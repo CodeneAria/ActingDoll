@@ -7,6 +7,7 @@ import os
 import sys
 import subprocess
 import json
+import yaml
 from pathlib import Path
 
 
@@ -28,17 +29,30 @@ def run_command(cmd, shell=True, capture_output=False, check=False):
 
 
 def main():
-    # Settings
-    DOCKER_FILE_NAME = "Dockerfile"
-    DOCKER_IMAGE_NAME = "img_node"
-    DOCKER_IMAGE_VER = "latest"
-    DOCKER_CONTAINER_NAME = "node_server"
-    SERVER_PORT = "5000"
-    CUBISM_SDK_FOR_WEB_PATH = "./volume/CubismSdkForWeb-5-r.4.zip"
-    WORK_DIR = "./volume"
-    SHARD_DIR = "volume/CubismSdkForWeb-5-r.4"
-
+    # Load settings from YAML
     script_dir = Path(__file__).parent.resolve()
+    config_path = script_dir / "config.yaml"
+
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+    except FileNotFoundError:
+        print(
+            f"Error: Configuration file not found: {config_path}", file=sys.stderr)
+        sys.exit(1)
+    except yaml.YAMLError as e:
+        print(
+            f"Error: Failed to parse YAML configuration: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    DOCKER_FILE_NAME = config['docker']['dockerfile']
+    DOCKER_IMAGE_NAME = config['docker']['image']['name']
+    DOCKER_IMAGE_VER = config['docker']['image']['version']
+    DOCKER_CONTAINER_NAME = config['docker']['container']['name']
+    SERVER_PORT = config['docker']['container']['port']
+    CUBISM_SDK_FOR_WEB_PATH = config['cubism']['sdk_zip_path']
+    WORK_DIR = config['cubism']['work_dir']
+    SHARD_DIR = config['cubism']['shared_dir']
 
     # Display settings
     print("=" * 50)
@@ -51,8 +65,22 @@ def main():
 
     # Extract Cubism SDK
     print(f"Extracting {CUBISM_SDK_FOR_WEB_PATH}...")
-    tar_cmd = f'tar -xf {CUBISM_SDK_FOR_WEB_PATH} -C "{WORK_DIR}"'
-    run_command(tar_cmd)
+    if not Path(CUBISM_SDK_FOR_WEB_PATH).exists():
+        print(
+            f"Error: Cubism SDK file not found: {CUBISM_SDK_FOR_WEB_PATH}", file=sys.stderr)
+        print("Please download it from https://www.live2d.com/sdk/download/web/", file=sys.stderr)
+        sys.exit(1)
+
+    # Create work directory if it doesn't exist
+    work_dir_path = Path(WORK_DIR)
+    work_dir_path.mkdir(parents=True, exist_ok=True)
+    print(f"Work directory: {work_dir_path.resolve()}")
+
+    tar_cmd = f'tar -xf {CUBISM_SDK_FOR_WEB_PATH} -C "{WORK_DIR}" --strip-components=1'
+    result = run_command(tar_cmd, check=False)
+    if result.returncode != 0:
+        print(f"Error: Failed to extract SDK archive", file=sys.stderr)
+        sys.exit(1)
 
     # Remove existing containers
     print("Checking for existing containers...")
@@ -72,8 +100,10 @@ def main():
     result = run_command(img_cmd, capture_output=True)
 
     if result.stdout.strip():
-        print(f"[INFO] Remove existing image: {DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}")
-        run_command(f"docker rmi {DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}", capture_output=True)
+        print(
+            f"[INFO] Remove existing image: {DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}")
+        run_command(
+            f"docker rmi {DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}", capture_output=True)
 
     # Build Docker image
     print("Building Docker image...")
@@ -84,7 +114,11 @@ def main():
         "-f", str(script_dir / DOCKER_FILE_NAME),
         "."
     ]
-    run_command(build_cmd, shell=False, check=True)
+    try:
+        run_command(build_cmd, shell=False, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error: Failed to build Docker image", file=sys.stderr)
+        sys.exit(1)
 
     # Show images
     print("/" * 50)
@@ -111,7 +145,11 @@ def main():
         "-p", f"{SERVER_PORT}:5000",
         f"{DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}"
     ]
-    run_command(run_cmd, shell=False, capture_output=True)
+    result = run_command(run_cmd, shell=False, capture_output=True)
+    if result.returncode != 0:
+        print(f"Error: Failed to start Docker container", file=sys.stderr)
+        print(result.stderr, file=sys.stderr)
+        sys.exit(1)
 
     # Inspect container
     run_command(f"docker container inspect {DOCKER_CONTAINER_NAME}")
@@ -129,7 +167,11 @@ def main():
         f'docker exec -t {DOCKER_CONTAINER_NAME} '
         f'/bin/sh -c "cd /root/work/Samples/TypeScript/Demo && npm install -g npm && npm install && npm run build"'
     )
-    run_command(npm_cmd, check=True)
+    try:
+        run_command(npm_cmd, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error: Failed to install or build npm packages", file=sys.stderr)
+        sys.exit(1)
 
     print("\nContainer setup completed successfully!")
 

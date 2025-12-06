@@ -5,6 +5,7 @@ Docker container run script for Cubism SDK Web
 
 import subprocess
 import sys
+import yaml
 from pathlib import Path
 
 
@@ -26,12 +27,24 @@ def run_command(cmd, shell=True, capture_output=False, check=False):
 
 
 def main():
-    # Settings
-    DOCKER_IMAGE_NAME = "img_node"
-    DOCKER_IMAGE_VER = "latest"
-    DOCKER_CONTAINER_NAME = "node_server"
-
+    # Load settings from YAML
     script_dir = Path(__file__).parent.resolve()
+    config_path = script_dir / "config.yaml"
+
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+    except FileNotFoundError:
+        print(
+            f"Error: Configuration file not found: {config_path}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error: Failed to load configuration: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    DOCKER_IMAGE_NAME = config['docker']['image']['name']
+    DOCKER_IMAGE_VER = config['docker']['image']['version']
+    DOCKER_CONTAINER_NAME = config['docker']['container']['name']
 
     # Display settings
     print("=" * 50)
@@ -50,7 +63,13 @@ def main():
 
     # Start container
     print(f"\nStarting container {DOCKER_CONTAINER_NAME}...")
-    run_command(f"docker start {DOCKER_CONTAINER_NAME}")
+    result = run_command(
+        f"docker start {DOCKER_CONTAINER_NAME}", capture_output=True)
+    if result.returncode != 0:
+        print(
+            f"Error: Failed to start container {DOCKER_CONTAINER_NAME}", file=sys.stderr)
+        print("Please run create_container.py first.", file=sys.stderr)
+        sys.exit(1)
 
     # Run npm start inside container
     print("Running npm start inside the container...")

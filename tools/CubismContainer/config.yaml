@@ -1,0 +1,26 @@
+# Docker Configuration for Cubism SDK Web
+
+docker:
+  # Dockerfile name
+  dockerfile: "volume/Dockerfile"
+
+  # Docker image settings
+  image:
+    name: "img_node"
+    version: "latest"
+
+  # Docker container settings
+  container:
+    name: "node_server"
+    port: "5000"
+
+# Cubism SDK settings
+cubism:
+  # Path to Cubism SDK zip file
+  sdk_zip_path: "./volume/CubismSdkForWeb-5-r.4.zip"
+
+  # Working directory
+  work_dir: "./volume/CubismSdkForWeb"
+
+  # Shared directory (will be mounted in container)
+  shared_dir: "volume/CubismSdkForWeb"
