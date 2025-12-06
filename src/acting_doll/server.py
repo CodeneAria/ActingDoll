@@ -1,6 +1,8 @@
 """MCP server for Live2D control."""
 
 import os
+from contextlib import asynccontextmanager
+from typing import AsyncIterator
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
@@ -13,6 +15,16 @@ server = Server("acting-doll")
 
 # Get Live2D server URL from environment variable
 LIVE2D_SERVER_URL = os.environ.get("LIVE2D_SERVER_URL", "http://localhost:8080")
+
+
+@asynccontextmanager
+async def get_client() -> AsyncIterator[Live2DClient]:
+    """Get a Live2D client instance."""
+    client = Live2DClient(base_url=LIVE2D_SERVER_URL)
+    try:
+        yield client
+    finally:
+        await client.close()
 
 
 @server.list_tools()
@@ -130,89 +142,85 @@ async def list_tools() -> list[Tool]:
 @server.call_tool()
 async def call_tool(name: str, arguments: dict) -> list[TextContent]:
     """Handle tool calls for Live2D control."""
-    client = Live2DClient(base_url=LIVE2D_SERVER_URL)
+    async with get_client() as client:
+        try:
+            if name == "set_parameter":
+                parameter_id = arguments["parameter_id"]
+                value = float(arguments["value"])
+                result = await client.set_parameter(parameter_id, value)
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"パラメータ '{parameter_id}' を {value} に設定しました。\n{result}",
+                    )
+                ]
 
-    try:
-        if name == "set_parameter":
-            parameter_id = arguments["parameter_id"]
-            value = float(arguments["value"])
-            result = await client.set_parameter(parameter_id, value)
+            elif name == "set_expression":
+                expression_id = arguments["expression_id"]
+                result = await client.set_expression(expression_id)
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"表情 '{expression_id}' を設定しました。\n{result}",
+                    )
+                ]
+
+            elif name == "start_motion":
+                group = arguments["group"]
+                index = int(arguments["index"])
+                priority = int(arguments.get("priority", 2))
+                result = await client.start_motion(group, index, priority)
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"モーション '{group}[{index}]' を開始しました。\n{result}",
+                    )
+                ]
+
+            elif name == "get_model_info":
+                result = await client.get_model_info()
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"モデル情報:\n{result}",
+                    )
+                ]
+
+            elif name == "reset_pose":
+                result = await client.reset_pose()
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"ポーズをリセットしました。\n{result}",
+                    )
+                ]
+
+            elif name == "set_look_at":
+                x = float(arguments["x"])
+                y = float(arguments["y"])
+                result = await client.set_look_at(x, y)
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"視線を ({x}, {y}) に設定しました。\n{result}",
+                    )
+                ]
+
+            else:
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"エラー: 不明なツール '{name}'",
+                    )
+                ]
+
+        except Exception as e:
             return [
                 TextContent(
                     type="text",
-                    text=f"パラメータ '{parameter_id}' を {value} に設定しました。\n{result}",
+                    text=f"エラー: {e!s}",
                 )
             ]
-
-        elif name == "set_expression":
-            expression_id = arguments["expression_id"]
-            result = await client.set_expression(expression_id)
-            return [
-                TextContent(
-                    type="text",
-                    text=f"表情 '{expression_id}' を設定しました。\n{result}",
-                )
-            ]
-
-        elif name == "start_motion":
-            group = arguments["group"]
-            index = int(arguments["index"])
-            priority = int(arguments.get("priority", 2))
-            result = await client.start_motion(group, index, priority)
-            return [
-                TextContent(
-                    type="text",
-                    text=f"モーション '{group}[{index}]' を開始しました。\n{result}",
-                )
-            ]
-
-        elif name == "get_model_info":
-            result = await client.get_model_info()
-            return [
-                TextContent(
-                    type="text",
-                    text=f"モデル情報:\n{result}",
-                )
-            ]
-
-        elif name == "reset_pose":
-            result = await client.reset_pose()
-            return [
-                TextContent(
-                    type="text",
-                    text=f"ポーズをリセットしました。\n{result}",
-                )
-            ]
-
-        elif name == "set_look_at":
-            x = float(arguments["x"])
-            y = float(arguments["y"])
-            result = await client.set_look_at(x, y)
-            return [
-                TextContent(
-                    type="text",
-                    text=f"視線を ({x}, {y}) に設定しました。\n{result}",
-                )
-            ]
-
-        else:
-            return [
-                TextContent(
-                    type="text",
-                    text=f"エラー: 不明なツール '{name}'",
-                )
-            ]
-
-    except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=f"エラー: {e!s}",
-            )
-        ]
-
-    finally:
-        await client.close()
 
 
 async def run_server() -> None:
