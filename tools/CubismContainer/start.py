@@ -46,23 +46,20 @@ def main():
     DOCKER_IMAGE_VER = config['docker']['image']['version']
     DOCKER_CONTAINER_NAME = config['docker']['container']['name']
 
-    # Display settings
-    print("=" * 50)
-    print("[Setup docker image]")
-    print("=" * 50)
-    print(f"  PATH             : {script_dir}")
-    print(f"  Docker container : {DOCKER_CONTAINER_NAME}")
-    print("=" * 50)
+    app_dir = "/root/work/CubismSdkForWeb/Samples/TypeScript/Demo"
 
     # Show running containers
+    print("=" * 50)
+    print("[Start Cubism SDK for Web]")
     ps_filter_cmd = (
         f'docker ps --filter "ancestor={DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}" '
         f'--format "table {{{{.ID}}}}\\t{{{{.Image}}}}\\t{{{{.Status}}}}\\t{{{{.Names}}}}\\t{{{{.Ports}}}}"'
     )
     run_command(ps_filter_cmd)
+    print("=" * 50)
 
     # Start container
-    print(f"\nStarting container {DOCKER_CONTAINER_NAME}...")
+    print(f"\n# Starting container {DOCKER_CONTAINER_NAME}...")
     result = run_command(
         f"docker start {DOCKER_CONTAINER_NAME}", capture_output=True)
     if result.returncode != 0:
@@ -72,10 +69,10 @@ def main():
         sys.exit(1)
 
     # Run npm start inside container
-    print("Running npm start inside the container...")
+    print("# Running npm start inside the container...")
     npm_cmd = (
         f'docker exec -t {DOCKER_CONTAINER_NAME} '
-        f'/bin/sh -c "cd /root/work/Samples/TypeScript/Demo && npm run start"'
+        f'/bin/sh -c "cd {app_dir} && npm run start"'
     )
 
     try:

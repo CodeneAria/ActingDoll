@@ -16,11 +16,9 @@ docker:
 
 # Cubism SDK settings
 cubism:
-  # Path to Cubism SDK zip file
-  sdk_zip_path: "./volume/CubismSdkForWeb-5-r.4.zip"
+  # Git repository and tag for Cubism SDK
+  sdk_git_repo: "https://github.com/Live2D/CubismWebSamples.git"
+  sdk_git_tag: "5-r.4"
 
-  # Working directory
-  work_dir: "./volume/CubismSdkForWeb"
-
-  # Shared directory (will be mounted in container)
-  shared_dir: "volume/CubismSdkForWeb"
+  # Path to Core archive directory
+  archive_core_dir: "./volume/Core"
