@@ -75,7 +75,7 @@ def main():
         f'docker exec -t {DOCKER_CONTAINER_NAME} /bin/sh -c "'
         f'cd {model_path}'
         f' && npm install -g npm && npm install'
-        # f' && npm audit fix'
+        f' && npm audit fix'
         f' && npm run build'
         f'"'
     )

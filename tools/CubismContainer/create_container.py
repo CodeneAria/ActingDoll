@@ -32,6 +32,7 @@ def run_command(cmd, shell=True, capture_output=False, check=False):
 def main():
     # Load settings from YAML
     script_dir = Path(__file__).parent.resolve()
+    os.chdir(script_dir)
     config_path = script_dir / "config.yaml"
 
     try:

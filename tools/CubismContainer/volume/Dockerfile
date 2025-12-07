@@ -26,6 +26,7 @@ COPY ${CORE_ARCHIVE_DIR}/ ./Core
 WORKDIR /root/work/${GIT_SAMPLE_DIR_NAME}/Samples/TypeScript/Demo
 RUN npm install -g npm && \
     npm install && \
+    npm audit fix && \
     npm run build
 
 WORKDIR /root/work/model

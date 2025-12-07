@@ -1,0 +1,37 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Docker:Create",
+            "type": "shell",
+            "command": "${workspaceFolder}/tools/CubismContainer/create_container.py",
+            "args": []
+        },
+        {
+            "label": "Docker:Exec",
+            "type": "shell",
+            "command": "${workspaceFolder}/tools/CubismContainer/exec.py",
+            "args": []
+        },
+        {
+            "label": "Docker:Start:Demo",
+            "type": "shell",
+            "command": "${workspaceFolder}/tools/CubismContainer/start_demo.py",
+            "args": []
+        },
+        {
+            "label": "model:Build",
+            "type": "shell",
+            "command": "${workspaceFolder}/tools/CubismContainer/build.py",
+            "args": []
+        },
+        {
+            "label": "model:Start",
+            "type": "shell",
+            "command": "${workspaceFolder}/tools/CubismContainer/start.py",
+            "args": []
+        }
+    ]
+}
