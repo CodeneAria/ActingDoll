@@ -57,7 +57,7 @@ python create_container.py
 ### 4. サーバーの起動
 
 ```bash
-python run.py
+python start_demo.py
 ```
 
 このスクリプトは以下の処理を実行します:
@@ -85,6 +85,7 @@ python run.py
 デフォルトの設定:
 
 - docker:
+
 | Key            | デフォルト値      | 概要                       |
 | -------------- | ----------------- | -------------------------- |
 | dockerfile     | volume/Dockerfile | Dockerfileのパス           |
@@ -92,7 +93,9 @@ python run.py
 | image.version  | latest            | Dockerイメージのバージョン |
 | container.name | node_server       | Dockerコンテナ名           |
 | container.port | 5000              | コンテナのポート番号       |
+
 - cubism:
+
 | Key              | デフォルト値                                   | 概要               |
 | ---------------- | ---------------------------------------------- | ------------------ |
 | sdk_git_repo     | https://github.com/Live2D/CubismWebSamples.git | SDK Git リポジトリ |

@@ -51,16 +51,25 @@ def main():
     DOCKER_IMAGE_VER = config['docker']['image']['version']
     DOCKER_CONTAINER_NAME = config['docker']['container']['name']
     SERVER_PORT = config['docker']['container']['port']
-    SDK_GIT_REPO = config['cubism']['sdk_git_repo']
-    SDK_GIT_TAG = config['cubism']['sdk_git_tag']
+    GIT_FRAMEWORK_REPO = config['cubism']['git_framework_repo']
+    GIT_FRAMEWORK_TAG = config['cubism']['git_framework_tag']
+    GIT_FRAMEWORK_DIR_NAME = config['cubism']['git_framework_dir_name']
+    GIT_SAMPLE_REPO = config['cubism']['git_sample_repo']
+    GIT_SAMPLE_TAG = config['cubism']['git_sample_tag']
+    GIT_SAMPLE_DIR_NAME = config['cubism']['git_sample_dir_name']
     ARCHIVE_CORE_DIR = config['cubism']['archive_core_dir']
+    MODEL_DIR = config['cubism']['model_dir']
 
     archive_core_path = Path(ARCHIVE_CORE_DIR).absolute()
     dockerfile_path = Path(script_dir / DOCKER_FILE_NAME).absolute()
+    model_path = Path(MODEL_DIR).absolute()
 
     # Display settings
     print("=" * 50)
-    print(f"  SDK              : {SDK_GIT_REPO}[{SDK_GIT_TAG}]")
+    print("[Create Cubism SDK for Web Docker Container]")
+    print(f"  Git")
+    print(f"    Framework      : {GIT_FRAMEWORK_REPO}[{GIT_FRAMEWORK_TAG}]")
+    print(f"    Sample         : {GIT_SAMPLE_REPO}[{GIT_SAMPLE_TAG}]")
     print(f"  PATH             : {script_dir}")
     print(f"  Archive Core dir : {archive_core_path}")
     print(f"  dockerfile       : {dockerfile_path}")
@@ -107,9 +116,13 @@ def main():
     print("# Building Docker image...")
     build_cmd = [
         "docker", "build",
-        "--build-arg", f"SDK_GIT_REPO={SDK_GIT_REPO}",
-        "--build-arg", f"SDK_GIT_TAG={SDK_GIT_TAG}",
         "--build-arg", f"CORE_ARCHIVE_DIR={ARCHIVE_CORE_DIR}",
+        "--build-arg", f"GIT_FRAMEWORK_REPO={GIT_FRAMEWORK_REPO}",
+        "--build-arg", f"GIT_FRAMEWORK_TAG={GIT_FRAMEWORK_TAG}",
+        "--build-arg", f"GIT_FRAMEWORK_DIR_NAME={GIT_FRAMEWORK_DIR_NAME}",
+        "--build-arg", f"GIT_SAMPLE_REPO={GIT_SAMPLE_REPO}",
+        "--build-arg", f"GIT_SAMPLE_TAG={GIT_SAMPLE_TAG}",
+        "--build-arg", f"GIT_SAMPLE_DIR_NAME={GIT_SAMPLE_DIR_NAME}",
         "-t", f"{DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}",
         "-f", str(dockerfile_path),
         "."
@@ -125,6 +138,7 @@ def main():
         "docker", "container", "run",
         "--name", DOCKER_CONTAINER_NAME,
         "-dit",
+        "-v", f"{model_path}:/root/work/model",
         "-p", f"{SERVER_PORT}:5000",
         f"{DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}"
     ]

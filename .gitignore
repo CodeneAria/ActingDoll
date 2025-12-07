@@ -212,3 +212,5 @@ __marimo__/
 **/doxygen
 **/CubismSdkForWeb*
 tools/CubismContainer/volume/Core
+**/node_modules
+**/public

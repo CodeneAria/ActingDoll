@@ -46,11 +46,9 @@ def main():
     DOCKER_IMAGE_VER = config['docker']['image']['version']
     DOCKER_CONTAINER_NAME = config['docker']['container']['name']
 
-    model_path = f"/root/work/model"
-
     # Show running containers
     print("=" * 50)
-    print("[Start Cubism SDK for Web]")
+    print("[Docker Containers Running]")
     ps_filter_cmd = (
         f'docker ps --filter "ancestor={DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}" '
         f'--format "table {{{{.ID}}}}\\t{{{{.Image}}}}\\t{{{{.Status}}}}\\t{{{{.Names}}}}\\t{{{{.Ports}}}}"'
@@ -71,8 +69,7 @@ def main():
     # Run npm start inside container
     print("# Running npm start inside the container...")
     npm_cmd = (
-        f'docker exec -t {DOCKER_CONTAINER_NAME} /bin/sh '
-        f'-c "cd {model_path} && npm run start"'
+        f'docker exec -it {DOCKER_CONTAINER_NAME} /bin/sh'
     )
 
     try:
@@ -83,8 +80,6 @@ def main():
         sys.exit(1)
     except KeyboardInterrupt:
         print("\n# Shutting down...")
-        run_command(
-            f"docker stop {DOCKER_CONTAINER_NAME}", capture_output=True)
         sys.exit(0)
 
 
