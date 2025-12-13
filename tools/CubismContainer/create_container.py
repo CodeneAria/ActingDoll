@@ -59,13 +59,15 @@ def main():
     GIT_SAMPLE_TAG = config['cubism']['git_sample_tag']
     GIT_SAMPLE_DIR_NAME = config['cubism']['git_sample_dir_name']
     ARCHIVE_CORE_DIR = config['cubism']['archive_core_dir']
-    MODELS_DIR = config['cubism']['models_dir']
-    ADAPTER_DIR = config['cubism']['adapter_dir']
+    CONTROLS_DIR = config['custom']['controls_dir']
+    NODE_PACKAGE_DIR = config['custom']['node_package_dir']
+    MODELS_DIR = config['custom']['models_dir']
 
     archive_core_path = Path(ARCHIVE_CORE_DIR).absolute()
     dockerfile_path = Path(script_dir / DOCKER_FILE_NAME).absolute()
+    node_package_dir = Path(NODE_PACKAGE_DIR).absolute()
+    controls_path = Path(CONTROLS_DIR).absolute()
     models_path = Path(MODELS_DIR).absolute()
-    adapter_path = Path(ADAPTER_DIR).absolute()
 
     # Display settings
     print("=" * 50)
@@ -142,7 +144,7 @@ def main():
         "--name", DOCKER_CONTAINER_NAME,
         "-dit",
         "-v", f"{models_path}:/root/workspace/Cubism/models",
-        "-v", f"{adapter_path}:/root/workspace/Cubism/adapter",
+        "-v", f"{controls_path}:/root/workspace/Cubism/adapter",
         "-p", f"{SERVER_PORT}:5000",
         f"{DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}"
     ]
@@ -150,6 +152,19 @@ def main():
     if result.returncode != 0:
         print(f"[Error] Failed to start Docker container", file=sys.stderr)
         print(result.stderr, file=sys.stderr)
+        sys.exit(1)
+
+    # Copy custom node package
+    print("# Copying custom node package...")
+    build_cmd = [
+        "docker", "cp",
+        str(node_package_dir) + "/",
+        f"{DOCKER_CONTAINER_NAME}:{'/root/workspace/Cubism/'}"
+    ]
+    try:
+        run_command(build_cmd, shell=False, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"[Error] Failed to build Docker image", file=sys.stderr)
         sys.exit(1)
 
     print("\n# -- Container setup completed successfully! --")

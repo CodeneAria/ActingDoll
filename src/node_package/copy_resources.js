@@ -8,8 +8,9 @@
 "use strict";
 const fs = require('fs');
 const publicResources = [
+  { src: '../adapter', dst: './src' },
   { src: '../Core', dst: './public/Core' },
-  { src: '../Samples/Samples/Resources', dst: './public/Resources'},
+  { src: '../models', dst: './public/Resources' },
 ];
 
 publicResources.forEach((e)=>{if (fs.existsSync(e.dst)) fs.rmSync(e.dst, { recursive: true })});

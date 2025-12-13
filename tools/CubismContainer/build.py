@@ -46,7 +46,7 @@ def main():
     DOCKER_IMAGE_VER = config['docker']['image']['version']
     DOCKER_CONTAINER_NAME = config['docker']['container']['name']
 
-    adapter_path = f"/root/workspace/Cubism/adapter"
+    adapter_path = f"/root/workspace/Cubism/node_package"
 
     # Show running containers
     print("=" * 50)

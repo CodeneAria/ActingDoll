@@ -46,7 +46,7 @@ def main():
     DOCKER_IMAGE_VER = config['docker']['image']['version']
     DOCKER_CONTAINER_NAME = config['docker']['container']['name']
 
-    adapter_path = f"/root/workspace/Cubism/adapter"
+    adapter_path = f"/root/workspace/Cubism/node_package"
 
     # Show running containers
     print("=" * 50)
@@ -58,10 +58,10 @@ def main():
     run_command(ps_filter_cmd)
     print("=" * 50)
 
-    # Start container
+    # Restart container
     print(f"# Starting container {DOCKER_CONTAINER_NAME}...")
     result = run_command(
-        f"docker start {DOCKER_CONTAINER_NAME}", capture_output=True)
+        f"docker restart {DOCKER_CONTAINER_NAME}", capture_output=True)
     if result.returncode != 0:
         print(
             f"[Error] Failed to start container {DOCKER_CONTAINER_NAME}", file=sys.stderr)

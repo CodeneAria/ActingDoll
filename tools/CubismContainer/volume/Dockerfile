@@ -23,10 +23,12 @@ RUN git clone --recursive --branch ${GIT_SAMPLE_TAG} ${GIT_SAMPLE_REPO} ${GIT_SA
 COPY ${CORE_ARCHIVE_DIR}/ ./${GIT_SAMPLE_DIR_NAME}/Core
 COPY ${CORE_ARCHIVE_DIR}/ ./Core
 
+# Build TypeScript Demo
 WORKDIR /root/workspace/Cubism/${GIT_SAMPLE_DIR_NAME}/Samples/TypeScript/Demo
 RUN npm install -g npm && \
     npm install && \
     npm audit fix && \
     npm run build
 
+# Set working directory
 WORKDIR /root/workspace/Cubism/adapter
