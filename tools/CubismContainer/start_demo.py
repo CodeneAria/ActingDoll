@@ -47,7 +47,7 @@ def main():
     DOCKER_CONTAINER_NAME = config['docker']['container']['name']
     GIT_SAMPLE_DIR_NAME = config['cubism']['git_sample_dir_name']
 
-    app_dir = f"/root/work/{GIT_SAMPLE_DIR_NAME}/Samples/TypeScript/Demo"
+    adapter_path = f"/root/workspace/Cubism/{GIT_SAMPLE_DIR_NAME}/Samples/TypeScript/Demo"
 
     # Show running containers
     print("=" * 50)
@@ -73,7 +73,7 @@ def main():
     print("# Running npm start inside the container...")
     npm_cmd = (
         f'docker exec -t {DOCKER_CONTAINER_NAME} /bin/sh '
-        f'-c "cd {app_dir} && npm run start"'
+        f'-c "cd {adapter_path} && npm run start"'
     )
 
     try:

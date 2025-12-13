@@ -8,11 +8,11 @@ ARG GIT_FRAMEWORK_DIR_NAME="Framework"
 
 ARG GIT_SAMPLE_REPO="https://github.com/Live2D/CubismWebSamples.git"
 ARG GIT_SAMPLE_TAG="5-r.4"
-ARG GIT_SAMPLE_DIR_NAME="CubismSdkForWeb"
+ARG GIT_SAMPLE_DIR_NAME="Samples"
 
 # Install git
 RUN apk add git
-WORKDIR /root/work
+WORKDIR /root/workspace/Cubism
 
 RUN mkdir Core
 
@@ -23,10 +23,10 @@ RUN git clone --recursive --branch ${GIT_SAMPLE_TAG} ${GIT_SAMPLE_REPO} ${GIT_SA
 COPY ${CORE_ARCHIVE_DIR}/ ./${GIT_SAMPLE_DIR_NAME}/Core
 COPY ${CORE_ARCHIVE_DIR}/ ./Core
 
-WORKDIR /root/work/${GIT_SAMPLE_DIR_NAME}/Samples/TypeScript/Demo
+WORKDIR /root/workspace/Cubism/${GIT_SAMPLE_DIR_NAME}/Samples/TypeScript/Demo
 RUN npm install -g npm && \
     npm install && \
     npm audit fix && \
     npm run build
 
-WORKDIR /root/work/model
+WORKDIR /root/workspace/Cubism/adapter

@@ -46,7 +46,7 @@ def main():
     DOCKER_IMAGE_VER = config['docker']['image']['version']
     DOCKER_CONTAINER_NAME = config['docker']['container']['name']
 
-    model_path = f"/root/work/model"
+    adapter_path = f"/root/workspace/Cubism/adapter"
 
     # Show running containers
     print("=" * 50)
@@ -72,7 +72,7 @@ def main():
     print("# Running npm start inside the container...")
     npm_cmd = (
         f'docker exec -t {DOCKER_CONTAINER_NAME} /bin/sh '
-        f'-c "cd {model_path} && npm run start"'
+        f'-c "cd {adapter_path} && npm run start"'
     )
 
     try:

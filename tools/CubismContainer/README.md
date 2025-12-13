@@ -8,6 +8,8 @@ Live2D Cubism SDK for WebをDockerコンテナで動作させるためのツー�
 - Python 3.6以上
 - PyYAML (`pip install pyyaml`)
 - Live2D Cubism SDK for Web (CubismSdkForWeb-5-r.4)
+  - 上記のSDK内に含まれるCoreファイルを `./volume/Core/` に配置する必要があります。
+- 利用したい組み込み用Live2Dモデルデータ（`./src/models/` に配置）
 
 ## セットアップ
 
@@ -104,6 +106,20 @@ python start_demo.py
 
 
 設定を変更する場合は、`config.yaml` ファイルを編集してください。
+
+## Docker内のフォルダ構成
+
+```tree
+${HOME}
+└── workspace
+    └── Cubism
+        ├── Core       : (Cubism Coreファイル, volume/Coreからマウント, 公式からダウンロードしたファイルを格納する)
+        ├── Framework  : (Cubism Frameworkファイル, GitHubからクローンする)
+        ├── Samples    : (Cubism Samplesファイル, GitHubからクローンする)
+        ├── adapter    : (ActingDoll用アダプタコード, src/adapterからマウント)
+        └── models     : (Live2Dモデルデータ, src/modelsからマウント, ユーザーが配置する)
+```
+
 
 ## エラーハンドリング
 

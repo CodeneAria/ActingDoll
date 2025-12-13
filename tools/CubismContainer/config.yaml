@@ -23,7 +23,7 @@ cubism:
   # Git repository and tag for Cubism Web Samples
   git_sample_repo: "https://github.com/Live2D/CubismWebSamples.git"
   git_sample_tag: "5-r.4"
-  git_sample_dir_name: "CubismSdkForWeb"
+  git_sample_dir_name: "Samples"
 
   # Git repository and tag for Cubism SDK
   sdk_git_repo: "https://github.com/Live2D/CubismWebSamples.git"
@@ -33,4 +33,7 @@ cubism:
   archive_core_dir: "./volume/Core"
 
   # Path to model source directory
-  model_dir: "../../src/model"
+  adapter_dir: "../../src/adapter"
+
+  # Path to model source directory
+  models_dir: "../../src/models"

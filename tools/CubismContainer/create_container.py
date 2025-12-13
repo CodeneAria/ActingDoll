@@ -59,11 +59,13 @@ def main():
     GIT_SAMPLE_TAG = config['cubism']['git_sample_tag']
     GIT_SAMPLE_DIR_NAME = config['cubism']['git_sample_dir_name']
     ARCHIVE_CORE_DIR = config['cubism']['archive_core_dir']
-    MODEL_DIR = config['cubism']['model_dir']
+    MODELS_DIR = config['cubism']['models_dir']
+    ADAPTER_DIR = config['cubism']['adapter_dir']
 
     archive_core_path = Path(ARCHIVE_CORE_DIR).absolute()
     dockerfile_path = Path(script_dir / DOCKER_FILE_NAME).absolute()
-    model_path = Path(MODEL_DIR).absolute()
+    models_path = Path(MODELS_DIR).absolute()
+    adapter_path = Path(ADAPTER_DIR).absolute()
 
     # Display settings
     print("=" * 50)
@@ -139,7 +141,8 @@ def main():
         "docker", "container", "run",
         "--name", DOCKER_CONTAINER_NAME,
         "-dit",
-        "-v", f"{model_path}:/root/work/model",
+        "-v", f"{models_path}:/root/workspace/Cubism/models",
+        "-v", f"{adapter_path}:/root/workspace/Cubism/adapter",
         "-p", f"{SERVER_PORT}:5000",
         f"{DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}"
     ]

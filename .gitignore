@@ -214,3 +214,4 @@ __marimo__/
 tools/CubismContainer/volume/Core
 **/node_modules
 **/public
+src/models

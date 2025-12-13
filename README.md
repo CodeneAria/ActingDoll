@@ -65,6 +65,7 @@ pip install -e ".[dev]"
 Live2Dモデルのパラメータを設定します。
 
 **入力:**
+
 - `parameter_id` (string): パラメータID（例: ParamAngleX, ParamEyeLOpen）
 - `value` (number): 設定する値（角度は-30〜30、開閉は0〜1が一般的）
 
@@ -73,6 +74,7 @@ Live2Dモデルのパラメータを設定します。
 Live2Dモデルの表情を設定します。
 
 **入力:**
+
 - `expression_id` (string): 表情ID（例: happy, sad, angry）
 
 ### start_motion
@@ -80,6 +82,7 @@ Live2Dモデルの表情を設定します。
 Live2Dモデルのモーションを開始します。
 
 **入力:**
+
 - `group` (string): モーショングループ名（例: Idle, TapBody）
 - `index` (integer): モーションのインデックス（0から開始）
 - `priority` (integer, optional): モーション優先度（1=アイドル, 2=通常, 3=強制）
@@ -97,6 +100,7 @@ Live2Dモデルをデフォルトのポーズにリセットします。
 Live2Dモデルの視線を設定します。
 
 **入力:**
+
 - `x` (number): X座標（-1.0〜1.0、左から右）
 - `y` (number): Y座標（-1.0〜1.0、下から上）
 

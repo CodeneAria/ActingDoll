@@ -46,7 +46,7 @@ def main():
     DOCKER_IMAGE_VER = config['docker']['image']['version']
     DOCKER_CONTAINER_NAME = config['docker']['container']['name']
 
-    model_path = f"/root/work/model"
+    adapter_path = f"/root/workspace/Cubism/adapter"
 
     # Show running containers
     print("=" * 50)
@@ -73,7 +73,7 @@ def main():
     # npm install -g npm && npm install && npm run build
     npm_cmd = (
         f'docker exec -t {DOCKER_CONTAINER_NAME} /bin/sh -c "'
-        f'cd {model_path}'
+        f'cd {adapter_path}'
         f' && npm install -g npm && npm install'
         f' && npm audit fix'
         f' && npm run build'
