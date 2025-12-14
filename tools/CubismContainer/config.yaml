@@ -38,3 +38,6 @@ custom:
 
   # Path to model source directory
   models_dir: "../../src/models"
+
+  # Path to acting doll control server directory
+  control_server_dir: "../../src/acting_doll"

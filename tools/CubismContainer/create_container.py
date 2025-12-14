@@ -62,12 +62,14 @@ def main():
     CONTROLS_DIR = config['custom']['controls_dir']
     NODE_PACKAGE_DIR = config['custom']['node_package_dir']
     MODELS_DIR = config['custom']['models_dir']
+    CONTROL_SERVER_DIR = config['custom']['control_server_dir']
 
     archive_core_path = Path(ARCHIVE_CORE_DIR).absolute()
     dockerfile_path = Path(script_dir / DOCKER_FILE_NAME).absolute()
     node_package_dir = Path(NODE_PACKAGE_DIR).absolute()
     controls_path = Path(CONTROLS_DIR).absolute()
     models_path = Path(MODELS_DIR).absolute()
+    control_server_path = Path(CONTROL_SERVER_DIR).absolute()
 
     # Display settings
     print("=" * 50)
@@ -143,6 +145,7 @@ def main():
         "docker", "container", "run",
         "--name", DOCKER_CONTAINER_NAME,
         "-dit",
+        "-v", f"{control_server_path}:/root/workspace/acting_doll",
         "-v", f"{models_path}:/root/workspace/Cubism/models",
         "-v", f"{controls_path}:/root/workspace/Cubism/adapter",
         "-p", f"{SERVER_PORT}:5000",

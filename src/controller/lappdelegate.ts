@@ -11,6 +11,7 @@ import * as LAppDefine from './lappdefine';
 import { LAppPal } from './lapppal';
 import { LAppSubdelegate } from './lappsubdelegate';
 import { CubismLogError } from '@framework/utils/cubismdebug';
+import { WebSocketClient } from './websocketclient';
 
 export let s_instance: LAppDelegate = null;
 
@@ -135,6 +136,7 @@ export class LAppDelegate {
   private release(): void {
     this.releaseEventListener();
     this.releaseSubdelegates();
+    this.releaseWebSocket();
 
     // Cubism SDKの解放
     CubismFramework.dispose();
@@ -181,6 +183,7 @@ export class LAppDelegate {
 
     this.initializeSubdelegates();
     this.initializeEventListener();
+    this.initializeWebSocket();
 
     return true;
   }
@@ -273,6 +276,50 @@ export class LAppDelegate {
     this._cubismOption = new Option();
     this._subdelegates = new csmVector<LAppSubdelegate>();
     this._canvases = new csmVector<HTMLCanvasElement>();
+    this._websocketClient = null;
+  }
+
+  /**
+   * WebSocketクライアントを初期化
+   */
+  private initializeWebSocket(): void {
+    if (LAppDefine.WebSocketAutoConnect) {
+      this._websocketClient = new WebSocketClient(LAppDefine.WebSocketUrl + LAppDefine.WebSocketAddress + ":" + LAppDefine.WebSocketPort);
+
+      // メッセージハンドラを登録
+      this._websocketClient.onMessage('welcome', (data) => {
+        console.log('[WebSocket] ウェルカムメッセージを受信しました');
+      });
+
+      this._websocketClient.onMessage('broadcast_message', (data) => {
+        console.log('[WebSocket] ブロードキャストメッセージを受信:', data);
+      });
+
+      // 接続を試みる
+      this._websocketClient.connect().catch((error) => {
+        console.error('[WebSocket] 接続に失敗しました:', error);
+      });
+
+      console.log('[WebSocket] WebSocketクライアントを初期化しました');
+    }
+  }
+
+  /**
+   * WebSocketクライアントを解放
+   */
+  private releaseWebSocket(): void {
+    if (this._websocketClient) {
+      this._websocketClient.disconnect();
+      this._websocketClient = null;
+      console.log('[WebSocket] WebSocketクライアントを解放しました');
+    }
+  }
+
+  /**
+   * WebSocketクライアントを取得
+   */
+  public getWebSocketClient(): WebSocketClient | null {
+    return this._websocketClient;
   }
 
   /**
@@ -309,4 +356,9 @@ export class LAppDelegate {
    * 登録済みイベントリスナー 関数オブジェクト
    */
   private pointCancelEventListener: (this: Document, ev: PointerEvent) => void;
+
+  /**
+   * WebSocketクライアント
+   */
+  private _websocketClient: WebSocketClient | null;
 }

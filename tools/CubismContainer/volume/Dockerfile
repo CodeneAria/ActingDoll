@@ -16,12 +16,19 @@ WORKDIR /root/workspace/Cubism
 
 RUN mkdir Core
 
-RUN git clone --recursive --branch ${GIT_FRAMEWORK_TAG} ${GIT_FRAMEWORK_REPO} ${GIT_FRAMEWORK_DIR_NAME}
-RUN git clone --recursive --branch ${GIT_SAMPLE_TAG} ${GIT_SAMPLE_REPO} ${GIT_SAMPLE_DIR_NAME}
+RUN git clone --branch ${GIT_FRAMEWORK_TAG} ${GIT_FRAMEWORK_REPO} ${GIT_FRAMEWORK_DIR_NAME}
+#RUN git clone --recursive --branch ${GIT_FRAMEWORK_TAG} ${GIT_FRAMEWORK_REPO} ${GIT_FRAMEWORK_DIR_NAME}
+RUN git clone --branch ${GIT_SAMPLE_TAG} ${GIT_SAMPLE_REPO} ${GIT_SAMPLE_DIR_NAME}
 
 # Copy Core files
 COPY ${CORE_ARCHIVE_DIR}/ ./${GIT_SAMPLE_DIR_NAME}/Core
 COPY ${CORE_ARCHIVE_DIR}/ ./Core
+RUN rm -rf ${GIT_SAMPLE_DIR_NAME}/Framework;\
+    ln -s /root/workspace/Cubism/${GIT_FRAMEWORK_DIR_NAME} ${GIT_SAMPLE_DIR_NAME}/Framework
+
+# Install dependencies
+RUN apk add python3; \
+    apk add py3-websockets;
 
 # Build TypeScript Demo
 WORKDIR /root/workspace/Cubism/${GIT_SAMPLE_DIR_NAME}/Samples/TypeScript/Demo
@@ -31,4 +38,4 @@ RUN npm install -g npm && \
     npm run build
 
 # Set working directory
-WORKDIR /root/workspace/Cubism/adapter
+WORKDIR /root/workspace/acting_doll

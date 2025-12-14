@@ -82,3 +82,11 @@ export const CubismLoggingLevel: LogLevel = LogLevel.LogLevel_Verbose;
 // デフォルトのレンダーターゲットサイズ
 export const RenderTargetWidth = 1900;
 export const RenderTargetHeight = 1000;
+
+// WebSocket設定
+export const WebSocketUrl = 'ws://';
+export const WebSocketAddress = 'localhost';
+export const WebSocketPort = '8765';
+export const WebSocketAutoConnect = true;
+export const WebSocketReconnectAttempts = 5;
+export const WebSocketReconnectDelay = 3000;

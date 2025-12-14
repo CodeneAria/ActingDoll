@@ -60,9 +60,9 @@ def main():
     print("=" * 50)
 
     # Start container
-    print(f"# Starting container {DOCKER_CONTAINER_NAME}...")
+    print(f"# Restarting container {DOCKER_CONTAINER_NAME}...")
     result = run_command(
-        f"docker start {DOCKER_CONTAINER_NAME}", capture_output=True)
+        f"docker restart {DOCKER_CONTAINER_NAME}", capture_output=True)
     if result.returncode != 0:
         print(
             f"[Error] Failed to start container {DOCKER_CONTAINER_NAME}", file=sys.stderr)

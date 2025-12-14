@@ -1,0 +1,377 @@
+"""
+WebSocket Server for bidirectional communication
+サーバー側のWebSocket通信アプリケーション
+"""
+import asyncio
+import json
+import logging
+from datetime import datetime
+from typing import Set
+import websockets
+from websockets.server import WebSocketServerProtocol
+
+# ロギング設定
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# 接続されたクライアントを管理
+connected_clients: Set[WebSocketServerProtocol] = set()
+# クライアントIDとWebSocket接続のマッピング
+client_id_map: dict[str, WebSocketServerProtocol] = {}
+
+
+async def broadcast_message(message: dict, exclude: WebSocketServerProtocol = None):
+    """
+    全クライアントにメッセージをブロードキャスト
+
+    Args:
+        message: 送信するメッセージ（辞書形式）
+        exclude: 除外するクライアント接続
+    """
+    if connected_clients:
+        message_json = json.dumps(message, ensure_ascii=False)
+        # 送信失敗したクライアントを追跡
+        disconnected = set()
+
+        for client in connected_clients:
+            if client != exclude:
+                try:
+                    await client.send(message_json)
+                except websockets.exceptions.ConnectionClosed:
+                    disconnected.add(client)
+
+        # 切断されたクライアントを削除
+        connected_clients.difference_update(disconnected)
+
+
+async def send_to_client(client_id: str, message: dict) -> bool:
+    """
+    特定のクライアントにメッセージを送信
+
+    Args:
+        client_id: 送信先のクライアントID
+        message: 送信するメッセージ（辞書形式）
+
+    Returns:
+        送信成功ならTrue、失敗ならFalse
+    """
+    if client_id not in client_id_map:
+        logger.warning(f"クライアント {client_id} が見つかりません")
+        return False
+
+    websocket = client_id_map[client_id]
+    message_json = json.dumps(message, ensure_ascii=False)
+
+    try:
+        await websocket.send(message_json)
+        return True
+    except websockets.exceptions.ConnectionClosed:
+        logger.warning(f"クライアント {client_id} への送信に失敗（切断済み）")
+        # クリーンアップ
+        connected_clients.discard(websocket)
+        client_id_map.pop(client_id, None)
+        return False
+    except Exception as e:
+        logger.error(f"クライアント {client_id} への送信エラー: {e}")
+        return False
+
+
+def get_client_id(websocket: WebSocketServerProtocol) -> str:
+    """
+    WebSocket接続からクライアントIDを生成
+
+    Args:
+        websocket: WebSocket接続
+
+    Returns:
+        クライアントID
+    """
+    try:
+        remote = websocket.remote_address
+        if remote:
+            return f"{remote[0]}:{remote[1]}"
+        else:
+            return "unknown"
+    except Exception:
+        return "unknown"
+
+
+async def handle_client(websocket: WebSocketServerProtocol):
+    """
+    クライアント接続を処理
+
+    Args:
+        websocket: WebSocket接続
+    """
+    logger.info(f"クライアント接続要求を受信")
+
+    # クライアントIDを生成
+    client_id = get_client_id(websocket)
+    logger.info(f"新しいクライアント接続: {client_id}")
+
+    # クライアントを登録
+    connected_clients.add(websocket)
+    client_id_map[client_id] = websocket
+
+    try:
+        # 接続通知を他のクライアントにブロードキャスト
+        await broadcast_message({
+            "type": "client_connected",
+            "client_id": client_id,
+            "timestamp": datetime.now().isoformat(),
+            "total_clients": len(connected_clients)
+        }, exclude=websocket)
+
+        # ウェルカムメッセージを送信
+        await websocket.send(json.dumps({
+            "type": "welcome",
+            "message": "WebSocketサーバーに接続しました",
+            "client_id": client_id,
+            "timestamp": datetime.now().isoformat()
+        }, ensure_ascii=False))
+
+        # メッセージ受信ループ
+        async for message in websocket:
+            try:
+                # JSON形式で受信
+                data = json.loads(message)
+                logger.info(f"受信 from {client_id}: {data}")
+
+                # メッセージタイプに応じて処理
+                msg_type = data.get("type", "message")
+
+                if msg_type == "echo":
+                    # エコーバック
+                    response = {
+                        "type": "echo_response",
+                        "original": data,
+                        "timestamp": datetime.now().isoformat()
+                    }
+                    await websocket.send(json.dumps(response, ensure_ascii=False))
+
+                elif msg_type == "broadcast":
+                    # 全クライアントにブロードキャスト
+                    broadcast_data = {
+                        "type": "broadcast_message",
+                        "from": client_id,
+                        "content": data.get("content"),
+                        "timestamp": datetime.now().isoformat()
+                    }
+                    await broadcast_message(broadcast_data)
+
+                elif msg_type == "command":
+                    # コマンド処理の例
+                    command = data.get("command")
+                    response = await process_command(command, client_id)
+                    await websocket.send(json.dumps(response, ensure_ascii=False))
+
+                else:
+                    # その他のメッセージは全クライアントに転送
+                    forward_data = {
+                        "type": "message",
+                        "from": client_id,
+                        "data": data,
+                        "timestamp": datetime.now().isoformat()
+                    }
+                    await broadcast_message(forward_data, exclude=websocket)
+
+            except json.JSONDecodeError:
+                logger.error(f"不正なJSON形式: {message}")
+                await websocket.send(json.dumps({
+                    "type": "error",
+                    "message": "不正なJSON形式です"
+                }, ensure_ascii=False))
+
+    except websockets.exceptions.ConnectionClosed:
+        logger.info(f"クライアント切断: {client_id}")
+    except Exception as e:
+        logger.error(f"エラー発生 ({client_id}): {e}")
+    finally:
+        # クライアントを削除
+        connected_clients.discard(websocket)
+        client_id_map.pop(client_id, None)
+
+        # 切断通知をブロードキャスト
+        await broadcast_message({
+            "type": "client_disconnected",
+            "client_id": client_id,
+            "timestamp": datetime.now().isoformat(),
+            "total_clients": len(connected_clients)
+        })
+
+
+async def process_command(command: str, client_id: str) -> dict:
+    """
+    コマンドを処理
+
+    Args:
+        command: コマンド文字列
+        client_id: クライアントID
+
+    Returns:
+        レスポンス辞書
+    """
+    if command == "status":
+        return {
+            "type": "command_response",
+            "command": "status",
+            "data": {
+                "connected_clients": len(connected_clients),
+                "server_time": datetime.now().isoformat()
+            }
+        }
+    elif command == "ping":
+        return {
+            "type": "command_response",
+            "command": "ping",
+            "data": "pong"
+        }
+    else:
+        return {
+            "type": "command_response",
+            "command": command,
+            "error": "不明なコマンドです"
+        }
+
+
+async def server_console():
+    """
+    サーバーコンソール - サーバーから能動的にメッセージを送信
+    """
+    logger.info("\n=== サーバーコンソール ===")
+    logger.info("コマンド:")
+    logger.info("  broadcast <message> - 全クライアントにメッセージを送信")
+    logger.info("  send <client_id> <message> - 特定のクライアントにメッセージを送信")
+    logger.info("  notify <message>    - 全クライアントに通知を送信")
+    logger.info("  list                - 接続中のクライアント一覧")
+    logger.info("  count               - 接続数を表示")
+    logger.info("  quit                - サーバーを停止")
+    logger.info("========================\n")
+
+    while True:
+        try:
+            # 非同期で標準入力を読み取り
+            user_input = await asyncio.get_event_loop().run_in_executor(
+                None, input, "[SERVER] > "
+            )
+
+            if not user_input.strip():
+                continue
+
+            parts = user_input.strip().split(maxsplit=1)
+            command = parts[0].lower()
+
+            if command == "quit":
+                logger.info("サーバーを停止します...")
+                break
+
+            elif command == "broadcast" and len(parts) > 1:
+                message = parts[1]
+                await broadcast_message({
+                    "type": "server_broadcast",
+                    "message": message,
+                    "timestamp": datetime.now().isoformat()
+                })
+                logger.info(f"ブロードキャスト送信: {message}")
+
+            elif command == "send" and len(parts) > 1:
+                # 形式: send <client_id> <message>
+                send_parts = parts[1].split(maxsplit=1)
+                if len(send_parts) < 2:
+                    logger.warning("使い方: send <client_id> <message>")
+                    continue
+
+                target_client_id = send_parts[0]
+                message = send_parts[1]
+
+                success = await send_to_client(target_client_id, {
+                    "type": "server_direct_message",
+                    "message": message,
+                    "timestamp": datetime.now().isoformat()
+                })
+
+                if success:
+                    logger.info(f"メッセージ送信完了 -> {target_client_id}: {message}")
+                else:
+                    logger.error(f"メッセージ送信失敗 -> {target_client_id}")
+
+            elif command == "notify" and len(parts) > 1:
+                message = parts[1]
+                await broadcast_message({
+                    "type": "server_notification",
+                    "message": message,
+                    "priority": "normal",
+                    "timestamp": datetime.now().isoformat()
+                })
+                logger.info(f"通知送信: {message}")
+
+            elif command == "list":
+                if client_id_map:
+                    logger.info(f"接続中のクライアント ({len(client_id_map)}件):")
+                    for i, client_id in enumerate(client_id_map.keys(), 1):
+                        logger.info(f"  {i}. {client_id}")
+                else:
+                    logger.info("接続中のクライアントはありません")
+
+            elif command == "count":
+                logger.info(f"接続数: {len(connected_clients)}")
+
+            else:
+                logger.warning(f"不明なコマンド: {command}")
+                logger.info("使用可能なコマンド: broadcast, send, notify, list, count, quit")
+
+        except EOFError:
+            break
+        except Exception as e:
+            logger.error(f"コンソールエラー: {e}")
+
+
+async def send_periodic_messages():
+    """
+    定期的なメッセージ送信（オプション）
+    必要に応じて有効化
+    """
+    while True:
+        await asyncio.sleep(60)  # 60秒ごと
+        if connected_clients:
+            await broadcast_message({
+                "type": "server_heartbeat",
+                "message": "サーバーは正常に動作中",
+                "timestamp": datetime.now().isoformat(),
+                "connected_clients": len(connected_clients)
+            })
+
+
+async def main():
+    """
+    WebSocketサーバーを起動
+    """
+    host = "localhost"
+    port = 8765
+
+    logger.info(f"WebSocketサーバーを起動中: ws://{host}:{port}")
+
+    async with websockets.serve(handle_client, host, port):
+        logger.info("サーバーが起動しました。Ctrl+Cで停止します。")
+
+        # サーバーコンソールを起動
+        console_task = asyncio.create_task(server_console())
+
+        # オプション: 定期メッセージを有効にする場合はコメントを外す
+        # periodic_task = asyncio.create_task(send_periodic_messages())
+
+        # コンソールタスクが終了するまで待機
+        await console_task
+
+        # オプション: 定期メッセージタスクをキャンセル
+        # periodic_task.cancel()
+
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("\nサーバーを停止しました")
