@@ -237,19 +237,21 @@ async def process_command(command: str, client_id: str) -> dict:
         }
 
 
+def print_server_console():
+    print("=== サーバーコンソール ===")
+    print("コマンド:")
+    print("  send <client_id> <message> - 特定のクライアントにメッセージを送信")
+    print("  notify <message>           - 全クライアントに通知を送信")
+    print("  list                       - 接続中のクライアント一覧")
+    print("  count                      - 接続数を表示")
+    print("  quit                       - サーバーを停止")
+    print("========================\n")
+
 async def server_console():
     """
     サーバーコンソール - サーバーから能動的にメッセージを送信
     """
-    logger.info("\n=== サーバーコンソール ===")
-    logger.info("コマンド:")
-    logger.info("  broadcast <message> - 全クライアントにメッセージを送信")
-    logger.info("  send <client_id> <message> - 特定のクライアントにメッセージを送信")
-    logger.info("  notify <message>    - 全クライアントに通知を送信")
-    logger.info("  list                - 接続中のクライアント一覧")
-    logger.info("  count               - 接続数を表示")
-    logger.info("  quit                - サーバーを停止")
-    logger.info("========================\n")
+    print_server_console()
 
     while True:
         try:
@@ -268,14 +270,6 @@ async def server_console():
                 logger.info("サーバーを停止します...")
                 break
 
-            elif command == "broadcast" and len(parts) > 1:
-                message = parts[1]
-                await broadcast_message({
-                    "type": "server_broadcast",
-                    "message": message,
-                    "timestamp": datetime.now().isoformat()
-                })
-                logger.info(f"ブロードキャスト送信: {message}")
 
             elif command == "send" and len(parts) > 1:
                 # 形式: send <client_id> <message>
@@ -303,7 +297,6 @@ async def server_console():
                 await broadcast_message({
                     "type": "server_notification",
                     "message": message,
-                    "priority": "normal",
                     "timestamp": datetime.now().isoformat()
                 })
                 logger.info(f"通知送信: {message}")
@@ -321,7 +314,7 @@ async def server_console():
 
             else:
                 logger.warning(f"不明なコマンド: {command}")
-                logger.info("使用可能なコマンド: broadcast, send, notify, list, count, quit")
+                print_server_console()
 
         except EOFError:
             break

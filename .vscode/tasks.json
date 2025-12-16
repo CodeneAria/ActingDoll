@@ -22,6 +22,12 @@
             "args": []
         },
         {
+            "label": "model:DirUpdate",
+            "type": "shell",
+            "command": "${workspaceFolder}/src/models/update_model_dirs.py",
+            "args": []
+        },
+        {
             "label": "model:Build",
             "type": "shell",
             "command": "${workspaceFolder}/tools/CubismContainer/build.py",
@@ -31,6 +37,18 @@
             "label": "model:Start",
             "type": "shell",
             "command": "${workspaceFolder}/tools/CubismContainer/start.py",
+            "args": []
+        },
+        {
+            "label": "model:Clean",
+            "type": "shell",
+            "command": "${workspaceFolder}/tools/CubismContainer/clean.py",
+            "args": []
+        },
+        {
+            "label": "Server:Websocket",
+            "type": "shell",
+            "command": "${workspaceFolder}/src/acting_doll/websocket_server.py",
             "args": []
         }
     ]

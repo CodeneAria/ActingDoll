@@ -112,7 +112,7 @@ export class WebSocketClient {
   private running: boolean = false;
   private messageHandlers: Map<string, MessageHandler[]> = new Map();
   private reconnectAttempts: number = 0;
-  private maxReconnectAttempts: number = 5;
+  private maxReconnectAttempts: number = 0; // 0で無制限
   private reconnectDelay: number = 3000;
 
   /**
@@ -178,7 +178,7 @@ export class WebSocketClient {
    * 再接続を試みる
    */
   private handleReconnect(): void {
-    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+    if ((this.reconnectAttempts < this.maxReconnectAttempts) || (0 === this.maxReconnectAttempts)) {
       this.reconnectAttempts++;
       console.log(
         `再接続を試みます... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`

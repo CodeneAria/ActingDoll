@@ -1,6 +1,6 @@
 # CubismContainer
 
-Live2D Cubism SDK for WebをDockerコンテナで動作させるためのツール群です。
+Live2D Cubism SDK for Webを "Dockerコンテナ"で動作させるためのツール群です。
 
 ## 必要なもの
 
@@ -25,7 +25,8 @@ Live2D Cubism SDK for Webを以下のURLからダウンロードしてくださ�
 
 **https://www.live2d.com/sdk/download/web/**
 
-ダウンロードした `CubismSdkForWeb-5-r.4.zip` を 展開し、Coreフォルダの中身を `./volume/Core/` ディレクトリに配置してください。
+ダウンロードした `CubismSdkForWeb-*.zip` を 展開し、Coreフォルダの中身を `./volume/Core/` ディレクトリに配置してください。
+"Cubism Core for Web"は、"live2dcubismcore.min.js"しかなくビルドに失敗するため"Cubism SDK for Web"を使用してください。
 
 ```tree
 tools/CubismContainer/
