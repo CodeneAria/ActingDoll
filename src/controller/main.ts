@@ -6,6 +6,7 @@
  */
 
 import { LAppDelegate } from './lappdelegate';
+import { LAppUI } from './lappui';
 import * as LAppDefine from './lappdefine';
 
 /**
@@ -20,6 +21,9 @@ window.addEventListener(
     }
 
     LAppDelegate.getInstance().run();
+
+    // Initialize UI controller
+    LAppUI.getInstance().initialize();
   },
   { passive: true }
 );
@@ -29,6 +33,9 @@ window.addEventListener(
  */
 window.addEventListener(
   'beforeunload',
-  (): void => LAppDelegate.releaseInstance(),
+  (): void => {
+    LAppUI.releaseInstance();
+    LAppDelegate.releaseInstance();
+  },
   { passive: true }
 );

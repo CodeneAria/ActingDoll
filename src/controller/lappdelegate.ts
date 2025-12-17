@@ -323,6 +323,16 @@ export class LAppDelegate {
   }
 
   /**
+   * 最初のSubdelegateを取得
+   */
+  public getSubdelegate(index: number = 0): LAppSubdelegate | null {
+    if (index < this._subdelegates.getSize()) {
+      return this._subdelegates.at(index);
+    }
+    return null;
+  }
+
+  /**
    * Cubism SDK Option
    */
   private _cubismOption: Option;

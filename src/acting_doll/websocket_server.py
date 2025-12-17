@@ -7,6 +7,7 @@ import json
 import logging
 from datetime import datetime
 from typing import Set
+import moc3manager
 import websockets
 from websockets.server import WebSocketServerProtocol
 
@@ -21,6 +22,9 @@ logger = logging.getLogger(__name__)
 connected_clients: Set[WebSocketServerProtocol] = set()
 # クライアントIDとWebSocket接続のマッピング
 client_id_map: dict[str, WebSocketServerProtocol] = {}
+
+# グローバルなモデルマネージャー
+model_manager = moc3manager.ModelManager()
 
 
 async def broadcast_message(message: dict, exclude: WebSocketServerProtocol = None):
@@ -202,6 +206,136 @@ async def handle_client(websocket: WebSocketServerProtocol):
             "total_clients": len(connected_clients)
         })
 
+async def model_command(command: str, args:str) -> dict:
+    """
+    モデル関連コマンドを処理
+    Args:
+        command: コマンド文字列
+        client_id: クライアントID
+    """
+    # コマンドをパースする
+    # parts = command.split(maxsplit=1)
+    # cmd = parts[0].lower()
+    # args = parts[1] if len(parts) > 1 else ""
+
+    # モデル関連コマンド
+    if command == "list":
+        print("List:")
+        print(model_manager.get_list_models())
+    elif command == "get_model":
+        return {
+            "type": "command_response",
+            "command": "get_model",
+            "data": model_manager.get_models()
+        }
+
+    # モーショングループ関連コマンド
+    elif command == "get_motion_groups":
+        return {
+            "type": "command_response",
+            "command": "get_motion_groups",
+            "data": model_manager.get_motion_groups()
+        }
+    elif command == "get_current_motion_group":
+        return {
+            "type": "command_response",
+            "command": "get_current_motion_group",
+            "data": model_manager.get_current_motion_group()
+        }
+    elif command == "set_motion_group":
+        if not args:
+            return {
+                "type": "command_response",
+                "command": "set_motion_group",
+                "error": "モーショングループ名が必要です"
+            }
+        success = model_manager.set_current_motion_group(args)
+        return {
+            "type": "command_response",
+            "command": "set_motion_group",
+            "data": {
+                "success": success,
+                "motion_group": args if success else None
+            }
+        }
+
+    # モーション関連コマンド
+    elif command == "get_motions":
+        group = args or model_manager.get_current_motion_group()
+        return {
+            "type": "command_response",
+            "command": "get_motions",
+            "data": {
+                "motion_group": group,
+                "motions": model_manager.get_motions(group)
+            }
+        }
+    elif command == "get_current_motion":
+        return {
+            "type": "command_response",
+            "command": "get_current_motion",
+            "data": {
+                "motion_group": model_manager.get_current_motion_group(),
+                "motion_index": model_manager.get_current_motion_index(),
+                "motion": model_manager.get_current_motion()
+            }
+        }
+    elif command == "set_motion_index":
+        try:
+            index = int(args)
+            success = model_manager.set_current_motion_index(index)
+            return {
+                "type": "command_response",
+                "command": "set_motion_index",
+                "data": {
+                    "success": success,
+                    "motion_index": index if success else None,
+                    "motion": model_manager.get_current_motion() if success else None
+                }
+            }
+        except ValueError:
+            return {
+                "type": "command_response",
+                "command": "set_motion_index",
+                "error": "有効な数値を指定してください"
+            }
+    elif command == "next_motion":
+        motion = model_manager.next_motion()
+        return {
+            "type": "command_response",
+            "command": "next_motion",
+            "data": {
+                "motion_group": model_manager.get_current_motion_group(),
+                "motion_index": model_manager.get_current_motion_index(),
+                "motion": motion
+            }
+        }
+    elif command == "previous_motion":
+        motion = model_manager.previous_motion()
+        return {
+            "type": "command_response",
+            "command": "previous_motion",
+            "data": {
+                "motion_group": model_manager.get_current_motion_group(),
+                "motion_index": model_manager.get_current_motion_index(),
+                "motion": motion
+            }
+        }
+    elif command == "get_model_info":
+        model_name = args if args else None
+        return {
+            "type": "command_response",
+            "command": "get_model_info",
+            "data": model_manager.get_model_info(model_name)
+        }
+
+    else:
+        return {
+            "type": "command_response",
+            "command": command,
+            "error": "不明なコマンドです"
+        }
+
 
 async def process_command(command: str, client_id: str) -> dict:
     """
@@ -240,11 +374,22 @@ async def process_command(command: str, client_id: str) -> dict:
 def print_server_console():
     print("=== サーバーコンソール ===")
     print("コマンド:")
-    print("  send <client_id> <message> - 特定のクライアントにメッセージを送信")
-    print("  notify <message>           - 全クライアントに通知を送信")
-    print("  list                       - 接続中のクライアント一覧")
-    print("  count                      - 接続数を表示")
     print("  quit                       - サーバーを停止")
+    print("  count                      - 接続数を表示")
+    print("  list                       - 接続中のクライアント一覧")
+    print("  notify <message>           - 全クライアントに通知を送信")
+    print("  send <client_id> <message> - 特定のクライアントにメッセージを送信")
+    print("  model commands:")
+    print("     model get_model <client_id>   - 現在のモデルを取得")
+    print("     model list                    - 利用可能なモデル一覧を取得")
+    print("     model get_model_info [name]   - モデルの詳細情報を取得")
+    print("     model get_motion_groups       - モーショングループ一覧を取得")
+    print("     model get_current_motion_group- 現在のモーショングループを取得")
+    print("     model get_motions [group]     - モーション一覧を取得")
+    print("     model get_current_motion      - 現在のモーションを取得")
+    print("     model set_motion_group <name> - モーショングループを変更")
+    print("     model set_motion_index <idx>  - モーションインデックスを設定")
+    print("     model motion_start            - モーションを開始")
     print("========================\n")
 
 async def server_console():
@@ -311,6 +456,11 @@ async def server_console():
 
             elif command == "count":
                 logger.info(f"接続数: {len(connected_clients)}")
+
+            elif command == "model" and len(parts) > 1:
+                sub_command = parts[1]
+                args = parts[2] if len(parts) > 2 else ""
+                await model_command(sub_command, args)
 
             else:
                 logger.warning(f"不明なコマンド: {command}")

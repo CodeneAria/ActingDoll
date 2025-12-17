@@ -470,6 +470,9 @@ export class LAppModel extends CubismUserModel {
           if (this._textureCount >= textureCount) {
             // ロード完了
             this._state = LoadStep.CompleteSetup;
+
+            // UIを更新
+            this.notifyModelLoaded();
           }
         };
 
@@ -767,12 +770,28 @@ export class LAppModel extends CubismUserModel {
       return false;
     }
 
+    // モデルセッティングが無い、またはHitAreasが定義されていない場合
+    if (this._modelSetting == null) {
+      return false;
+    }
+
     const count: number = this._modelSetting.getHitAreasCount();
 
     for (let i = 0; i < count; i++) {
       if (this._modelSetting.getHitAreaName(i) == hitArenaName) {
         const drawId: CubismIdHandle = this._modelSetting.getHitAreaId(i);
-        return this.isHit(drawId, x, y);
+        if (this.isHit(drawId, x, y)) {
+          // WebSocketでサーバーに通知（LAppDelegateから取得）
+          const websocketClient = LAppDelegate.getInstance().getWebSocketClient();
+          if (websocketClient && websocketClient.isConnected()) {
+            websocketClient.sendCustomMessage('model_hit', {
+              moc_name: this._modelSetting.getModelFileName(),
+              sprite: drawId.getString().s,
+              position:{ x, y }
+            });
+          }
+          return true;
+        }
       }
     }
 
@@ -930,6 +949,17 @@ export class LAppModel extends CubismUserModel {
 
   public setSubdelegate(subdelegate: LAppSubdelegate): void {
     this._subdelegate = subdelegate;
+  }
+
+  /**
+   * モデル読み込み完了時の通知
+   */
+  private notifyModelLoaded(): void {
+    // UIを更新するためのイベントを発火
+    if (typeof window !== 'undefined') {
+      const event = new CustomEvent('modelLoaded');
+      window.dispatchEvent(event);
+    }
   }
 
   /**

@@ -231,6 +231,15 @@ export class LAppView {
 
     // 歯車にタップしたか
     if (this._gear.isHit(posX, posY)) {
+      // WebSocketでサーバーに通知（LAppDelegateから取得）
+      const websocketClient = LAppDelegate.getInstance().getWebSocketClient();
+      if (websocketClient && websocketClient.isConnected()) {
+        websocketClient.sendCustomMessage('sprite_hit', {
+          sprite: 'gear',
+          position: { x: posX, y: posY },
+          viewPosition: { x, y }
+        });
+      }
       lapplive2dmanager.nextScene();
     }
   }

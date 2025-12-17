@@ -20,6 +20,31 @@ import { LAppSubdelegate } from './lappsubdelegate';
  */
 export class LAppLive2DManager {
   /**
+   * クラスのインスタンス（シングルトン）を返す。
+   * インスタンスが生成されていない場合は内部でインスタンスを生成する。
+   *
+   * @return クラスのインスタンス
+   */
+  public static getInstance(): LAppLive2DManager {
+    if (this.s_instance == null) {
+      this.s_instance = new LAppLive2DManager();
+    }
+
+    return this.s_instance;
+  }
+
+  /**
+   * クラスのインスタンス（シングルトン）を解放する。
+   */
+  public static releaseInstance(): void {
+    if (this.s_instance != null) {
+      this.s_instance.release();
+    }
+
+    this.s_instance = null;
+  }
+
+  /**
    * 現在のシーンで保持しているすべてのモデルを解放する
    */
   private releaseAllModel(): void {
@@ -176,6 +201,18 @@ export class LAppLive2DManager {
   }
 
   /**
+   * モデルを取得する
+   * @param no モデルのインデックス
+   * @return モデルのインスタンス
+   */
+  public getModel(no: number): LAppModel {
+    if (no < this._models.getSize()) {
+      return this._models.at(no);
+    }
+    return null;
+  }
+
+  /**
    * 自身が所属するSubdelegate
    */
   private _subdelegate: LAppSubdelegate;
@@ -194,4 +231,6 @@ export class LAppLive2DManager {
     LAppPal.printMessage('Motion Finished:');
     console.log(self);
   };
+
+  private static s_instance: LAppLive2DManager = null;
 }
