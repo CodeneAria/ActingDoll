@@ -51,7 +51,8 @@ def main():
     DOCKER_IMAGE_NAME = config['docker']['image']['name']
     DOCKER_IMAGE_VER = config['docker']['image']['version']
     DOCKER_CONTAINER_NAME = config['docker']['container']['name']
-    SERVER_PORT = config['docker']['container']['port']
+    SERVER_PORT = config['docker']['container']['port_cubism']
+    WEBSOCKET_PORT = config['docker']['container']['port_websocket']
     GIT_FRAMEWORK_REPO = config['cubism']['git_framework_repo']
     GIT_FRAMEWORK_TAG = config['cubism']['git_framework_tag']
     GIT_FRAMEWORK_DIR_NAME = config['cubism']['git_framework_dir_name']
@@ -149,6 +150,7 @@ def main():
         "-v", f"{models_path}:/root/workspace/Cubism/models",
         "-v", f"{controls_path}:/root/workspace/Cubism/adapter",
         "-p", f"{SERVER_PORT}:5000",
+        "-p", f"{WEBSOCKET_PORT}:8765",
         f"{DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}"
     ]
     result = run_command(run_cmd, shell=False, capture_output=True)

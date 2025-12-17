@@ -8,7 +8,8 @@ docker:
   # Docker container settings
   container:
     name: "node_server"
-    port: "5000"
+    port_cubism: "5000"
+    port_websocket: "8765"
 
   # Dockerfile name
   dockerfile: "volume/Dockerfile"

@@ -28,7 +28,11 @@ RUN rm -rf ${GIT_SAMPLE_DIR_NAME}/Framework;\
 
 # Install dependencies
 RUN apk add python3; \
+    apk add py3-pip; \
     apk add py3-websockets;
+
+# Install Python dependencies for acting_doll
+RUN pip3 install --break-system-packages websockets
 
 # Build TypeScript Demo
 WORKDIR /root/workspace/Cubism/${GIT_SAMPLE_DIR_NAME}/Samples/TypeScript/Demo
@@ -39,3 +43,12 @@ RUN npm install -g npm && \
 
 # Set working directory
 WORKDIR /root/workspace/acting_doll
+
+# Set environment variable for model directory
+ENV CUBISM_MODEL_DIR=/root/workspace/Cubism/models
+
+
+# Expose WebSocket port
+#EXPOSE 8765
+# CMD ["python3", "-m", "websocket_server", "--host", "0.0.0.0"]
+# python3 -m websocket_server

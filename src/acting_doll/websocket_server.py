@@ -2,9 +2,11 @@
 WebSocket Server for bidirectional communication
 サーバー側のWebSocket通信アプリケーション
 """
+import argparse
 import asyncio
 import json
 import logging
+import os
 from datetime import datetime
 from typing import Set
 import moc3manager
@@ -23,8 +25,8 @@ connected_clients: Set[WebSocketServerProtocol] = set()
 # クライアントIDとWebSocket接続のマッピング
 client_id_map: dict[str, WebSocketServerProtocol] = {}
 
-# グローバルなモデルマネージャー
-model_manager = moc3manager.ModelManager()
+# グローバルなモデルマネージャー（後で初期化）
+model_manager = None
 
 
 async def broadcast_message(message: dict, exclude: WebSocketServerProtocol = None):
@@ -488,12 +490,49 @@ async def send_periodic_messages():
             })
 
 
+def parse_args():
+    """
+    コマンドライン引数をパース
+    """
+    parser = argparse.ArgumentParser(
+        description='WebSocket Server for Live2D model control'
+    )
+    parser.add_argument(
+        '--model-dir',
+        type=str,
+        default=os.environ.get('CUBISM_MODEL_DIR', 'src/models'),
+        help='モデルディレクトリのパス (デフォルト: src/models, 環境変数: CUBISM_MODEL_DIR)'
+    )
+    parser.add_argument(
+        '--host',
+        type=str,
+        default='0.0.0.0',
+        help='サーバーのホスト (デフォルト: 0.0.0.0)'
+    )
+    parser.add_argument(
+        '--port',
+        type=int,
+        default=8765,
+        help='サーバーのポート (デフォルト: 8765)'
+    )
+    return parser.parse_args()
+
+
 async def main():
     """
     WebSocketサーバーを起動
     """
-    host = "localhost"
-    port = 8765
+    global model_manager
+
+    # コマンドライン引数をパース
+    args = parse_args()
+
+    # モデルマネージャーを初期化
+    model_manager = moc3manager.ModelManager(args.model_dir)
+    logger.info(f"モデルディレクトリ: {args.model_dir}")
+
+    host = args.host
+    port = args.port
 
     logger.info(f"WebSocketサーバーを起動中: ws://{host}:{port}")
 
