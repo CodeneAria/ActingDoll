@@ -9,7 +9,7 @@ docker:
   container:
     name: "node_server"
     port_cubism: "5000"
-    port_websocket: "8765"
+    port_websocket: "8766"
 
   # Dockerfile name
   dockerfile: "volume/Dockerfile"

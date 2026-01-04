@@ -516,10 +516,12 @@ export class LAppModel extends CubismUserModel {
     this._model.loadParameters(); // 前回セーブされた状態をロード
     if (this._motionManager.isFinished()) {
       // モーションの再生がない場合、待機モーションの中からランダムで再生する
-      this.startRandomMotion(
-        LAppDefine.MotionGroupIdle,
-        LAppDefine.PriorityIdle
-      );
+      if (this._idleMotionEnabled) {
+        this.startRandomMotion(
+          LAppDefine.MotionGroupIdle,
+          LAppDefine.PriorityIdle
+        );
+      }
     } else {
       motionUpdated = this._motionManager.updateMotion(
         this._model,
@@ -531,7 +533,7 @@ export class LAppModel extends CubismUserModel {
 
     // まばたき
     if (!motionUpdated) {
-      if (this._eyeBlink != null) {
+      if (this._eyeBlink != null && this._eyeBlinkEnabled) {
         // メインモーションの更新がないとき
         this._eyeBlink.updateParameters(this._model, deltaTimeSeconds); // 目パチ
       }
@@ -561,7 +563,7 @@ export class LAppModel extends CubismUserModel {
     this._model.addParameterValueById(this._idParamEyeBallY, this._dragY);
 
     // 呼吸など
-    if (this._breath != null) {
+    if (this._breath != null && this._breathEnabled) {
       this._breath.updateParameters(this._model, deltaTimeSeconds);
     }
 
@@ -588,6 +590,30 @@ export class LAppModel extends CubismUserModel {
     }
 
     this._model.update();
+  }
+
+  /**
+   * 自動目パチを有効/無効にする
+   * @param enabled 有効にする場合はtrue、無効にする場合はfalse
+   */
+  public setEyeBlinkEnabled(enabled: boolean): void {
+    this._eyeBlinkEnabled = enabled;
+  }
+
+  /**
+   * 呼吸を有効/無効にする
+   * @param enabled 有効にする場合はtrue、無効にする場合はfalse
+   */
+  public setBreathEnabled(enabled: boolean): void {
+    this._breathEnabled = enabled;
+  }
+
+  /**
+   * アイドリングモーションを有効/無効にする
+   * @param enabled 有効にする場合はtrue、無効にする場合はfalse
+   */
+  public setIdleMotionEnabled(enabled: boolean): void {
+    this._idleMotionEnabled = enabled;
   }
 
   /**
@@ -1024,6 +1050,9 @@ export class LAppModel extends CubismUserModel {
   _userTimeSeconds: number; // デルタ時間の積算値[秒]
 
   _eyeBlinkIds: csmVector<CubismIdHandle>; // モデルに設定された瞬き機能用パラメータID
+  _eyeBlinkEnabled: boolean = true; // 自動目パチの有効/無効
+  _breathEnabled: boolean = true; // 呼吸の有効/無効
+  _idleMotionEnabled: boolean = false; // アイドリングモーションの有効/無効
   _lipSyncIds: csmVector<CubismIdHandle>; // モデルに設定されたリップシンク機能用パラメータID
 
   _motions: csmMap<string, ACubismMotion>; // 読み込まれているモーションのリスト

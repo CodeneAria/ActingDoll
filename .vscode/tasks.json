@@ -7,49 +7,61 @@
             "label": "Docker:Create",
             "type": "shell",
             "command": "${workspaceFolder}/tools/CubismContainer/create_container.py",
-            "args": []
+            "args": [],
+            "detail": "Dockerイメージとコンテナを作成する"
         },
         {
             "label": "Docker:Exec",
             "type": "shell",
             "command": "${workspaceFolder}/tools/CubismContainer/exec.py",
-            "args": []
+            "args": [],
+            "detail": "Dockerの中に入って操作できるコンソール",
         },
         {
-            "label": "Docker:Start:Demo",
+            "label": "Docker:model:Start-Demo",
             "type": "shell",
             "command": "${workspaceFolder}/tools/CubismContainer/start_demo.py",
-            "args": []
+            "args": [],
+            "hide": true,
+            "detail": "Demo版のモデルサーバーを起動する"
         },
         {
-            "label": "model:DirUpdate",
-            "type": "shell",
-            "command": "${workspaceFolder}/src/models/update_model_dirs.py",
-            "args": []
-        },
-        {
-            "label": "model:Build",
-            "type": "shell",
-            "command": "${workspaceFolder}/tools/CubismContainer/build.py",
-            "args": []
-        },
-        {
-            "label": "model:Start",
+            "label": "Docker:model:Start",
             "type": "shell",
             "command": "${workspaceFolder}/tools/CubismContainer/start.py",
-            "args": []
+            "args": [],
+            "detail": "Dockerコンテナを起動してモデルサーバーを立ち上げる"
         },
         {
-            "label": "model:Clean",
+            "label": "Docker:model:Build",
+            "type": "shell",
+            "command": "${workspaceFolder}/tools/CubismContainer/build.py",
+            "args": [],
+            "detail": "モデルデータをビルドして dist フォルダに出力する"
+        },
+        {
+            "label": "Docker:model:Bulid-Clean",
             "type": "shell",
             "command": "${workspaceFolder}/tools/CubismContainer/clean.py",
-            "args": []
+            "args": [],
+            "detail": "Buildで作成したdistフォルダを削除する"
+        },
+        {
+            "label": "Docker:Model-DirUpdate",
+            "type": "shell",
+            "command": "${workspaceFolder}/src/models/update_model_dirs.py",
+            "args": [],
+            "detail": "src/models/ 以下のモデルディレクトリを参照するように lappdefine.ts を更新する"
         },
         {
             "label": "Server:Websocket",
             "type": "shell",
             "command": "${workspaceFolder}/src/acting_doll/websocket_server.py",
-            "args": []
+            "args": [
+                "--port", "8765",
+                "--host", "localhost"
+            ],
+            "detail": "WebSocketのサーバーを起動する"
         }
     ]
 }

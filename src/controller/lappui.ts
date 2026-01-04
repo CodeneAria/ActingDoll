@@ -16,6 +16,9 @@ export class LAppUI {
   private _parametersContainer!: HTMLDivElement;
   private _controlPanel!: HTMLDivElement;
   private _toggleButton!: HTMLButtonElement;
+  private _eyeBlinkToggle!: HTMLInputElement;
+  private _breathToggle!: HTMLInputElement;
+  private _idleMotionToggle!: HTMLInputElement;
   private _parameterSliders: Map<string, HTMLInputElement> = new Map();
   private _parameterValues: Map<string, HTMLSpanElement> = new Map();
   private _updateInterval: number | null = null;
@@ -27,6 +30,9 @@ export class LAppUI {
     // Get DOM elements
     this._controlPanel = document.getElementById('controlPanel') as HTMLDivElement;
     this._toggleButton = document.getElementById('togglePanel') as HTMLButtonElement;
+    this._eyeBlinkToggle = document.getElementById('eyeBlinkToggle') as HTMLInputElement;
+    this._breathToggle = document.getElementById('breathToggle') as HTMLInputElement;
+    this._idleMotionToggle = document.getElementById('idleMotionToggle') as HTMLInputElement;
     this._expressionSelect = document.getElementById('expressionSelect') as HTMLSelectElement;
     this._motionSelect = document.getElementById('motionSelect') as HTMLSelectElement;
     this._parametersContainer = document.getElementById('parametersContainer') as HTMLDivElement;
@@ -61,6 +67,24 @@ export class LAppUI {
       }
     });
 
+    // Setup eye blink toggle
+    this._eyeBlinkToggle.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement;
+      this.setEyeBlinkEnabled(target.checked);
+    });
+
+    // Setup breath toggle
+    this._breathToggle.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement;
+      this.setBreathEnabled(target.checked);
+    });
+
+    // Setup idle motion toggle
+    this._idleMotionToggle.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement;
+      this.setIdleMotionEnabled(target.checked);
+    });
+
     // Listen for model loaded events
     window.addEventListener('modelLoaded', () => {
       console.log('[LAppUI] Model loaded, updating UI');
@@ -71,6 +95,66 @@ export class LAppUI {
     this._updateInterval = window.setInterval(() => {
       this.updateParameterValues();
     }, 100);
+  }
+
+  /**
+   * Enable or disable eye blink animation
+   */
+  public setEyeBlinkEnabled(enabled: boolean): void {
+    const delegate = LAppDelegate.getInstance();
+    const subdelegate = delegate.getSubdelegate(0);
+
+    if (!subdelegate) {
+      return;
+    }
+
+    const manager = subdelegate.getLive2DManager();
+    const model = manager.getModel(0);
+
+    if (model) {
+      model.setEyeBlinkEnabled(enabled);
+      console.log(`[LAppUI] Eye blink ${enabled ? 'enabled' : 'disabled'}`);
+    }
+  }
+
+  /**
+   * Enable or disable breath animation
+   */
+  public setBreathEnabled(enabled: boolean): void {
+    const delegate = LAppDelegate.getInstance();
+    const subdelegate = delegate.getSubdelegate(0);
+
+    if (!subdelegate) {
+      return;
+    }
+
+    const manager = subdelegate.getLive2DManager();
+    const model = manager.getModel(0);
+
+    if (model) {
+      model.setBreathEnabled(enabled);
+      console.log(`[LAppUI] Breath ${enabled ? 'enabled' : 'disabled'}`);
+    }
+  }
+
+  /**
+   * Enable or disable idle motion
+   */
+  public setIdleMotionEnabled(enabled: boolean): void {
+    const delegate = LAppDelegate.getInstance();
+    const subdelegate = delegate.getSubdelegate(0);
+
+    if (!subdelegate) {
+      return;
+    }
+
+    const manager = subdelegate.getLive2DManager();
+    const model = manager.getModel(0);
+
+    if (model) {
+      model.setIdleMotionEnabled(enabled);
+      console.log(`[LAppUI] Idle motion ${enabled ? 'enabled' : 'disabled'}`);
+    }
   }
 
   /**
