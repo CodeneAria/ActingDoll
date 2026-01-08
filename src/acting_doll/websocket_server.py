@@ -174,6 +174,13 @@ async def handle_client(websocket: WebSocketServerProtocol):
                     response = await process_command(command, client_id)
                     await websocket.send(json.dumps(response, ensure_ascii=False))
 
+                elif msg_type == "model_command":
+                    # モデルコマンド処理
+                    command = data.get("command")
+                    args = data.get("args", "")
+                    response = await model_command(command, args)
+                    await websocket.send(json.dumps(response, ensure_ascii=False))
+
                 else:
                     # その他のメッセージは全クライアントに転送
                     forward_data = {
