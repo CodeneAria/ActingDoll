@@ -70,8 +70,8 @@ def main(work_dir, config_path):
     # npm install -g npm && npm install && npm run build
     npm_cmd = (
         f'docker exec -t {DOCKER_CONTAINER_NAME} /bin/sh -c "'
-        f'cd {node_dir}; rm -rf src'
-        f' && npm install -g npm && npm install'
+        f'cd {node_dir};'
+        f'npm install -g npm && npm install'
         f' && npm audit fix'
         f' && npm run build'
         f'"'

@@ -10,7 +10,6 @@ const fs = require('fs');
 const publicResources = [
   { src: '../resources', dst: './../public/Resources' },
  // { src: '../Samples/Samples/Resources', dst: './public/Resources' },
-  { src: '../controller', dst: './src' },
   { src: '../../Cubism/Core', dst: './../public/Core' }
 ];
 

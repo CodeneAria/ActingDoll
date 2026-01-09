@@ -214,6 +214,5 @@ __marimo__/
 **/CubismSdkForWeb*
 src/Cubism/Core
 src/adapter/resources
-src/adapter/acting_doll/src
 src/adapter/public
 src/adapter/dist

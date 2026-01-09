@@ -546,26 +546,38 @@ export class LAppModel extends CubismUserModel {
     // ドラッグによる変化
     if (this._dragFollowEnabled) {
       // ドラッグによる顔の向きの調整
-      this._model.addParameterValueById(this._idParamAngleX, this._dragX * 30); // -30から30の値を加える
-      this._model.addParameterValueById(this._idParamAngleY, this._dragY * 30);
-      this._model.addParameterValueById(
-        this._idParamAngleZ,
-        this._dragX * this._dragY * -30
-      );
+      if (!this.isParameterManuallyControlled(this._idParamAngleX)) {
+        this._model.addParameterValueById(this._idParamAngleX, this._dragX * 30); // -30から30の値を加える
+      }
+      if (!this.isParameterManuallyControlled(this._idParamAngleY)) {
+        this._model.addParameterValueById(this._idParamAngleY, this._dragY * 30);
+      }
+      if (!this.isParameterManuallyControlled(this._idParamAngleZ)) {
+        this._model.addParameterValueById(
+          this._idParamAngleZ,
+          this._dragX * this._dragY * -30
+        );
+      }
 
       // ドラッグによる体の向きの調整
-      this._model.addParameterValueById(
-        this._idParamBodyAngleX,
-        this._dragX * 10
-      ); // -10から10の値を加える
+      if (!this.isParameterManuallyControlled(this._idParamBodyAngleX)) {
+        this._model.addParameterValueById(
+          this._idParamBodyAngleX,
+          this._dragX * 10
+        ); // -10から10の値を加える
+      }
 
       // ドラッグによる目の向きの調整
-      this._model.addParameterValueById(this._idParamEyeBallX, this._dragX); // -1から1の値を加える
-      this._model.addParameterValueById(this._idParamEyeBallY, this._dragY);
+      if (!this.isParameterManuallyControlled(this._idParamEyeBallX)) {
+        this._model.addParameterValueById(this._idParamEyeBallX, this._dragX); // -1から1の値を加える
+      }
+      if (!this.isParameterManuallyControlled(this._idParamEyeBallY)) {
+        this._model.addParameterValueById(this._idParamEyeBallY, this._dragY);
+      }
     }
 
-    // 呼吸など
-    if (this._breath != null && this._breathEnabled) {
+    // 呼吸など（手動制御中のパラメータには適用しない）
+    if (this._breath != null && this._breathEnabled && !this._hasManuallyControlledParams) {
       this._breath.updateParameters(this._model, deltaTimeSeconds);
     }
 
@@ -624,6 +636,35 @@ export class LAppModel extends CubismUserModel {
    */
   public setDragFollowEnabled(enabled: boolean): void {
     this._dragFollowEnabled = enabled;
+  }
+
+  /**
+   * パラメータを手動制御中として設定
+   * @param paramIndex パラメータインデックス
+   */
+  public setParameterManualControl(paramIndex: number): void {
+    this._manuallyControlledParams.add(paramIndex);
+    this._hasManuallyControlledParams = true;
+  }
+
+  /**
+   * パラメータの手動制御を解除
+   * @param paramIndex パラメータインデックス
+   */
+  public releaseParameterManualControl(paramIndex: number): void {
+    this._manuallyControlledParams.delete(paramIndex);
+    this._hasManuallyControlledParams = this._manuallyControlledParams.size > 0;
+  }
+
+  /**
+   * パラメータが手動制御中かチェック
+   * @param paramId パラメータID
+   */
+  private isParameterManuallyControlled(paramId: CubismIdHandle): boolean {
+    if (!this._hasManuallyControlledParams) return false;
+    
+    const index = this._model.getParameterIndex(paramId);
+    return this._manuallyControlledParams.has(index);
   }
 
   /**
@@ -1064,6 +1105,8 @@ export class LAppModel extends CubismUserModel {
   _breathEnabled: boolean = true; // 呼吸の有効/無効
   _idleMotionEnabled: boolean = false; // アイドリングモーションの有効/無効
   _dragFollowEnabled: boolean = false; // ドラッグ追従の有効/無効
+  _manuallyControlledParams: Set<number> = new Set(); // 手動制御中のパラメータインデックス
+  _hasManuallyControlledParams: boolean = false; // 手動制御中のパラメータがあるか
   _lipSyncIds: csmVector<CubismIdHandle>; // モデルに設定されたリップシンク機能用パラメータID
 
   _motions: csmMap<string, ACubismMotion>; // 読み込まれているモーションのリスト

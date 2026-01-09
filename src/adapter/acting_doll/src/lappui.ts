@@ -22,6 +22,8 @@ export class LAppUI {
   private _dragFollowToggle!: HTMLInputElement;
   private _parameterSliders: Map<string, HTMLInputElement> = new Map();
   private _parameterValues: Map<string, HTMLSpanElement> = new Map();
+  private _manualControlParams: Set<number> = new Set();
+  private _manualControlTimers: Map<number, number> = new Map();
   private _updateInterval: number | null = null;
 
   /**
@@ -330,6 +332,23 @@ export class LAppUI {
         const target = e.target as HTMLInputElement;
         const value = parseFloat(target.value);
         const index = parseInt(target.dataset.paramIndex!);
+
+        // Mark this parameter as manually controlled
+        this._manualControlParams.add(index);
+
+        // Clear existing timer for this parameter
+        const existingTimer = this._manualControlTimers.get(index);
+        if (existingTimer) {
+          clearTimeout(existingTimer);
+        }
+
+        // Set timer to release manual control after 3 seconds
+        const timer = window.setTimeout(() => {
+          this._manualControlParams.delete(index);
+          this._manualControlTimers.delete(index);
+        }, 3000);
+        this._manualControlTimers.set(index, timer);
+
         this.setParameter(index, value);
 
         // Update value display
@@ -438,9 +457,23 @@ export class LAppUI {
     if (model) {
       const cubismModel = model.getModel();
       if (cubismModel) {
+        // パラメータ値を設定
         cubismModel.setParameterValueByIndex(index, value);
+
+        // 保存された状態も更新（loadParameters()で上書きされないように）
+        cubismModel.saveParameters();
+
+        // モデルに手動制御フラグを設定
+        model.setParameterManualControl(index);
       }
     }
+  }
+
+  /**
+   * Get manual control parameter indices
+   */
+  public getManualControlParams(): Set<number> {
+    return this._manualControlParams;
   }
 
   /**
@@ -451,6 +484,11 @@ export class LAppUI {
       clearInterval(this._updateInterval);
       this._updateInterval = null;
     }
+
+    // Clear all manual control timers
+    this._manualControlTimers.forEach(timer => clearTimeout(timer));
+    this._manualControlTimers.clear();
+    this._manualControlParams.clear();
 
     this._parameterSliders.clear();
     this._parameterValues.clear();
