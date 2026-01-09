@@ -19,6 +19,7 @@ export class LAppUI {
   private _eyeBlinkToggle!: HTMLInputElement;
   private _breathToggle!: HTMLInputElement;
   private _idleMotionToggle!: HTMLInputElement;
+  private _dragFollowToggle!: HTMLInputElement;
   private _parameterSliders: Map<string, HTMLInputElement> = new Map();
   private _parameterValues: Map<string, HTMLSpanElement> = new Map();
   private _updateInterval: number | null = null;
@@ -33,6 +34,7 @@ export class LAppUI {
     this._eyeBlinkToggle = document.getElementById('eyeBlinkToggle') as HTMLInputElement;
     this._breathToggle = document.getElementById('breathToggle') as HTMLInputElement;
     this._idleMotionToggle = document.getElementById('idleMotionToggle') as HTMLInputElement;
+    this._dragFollowToggle = document.getElementById('dragFollowToggle') as HTMLInputElement;
     this._expressionSelect = document.getElementById('expressionSelect') as HTMLSelectElement;
     this._motionSelect = document.getElementById('motionSelect') as HTMLSelectElement;
     this._parametersContainer = document.getElementById('parametersContainer') as HTMLDivElement;
@@ -83,6 +85,12 @@ export class LAppUI {
     this._idleMotionToggle.addEventListener('change', (e) => {
       const target = e.target as HTMLInputElement;
       this.setIdleMotionEnabled(target.checked);
+    });
+
+    // Setup drag follow toggle
+    this._dragFollowToggle.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement;
+      this.setDragFollowEnabled(target.checked);
     });
 
     // Listen for model loaded events
@@ -154,6 +162,25 @@ export class LAppUI {
     if (model) {
       model.setIdleMotionEnabled(enabled);
       console.log(`[LAppUI] Idle motion ${enabled ? 'enabled' : 'disabled'}`);
+    }
+  }
+  /**
+   * Enable or disable idle motion
+   */
+  public setDragFollowEnabled(enabled: boolean): void {
+    const delegate = LAppDelegate.getInstance();
+    const subdelegate = delegate.getSubdelegate(0);
+
+    if (!subdelegate) {
+      return;
+    }
+
+    const manager = subdelegate.getLive2DManager();
+    const model = manager.getModel(0);
+
+    if (model) {
+      model.setDragFollowEnabled(enabled);
+      console.log(`[LAppUI] Drag follow ${enabled ? 'enabled' : 'disabled'}`);
     }
   }
 

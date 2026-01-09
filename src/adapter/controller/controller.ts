@@ -100,6 +100,28 @@ class Live2DController {
           <div id="model-info"></div>
         </div>
 
+        <div class="animation-settings-section">
+          <h2>アニメーション設定</h2>
+          <div style="margin-top: 8px;">
+            <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
+              <input type="checkbox" id="eyeBlinkToggle" checked style="margin-right: 8px;">
+              <span>自動目パチ (Eye Blink)</span>
+            </label>
+            <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
+              <input type="checkbox" id="breathToggle" checked style="margin-right: 8px;">
+              <span>呼吸 (Breath)</span>
+            </label>
+            <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
+              <input type="checkbox" id="idleMotionToggle" style="margin-right: 8px;">
+              <span>アイドリングモーション (Idle Motion)</span>
+            </label>
+            <label style="display: flex; align-items: center; cursor: pointer;">
+              <input type="checkbox" id="dragFollowToggle" style="margin-right: 8px;">
+              <span>ドラッグ追従 (Drag Follow)</span>
+            </label>
+          </div>
+        </div>
+
         <div class="motion-group-section">
           <h2>モーショングループ</h2>
           <button id="btn-get-motion-groups">モーショングループ一覧</button>
@@ -143,6 +165,27 @@ class Live2DController {
    * イベントリスナーを設定
    */
   private setupEventListeners(): void {
+    // アニメーション設定
+    document.getElementById('eyeBlinkToggle')?.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement;
+      this.sendModelCommand('set_eye_blink', target.checked ? 'true' : 'false');
+    });
+
+    document.getElementById('breathToggle')?.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement;
+      this.sendModelCommand('set_breath', target.checked ? 'true' : 'false');
+    });
+
+    document.getElementById('idleMotionToggle')?.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement;
+      this.sendModelCommand('set_idle_motion', target.checked ? 'true' : 'false');
+    });
+
+    document.getElementById('dragFollowToggle')?.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement;
+      this.sendModelCommand('set_drag_follow', target.checked ? 'true' : 'false');
+    });
+
     // モデル関連
     document.getElementById('btn-get-models')?.addEventListener('click', () => {
       this.sendModelCommand('get_model', '');

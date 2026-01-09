@@ -544,23 +544,25 @@ export class LAppModel extends CubismUserModel {
     }
 
     // ドラッグによる変化
-    // ドラッグによる顔の向きの調整
-    this._model.addParameterValueById(this._idParamAngleX, this._dragX * 30); // -30から30の値を加える
-    this._model.addParameterValueById(this._idParamAngleY, this._dragY * 30);
-    this._model.addParameterValueById(
-      this._idParamAngleZ,
-      this._dragX * this._dragY * -30
-    );
+    if (this._dragFollowEnabled) {
+      // ドラッグによる顔の向きの調整
+      this._model.addParameterValueById(this._idParamAngleX, this._dragX * 30); // -30から30の値を加える
+      this._model.addParameterValueById(this._idParamAngleY, this._dragY * 30);
+      this._model.addParameterValueById(
+        this._idParamAngleZ,
+        this._dragX * this._dragY * -30
+      );
 
-    // ドラッグによる体の向きの調整
-    this._model.addParameterValueById(
-      this._idParamBodyAngleX,
-      this._dragX * 10
-    ); // -10から10の値を加える
+      // ドラッグによる体の向きの調整
+      this._model.addParameterValueById(
+        this._idParamBodyAngleX,
+        this._dragX * 10
+      ); // -10から10の値を加える
 
-    // ドラッグによる目の向きの調整
-    this._model.addParameterValueById(this._idParamEyeBallX, this._dragX); // -1から1の値を加える
-    this._model.addParameterValueById(this._idParamEyeBallY, this._dragY);
+      // ドラッグによる目の向きの調整
+      this._model.addParameterValueById(this._idParamEyeBallX, this._dragX); // -1から1の値を加える
+      this._model.addParameterValueById(this._idParamEyeBallY, this._dragY);
+    }
 
     // 呼吸など
     if (this._breath != null && this._breathEnabled) {
@@ -614,6 +616,14 @@ export class LAppModel extends CubismUserModel {
    */
   public setIdleMotionEnabled(enabled: boolean): void {
     this._idleMotionEnabled = enabled;
+  }
+
+  /**
+   * ドラッグ追従を有効/無効にする
+   * @param enabled 有効にする場合はtrue、無効にする場合はfalse
+   */
+  public setDragFollowEnabled(enabled: boolean): void {
+    this._dragFollowEnabled = enabled;
   }
 
   /**
@@ -1053,6 +1063,7 @@ export class LAppModel extends CubismUserModel {
   _eyeBlinkEnabled: boolean = true; // 自動目パチの有効/無効
   _breathEnabled: boolean = true; // 呼吸の有効/無効
   _idleMotionEnabled: boolean = false; // アイドリングモーションの有効/無効
+  _dragFollowEnabled: boolean = false; // ドラッグ追従の有効/無効
   _lipSyncIds: csmVector<CubismIdHandle>; // モデルに設定されたリップシンク機能用パラメータID
 
   _motions: csmMap<string, ACubismMotion>; // 読み込まれているモーションのリスト
