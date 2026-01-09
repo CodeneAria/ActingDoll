@@ -49,14 +49,14 @@
         {
             "label": "Docker:Model-DirUpdate",
             "type": "shell",
-            "command": "${workspaceFolder}/src/models/update_model_dirs.py",
+            "command": "${workspaceFolder}/src/adapter/resources/update_model_dirs.py",
             "args": [],
-            "detail": "src/models/ 以下のモデルディレクトリを参照するように lappdefine.ts を更新する"
+            "detail": "src/adapter/resources/ 以下のモデルディレクトリを参照するように lappdefine.ts を更新する"
         },
         {
             "label": "Server:Websocket",
             "type": "shell",
-            "command": "${workspaceFolder}/src/acting_doll/websocket_server.py",
+            "command": "${workspaceFolder}/src/adapter/server/websocket_server.py",
             "args": [
                 "--port", "8765",
                 "--host", "localhost"

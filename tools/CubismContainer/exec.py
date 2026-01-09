@@ -26,11 +26,8 @@ def run_command(cmd, shell=True, capture_output=False, check=False):
         return e
 
 
-def main():
+def main(work_dir, config_path):
     # Load settings from YAML
-    script_dir = Path(__file__).parent.resolve()
-    config_path = script_dir / "config.yaml"
-
     try:
         with open(config_path, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
@@ -84,4 +81,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    work_dir = Path(__file__).parent.resolve()
+    config_path = Path("src").absolute() / "config.yaml"
+    main(work_dir, config_path)

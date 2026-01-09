@@ -42,7 +42,7 @@ RUN npm install -g npm && \
     npm run build
 
 # Set working directory
-WORKDIR /root/workspace/acting_doll
+WORKDIR /root/workspace/adapter
 
 # Set environment variable for model directory
 ENV CUBISM_MODEL_DIR=/root/workspace/Cubism/models

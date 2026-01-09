@@ -26,11 +26,8 @@ def run_command(cmd, shell=True, capture_output=False, check=False):
         return e
 
 
-def main():
+def main(work_dir, config_path):
     # Load settings from YAML
-    script_dir = Path(__file__).parent.resolve()
-    config_path = script_dir / "config.yaml"
-
     try:
         with open(config_path, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
@@ -46,7 +43,7 @@ def main():
     DOCKER_IMAGE_VER = config['docker']['image']['version']
     DOCKER_CONTAINER_NAME = config['docker']['container']['name']
 
-    adapter_path = f"/root/workspace/Cubism/node_package"
+    node_dir = f"/root/workspace/adapter/acting_doll"
 
     # Show running containers
     print("=" * 50)
@@ -73,7 +70,7 @@ def main():
     # npm install -g npm && npm install && npm run build
     npm_cmd = (
         f'docker exec -t {DOCKER_CONTAINER_NAME} /bin/sh -c "'
-        f'cd {adapter_path}'
+        f'cd {node_dir}'
         f' && npm run clean'
         f'"'
     )
@@ -90,4 +87,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    work_dir = Path(__file__).parent.resolve()
+    config_path = Path("src").absolute() / "config.yaml"
+    main(work_dir, config_path)

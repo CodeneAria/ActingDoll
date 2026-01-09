@@ -8,17 +8,17 @@ export default defineConfig((env: ConfigEnv): UserConfig => {
     },
     root: './',
     base: '/',
-    publicDir: './public',
+    publicDir: './../public',
     resolve: {
       extensions: ['.ts', '.js'],
       alias: {
-        '@framework': path.resolve(__dirname, '../Framework/src'),
+        '@framework': path.resolve(__dirname, '../../Cubism/Framework/src'),
       }
     },
     build: {
       target: 'modules',
       assetsDir: 'assets',
-      outDir: './dist',
+      outDir: './../dist',
       sourcemap: env.mode == 'development' ? true : false,
       rollupOptions: {
         input: {

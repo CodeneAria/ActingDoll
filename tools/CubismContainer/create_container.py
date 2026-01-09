@@ -29,12 +29,10 @@ def run_command(cmd, shell=True, capture_output=False, check=False):
         return e
 
 
-def main():
-    # Load settings from YAML
-    script_dir = Path(__file__).parent.resolve()
-    os.chdir(script_dir)
-    config_path = script_dir / "config.yaml"
+def main(work_dir, config_path):
+    os.chdir(work_dir)
 
+    # Load settings from YAML
     try:
         with open(config_path, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
@@ -60,17 +58,12 @@ def main():
     GIT_SAMPLE_TAG = config['cubism']['git_sample_tag']
     GIT_SAMPLE_DIR_NAME = config['cubism']['git_sample_dir_name']
     ARCHIVE_CORE_DIR = config['cubism']['archive_core_dir']
-    CONTROLS_DIR = config['custom']['controls_dir']
-    NODE_PACKAGE_DIR = config['custom']['node_package_dir']
-    MODELS_DIR = config['custom']['models_dir']
-    CONTROL_SERVER_DIR = config['custom']['control_server_dir']
+    ADAPTER_DIR = config['custom']['adapter_dir']
 
-    archive_core_path = Path(ARCHIVE_CORE_DIR).absolute()
-    dockerfile_path = Path(script_dir / DOCKER_FILE_NAME).absolute()
-    node_package_dir = Path(NODE_PACKAGE_DIR).absolute()
-    controls_path = Path(CONTROLS_DIR).absolute()
-    models_path = Path(MODELS_DIR).absolute()
-    control_server_path = Path(CONTROL_SERVER_DIR).absolute()
+    dockerfile_path = Path(work_dir / DOCKER_FILE_NAME).resolve().absolute()
+    adapter_dir = Path(ADAPTER_DIR).resolve().absolute()
+    archive_core_path = Path(ARCHIVE_CORE_DIR).resolve().absolute()
+    temp_core_dir = Path(work_dir / "volume" / "Core").resolve().absolute()
 
     # Display settings
     print("=" * 50)
@@ -78,8 +71,9 @@ def main():
     print(f"  Git")
     print(f"    Framework      : {GIT_FRAMEWORK_REPO}[{GIT_FRAMEWORK_TAG}]")
     print(f"    Sample         : {GIT_SAMPLE_REPO}[{GIT_SAMPLE_TAG}]")
-    print(f"  PATH             : {script_dir}")
-    print(f"  Archive Core dir : {archive_core_path}")
+    print(f"  Working Dir      : {work_dir}")
+    print(f"  Config           : {config_path}")
+    print(f"  Archive Core Dir : {archive_core_path}")
     print(f"  dockerfile       : {dockerfile_path}")
     print(f"  Docker image     : {DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}")
     print(f"  Docker container : {DOCKER_CONTAINER_NAME}")
@@ -87,7 +81,7 @@ def main():
     print("=" * 50)
 
     # Check Cubism Core files
-    print(f"# Checking {archive_core_path}...")
+    print(f"# Checking Archive Core directory: {archive_core_path}")
     if not archive_core_path.exists():
         print(
             f"[Error] Archive core directory not found: {archive_core_path}", file=sys.stderr)
@@ -106,7 +100,7 @@ def main():
     if result.stdout.strip():
         container_ids = result.stdout.strip().split('\n')
         for container_id in container_ids:
-            print(f"## Remove existing container: ID[{container_id}]")
+            print(f"  - Remove existing container: ID[{container_id}]")
             run_command(f"docker stop {container_id}", capture_output=True)
             run_command(f"docker rm {container_id}", capture_output=True)
 
@@ -116,39 +110,53 @@ def main():
     result = run_command(img_cmd, capture_output=True)
     if result.stdout.strip():
         print(
-            f"## Remove existing image: {DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}")
+            f"  - Remove existing image: {DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}")
         run_command(
             f"docker rmi {DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}", capture_output=True)
 
     # Build Docker image
     print("# Building Docker image...")
-    build_cmd = [
-        "docker", "build",
-        "--build-arg", f"CORE_ARCHIVE_DIR={ARCHIVE_CORE_DIR}",
-        "--build-arg", f"GIT_FRAMEWORK_REPO={GIT_FRAMEWORK_REPO}",
-        "--build-arg", f"GIT_FRAMEWORK_TAG={GIT_FRAMEWORK_TAG}",
-        "--build-arg", f"GIT_FRAMEWORK_DIR_NAME={GIT_FRAMEWORK_DIR_NAME}",
-        "--build-arg", f"GIT_SAMPLE_REPO={GIT_SAMPLE_REPO}",
-        "--build-arg", f"GIT_SAMPLE_TAG={GIT_SAMPLE_TAG}",
-        "--build-arg", f"GIT_SAMPLE_DIR_NAME={GIT_SAMPLE_DIR_NAME}",
-        "-t", f"{DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}",
-        "-f", str(dockerfile_path),
-        "."
-    ]
+
+    # Temporarily copy Core files to Dockerfile directory
+
+    print(f"# Copying Core files to {temp_core_dir}")
     try:
+        if temp_core_dir.exists():
+            shutil.rmtree(temp_core_dir)
+        shutil.copytree(archive_core_path, temp_core_dir)
+    except Exception as e:
+        print(f"[Error] Failed to copy Core files: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        build_cmd = [
+            "docker", "build",
+            "--build-arg", f"GIT_FRAMEWORK_REPO={GIT_FRAMEWORK_REPO}",
+            "--build-arg", f"GIT_FRAMEWORK_TAG={GIT_FRAMEWORK_TAG}",
+            "--build-arg", f"GIT_FRAMEWORK_DIR_NAME={GIT_FRAMEWORK_DIR_NAME}",
+            "--build-arg", f"GIT_SAMPLE_REPO={GIT_SAMPLE_REPO}",
+            "--build-arg", f"GIT_SAMPLE_TAG={GIT_SAMPLE_TAG}",
+            "--build-arg", f"GIT_SAMPLE_DIR_NAME={GIT_SAMPLE_DIR_NAME}",
+            "-t", f"{DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}",
+            "-f", str(dockerfile_path),
+            "."
+        ]
         run_command(build_cmd, shell=False, check=True)
     except subprocess.CalledProcessError as e:
         print(f"[Error] Failed to build Docker image", file=sys.stderr)
         sys.exit(1)
+    finally:
+        # Clean up temporary Core files
+        print("# Cleaning up temporary Core files...")
+        if temp_core_dir.exists():
+            shutil.rmtree(temp_core_dir)
 
     # Run container
     run_cmd = [
         "docker", "container", "run",
         "--name", DOCKER_CONTAINER_NAME,
         "-dit",
-        "-v", f"{control_server_path}:/root/workspace/acting_doll",
-        "-v", f"{models_path}:/root/workspace/Cubism/models",
-        "-v", f"{controls_path}:/root/workspace/Cubism/adapter",
+        "-v", f"{adapter_dir}:/root/workspace/adapter",
         "-p", f"{SERVER_PORT}:5000",
         "-p", f"{WEBSOCKET_PORT}:8765",
         f"{DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}"
@@ -159,21 +167,10 @@ def main():
         print(result.stderr, file=sys.stderr)
         sys.exit(1)
 
-    # Copy custom node package
-    print("# Copying custom node package...")
-    build_cmd = [
-        "docker", "cp",
-        str(node_package_dir) + "/",
-        f"{DOCKER_CONTAINER_NAME}:{'/root/workspace/Cubism/'}"
-    ]
-    try:
-        run_command(build_cmd, shell=False, check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"[Error] Failed to build Docker image", file=sys.stderr)
-        sys.exit(1)
-
     print("\n# -- Container setup completed successfully! --")
 
 
 if __name__ == "__main__":
-    main()
+    work_dir = Path(__file__).parent.resolve()
+    config_path = Path("src").absolute() / "config.yaml"
+    main(work_dir, config_path)

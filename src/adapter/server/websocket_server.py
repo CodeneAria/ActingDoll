@@ -507,8 +507,8 @@ def parse_args():
     parser.add_argument(
         '--model-dir',
         type=str,
-        default=os.environ.get('CUBISM_MODEL_DIR', 'src/models'),
-        help='モデルディレクトリのパス (デフォルト: src/models, 環境変数: CUBISM_MODEL_DIR)'
+        default=os.environ.get('CUBISM_MODEL_DIR', 'src/adapter/resources'),
+        help='モデルディレクトリのパス (デフォルト: src/adapter/resources, 環境変数: CUBISM_MODEL_DIR)'
     )
     parser.add_argument(
         '--host',

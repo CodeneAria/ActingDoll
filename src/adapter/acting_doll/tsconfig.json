@@ -5,19 +5,19 @@
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "./dist",
+    "outDir": "./../dist",
     "removeComments": true,
     "sourceMap": true,
     "baseUrl": "./",
     "paths": {
-      "@framework/*": ["../Framework/src/*"]
+      "@framework/*": ["../../Cubism/Framework/src/*"]
     },
     "noImplicitAny": true,
     "useUnknownInCatchVariables": true
   },
   "include": [
     "src/**/*.ts",
-    "../Core/*.ts"
+    "../../Cubism/Core/*.ts"
   ],
   "exclude": [
     "node_modules",

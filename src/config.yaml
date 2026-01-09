@@ -27,18 +27,9 @@ cubism:
   git_sample_dir_name: "Samples"
 
   # Path to Core archive directory
-  archive_core_dir: "./volume/Core"
+  archive_core_dir: "../../src/Cubism/Core"
 
 # Custom code paths
 custom:
-  # Path to node package directory
-  node_package_dir: "../../src/node_package"
-
-  # Path to model source directory
-  controls_dir: "../../src/controller"
-
-  # Path to model source directory
-  models_dir: "../../src/models"
-
-  # Path to acting doll control server directory
-  control_server_dir: "../../src/acting_doll"
+  # Path to adapter directory
+  adapter_dir: "../../src/adapter"

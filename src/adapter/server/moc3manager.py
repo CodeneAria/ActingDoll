@@ -18,7 +18,7 @@ class ModelManager:
     """
     Live2Dモデルの情報を管理するクラス
     """
-    def __init__(self, models_dir: str = "./src/models"):
+    def __init__(self, models_dir: str = "./src/adapter/resources"):
         self.models_dir = Path(models_dir)
         self.models: Dict[str, dict] = {}
         self.current_motion_group: str = "Idle"

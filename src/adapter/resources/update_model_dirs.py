@@ -85,7 +85,7 @@ def main():
     project_root = script_dir.parent
 
     # パスを設定
-    models_dir = project_root / "models"
+    models_dir = project_root / "resources"
     lappdefine_path = project_root / "controller" / "lappdefine.ts"
 
     print("=" * 60)

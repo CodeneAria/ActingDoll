@@ -210,10 +210,10 @@ __marimo__/
 **/._*
 **/*.zip
 **/doxygen
-**/CubismSdkForWeb*
-tools/CubismContainer/volume/Core
 **/node_modules
-src/models
-src/node_package/public
-src/node_package/src
-src/node_package/dist
+**/CubismSdkForWeb*
+src/Cubism/Core
+src/adapter/resources
+src/adapter/acting_doll/src
+src/adapter/public
+src/adapter/dist
