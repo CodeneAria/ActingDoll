@@ -43,7 +43,7 @@ def main(work_dir, config_path):
     DOCKER_IMAGE_VER = config['docker']['image']['version']
     DOCKER_CONTAINER_NAME = config['docker']['container']['name']
 
-    node_dir = f"/root/workspace/adapter/acting_doll"
+    server_dir = f"/root/workspace/adapter/server"
 
     # Show running containers
     print("=" * 50)
@@ -66,10 +66,10 @@ def main(work_dir, config_path):
         sys.exit(1)
 
     # Run npm start inside container
-    print("# Running npm start inside the container...")
+    print("# Running npm start...")
     npm_cmd = (
-        f'docker exec -t {DOCKER_CONTAINER_NAME} /bin/sh '
-        f'-c "cd {node_dir} && npm run start"'
+        f'docker exec -t {DOCKER_CONTAINER_NAME} /bin/sh -c "'
+        f'cd {server_dir} && /bin/sh start.sh"'
     )
 
     try:

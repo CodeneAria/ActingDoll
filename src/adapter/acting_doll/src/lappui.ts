@@ -25,6 +25,9 @@ export class LAppUI {
   private _manualControlParams: Set<number> = new Set();
   private _manualControlTimers: Map<number, number> = new Map();
   private _updateInterval: number | null = null;
+  private _wsStatusText!: HTMLSpanElement;
+  private _wsStatusIndicator!: HTMLSpanElement;
+  private _wsCheckInterval: number | null = null;
 
   /**
    * Initialize UI
@@ -40,6 +43,8 @@ export class LAppUI {
     this._expressionSelect = document.getElementById('expressionSelect') as HTMLSelectElement;
     this._motionSelect = document.getElementById('motionSelect') as HTMLSelectElement;
     this._parametersContainer = document.getElementById('parametersContainer') as HTMLDivElement;
+    this._wsStatusText = document.getElementById('wsStatusText') as HTMLSpanElement;
+    this._wsStatusIndicator = document.getElementById('wsStatusIndicator') as HTMLSpanElement;
 
     if (!this._controlPanel || !this._toggleButton) {
       console.error('[LAppUI] Required UI elements not found');
@@ -105,6 +110,14 @@ export class LAppUI {
     this._updateInterval = window.setInterval(() => {
       this.updateParameterValues();
     }, 100);
+
+    // Start WebSocket status check loop
+    this._wsCheckInterval = window.setInterval(() => {
+      this.updateWebSocketStatus();
+    }, 500);
+
+    // Initial WebSocket status check
+    this.updateWebSocketStatus();
   }
 
   /**
@@ -290,6 +303,9 @@ export class LAppUI {
       return;
     }
 
+    // Get physics parameter names
+    const physicsParams = model.getPhysicsParameterNames();
+
     // Create sliders for each parameter
     for (let i = 0; i < parameterCount; i++) {
       const parameterId = cubismModel.getParameterId(i);
@@ -327,6 +343,11 @@ export class LAppUI {
       slider.step = '0.01';
       slider.value = currentValue.toString();
       slider.dataset.paramIndex = i.toString();
+
+      // Add physics class if this parameter uses physics
+      if (physicsParams.has(parameterName)) {
+        slider.classList.add('physics-param');
+      }
 
       slider.addEventListener('input', (e) => {
         const target = e.target as HTMLInputElement;
@@ -476,6 +497,28 @@ export class LAppUI {
     return this._manualControlParams;
   }
 
+  /**Update WebSocket connection status display
+   */
+  private updateWebSocketStatus(): void {
+    const delegate = LAppDelegate.getInstance();
+    const wsClient = delegate.getWebSocketClient();
+
+    if (!this._wsStatusText || !this._wsStatusIndicator) {
+      return;
+    }
+
+    if (wsClient && wsClient.isConnected()) {
+      this._wsStatusText.textContent = '接続済み';
+      this._wsStatusIndicator.style.background = '#4CAF50'; // Green
+    } else if (wsClient && wsClient.isRunning()) {
+      this._wsStatusText.textContent = '再接続中...';
+      this._wsStatusIndicator.style.background = '#FFC107'; // Yellow
+    } else {
+      this._wsStatusText.textContent = '未接続';
+      this._wsStatusIndicator.style.background = '#999'; // Gray
+    }
+  }
+
   /**
    * Release resources
    */
@@ -483,6 +526,10 @@ export class LAppUI {
     if (this._updateInterval !== null) {
       clearInterval(this._updateInterval);
       this._updateInterval = null;
+    }
+    if (this._wsCheckInterval !== null) {
+      clearInterval(this._wsCheckInterval);
+      this._wsCheckInterval = null;
     }
 
     // Clear all manual control timers

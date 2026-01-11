@@ -167,7 +167,15 @@ def main(work_dir, config_path):
         print(result.stderr, file=sys.stderr)
         sys.exit(1)
 
-    print("\n# -- Container setup completed successfully! --")
+    ps_filter_cmd = (
+        f'docker ps --filter "ancestor={DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}" '
+        f'--format "table {{{{.ID}}}}\\t{{{{.Image}}}}\\t{{{{.Status}}}}\\t{{{{.Names}}}}\\t{{{{.Ports}}}}"'
+    )
+    result = run_command(ps_filter_cmd, shell=False, capture_output=True)
+    if result.returncode != 0:
+        print("\n[Error] Container setup failed! --")
+    else:
+        print("\n# -- Container setup completed successfully! --")
 
 
 if __name__ == "__main__":

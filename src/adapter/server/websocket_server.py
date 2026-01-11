@@ -522,6 +522,11 @@ def parse_args():
         default=8765,
         help='サーバーのポート (デフォルト: 8765)'
     )
+    parser.add_argument(
+        '--no-console',
+        action='store_true',
+        help='対話型コンソールを無効化（ログのみ出力）'
+    )
     return parser.parse_args()
 
 
@@ -546,14 +551,15 @@ async def main():
     async with websockets.serve(handle_client, host, port):
         logger.info("サーバーが起動しました。Ctrl+Cで停止します。")
 
-        # サーバーコンソールを起動
-        console_task = asyncio.create_task(server_console())
-
-        # オプション: 定期メッセージを有効にする場合はコメントを外す
-        # periodic_task = asyncio.create_task(send_periodic_messages())
-
-        # コンソールタスクが終了するまで待機
-        await console_task
+        # サーバーコンソールを起動（--no-console が指定されていない場合のみ）
+        if not args.no_console:
+            console_task = asyncio.create_task(server_console())
+            # コンソールタスクが終了するまで待機
+            await console_task
+        else:
+            # コンソールなしモード：無限待機
+            logger.info("コンソールなしモードで動作中")
+            await asyncio.Future()  # 無限待機
 
         # オプション: 定期メッセージタスクをキャンセル
         # periodic_task.cancel()

@@ -662,9 +662,55 @@ export class LAppModel extends CubismUserModel {
    */
   private isParameterManuallyControlled(paramId: CubismIdHandle): boolean {
     if (!this._hasManuallyControlledParams) return false;
-    
+
     const index = this._model.getParameterIndex(paramId);
     return this._manuallyControlledParams.has(index);
+  }
+
+  /**
+   * 物理演算が適用されているパラメータ名のセットを取得
+   * @returns 物理演算が適用されているパラメータ名のセット
+   */
+  public getPhysicsParameterNames(): Set<string> {
+    const physicsParams = new Set<string>();
+
+    if (!this._physics || !this._model) {
+      return physicsParams;
+    }
+
+    // 物理演算のパラメータを取得
+    // CubismPhysicsには直接パラメータ一覧を取得するAPIがないため、
+    // 一般的な物理演算対象のパラメータ名をチェック
+    const commonPhysicsParams = [
+      'ParamHairFront',
+      'ParamHairSide',
+      'ParamHairBack',
+      'ParamHairFluffy',
+      'ParamArmL',
+      'ParamArmR',
+      'ParamBustX',
+      'ParamBustY',
+      'ParamBodyAngleX',
+      'ParamBodyAngleY',
+      'ParamBodyAngleZ',
+      'ParamBreath'
+    ];
+
+    // モデルのパラメータ名をチェック
+    for (let i = 0; i < this._model.getParameterCount(); i++) {
+      const paramId = this._model.getParameterId(i);
+      const paramName = paramId.getString().s;
+
+      // 一般的な物理演算パラメータ名を含むかチェック
+      for (const physicsParam of commonPhysicsParams) {
+        if (paramName.includes(physicsParam)) {
+          physicsParams.add(paramName);
+          break;
+        }
+      }
+    }
+
+    return physicsParams;
   }
 
   /**

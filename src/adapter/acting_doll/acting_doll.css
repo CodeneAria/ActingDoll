@@ -117,6 +117,19 @@ body>canvas:only-child {
     border: none;
 }
 
+/* Physics parameter slider style */
+.parameter-item input[type="range"].physics-param {
+    background: #ffdddd;
+}
+
+.parameter-item input[type="range"].physics-param::-webkit-slider-thumb {
+    background: #ff6b6b;
+}
+
+.parameter-item input[type="range"].physics-param::-moz-range-thumb {
+    background: #ff6b6b;
+}
+
 #togglePanel {
     position: fixed;
     height: 2.5em;

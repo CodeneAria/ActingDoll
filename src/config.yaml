@@ -7,9 +7,9 @@ docker:
 
   # Docker container settings
   container:
-    name: "node_server"
+    name: "server_acting_doll"
     port_cubism: "5000"
-    port_websocket: "8766"
+    port_websocket: "8765"
 
   # Dockerfile name
   dockerfile: "volume/Dockerfile"

@@ -16,6 +16,15 @@
     <div id="controlPanel" class="hidden">
       <h3>Live2D Controls</h3>
 
+      <!-- WebSocket Connection Status -->
+      <div class="control-section">
+        <label>WebSocket Status:</label>
+        <div id="websocketStatus" style="margin-top: 8px; padding: 8px; background: #f0f0f0; border-radius: 4px;">
+          <span id="wsStatusText">未接続</span>
+          <span id="wsStatusIndicator" style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #999; margin-left: 8px;"></span>
+        </div>
+      </div>
+
       <!-- Animation Settings Section -->
       <div class="control-section">
         <label>Animation Settings:</label>

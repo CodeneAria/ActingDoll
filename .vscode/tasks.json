@@ -58,7 +58,7 @@
             "type": "shell",
             "command": "${workspaceFolder}/src/adapter/server/websocket_server.py",
             "args": [
-                "--port", "8765",
+                "--port", "8766",
                 "--host", "localhost"
             ],
             "detail": "WebSocketのサーバーを起動する"
