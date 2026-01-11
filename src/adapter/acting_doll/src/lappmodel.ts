@@ -678,36 +678,20 @@ export class LAppModel extends CubismUserModel {
       return physicsParams;
     }
 
-    // 物理演算のパラメータを取得
-    // CubismPhysicsには直接パラメータ一覧を取得するAPIがないため、
-    // 一般的な物理演算対象のパラメータ名をチェック
-    const commonPhysicsParams = [
-      'ParamHairFront',
-      'ParamHairSide',
-      'ParamHairBack',
-      'ParamHairFluffy',
-      'ParamArmL',
-      'ParamArmR',
-      'ParamBustX',
-      'ParamBustY',
-      'ParamBodyAngleX',
-      'ParamBodyAngleY',
-      'ParamBodyAngleZ',
-      'ParamBreath'
-    ];
-
-    // モデルのパラメータ名をチェック
-    for (let i = 0; i < this._model.getParameterCount(); i++) {
-      const paramId = this._model.getParameterId(i);
-      const paramName = paramId.getString().s;
-
-      // 一般的な物理演算パラメータ名を含むかチェック
-      for (const physicsParam of commonPhysicsParams) {
-        if (paramName.includes(physicsParam)) {
-          physicsParams.add(paramName);
-          break;
+    // 物理演算の出力先パラメータを直接取得
+    try {
+      const outputs = (this._physics as any)._physicsRig?.outputs?._ptr;
+      if (outputs) {
+        for (let i = 0; i < outputs.length; i++) {
+          const output = outputs[i];
+          const paramName = output?.destination?.id?._id?.s;
+          if (paramName) {
+            physicsParams.add(paramName);
+          }
         }
       }
+    } catch (e) {
+      CubismLogError(`Failed to get physics parameter names: ${e}`);
     }
 
     return physicsParams;

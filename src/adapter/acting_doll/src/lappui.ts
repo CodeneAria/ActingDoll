@@ -220,6 +220,34 @@ export class LAppUI {
     this.updateExpressions(model);
     this.updateMotions(model);
     this.updateParameters(model);
+
+    // Apply current checkbox settings to the new model
+    this.applyCheckboxSettings();
+  }
+
+  /**
+   * Apply current checkbox settings to the model
+   */
+  private applyCheckboxSettings(): void {
+    // Apply eye blink setting
+    if (this._eyeBlinkToggle) {
+      this.setEyeBlinkEnabled(this._eyeBlinkToggle.checked);
+    }
+
+    // Apply breath setting
+    if (this._breathToggle) {
+      this.setBreathEnabled(this._breathToggle.checked);
+    }
+
+    // Apply idle motion setting
+    if (this._idleMotionToggle) {
+      this.setIdleMotionEnabled(this._idleMotionToggle.checked);
+    }
+
+    // Apply drag follow setting
+    if (this._dragFollowToggle) {
+      this.setDragFollowEnabled(this._dragFollowToggle.checked);
+    }
   }
 
   /**
