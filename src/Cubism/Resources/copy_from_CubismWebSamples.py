@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Docker container run script for Cubism SDK Web
+Docker container copy resource from Cubism SDK for Web Samples
 """
 
 import os
@@ -43,13 +43,20 @@ def main(work_dir, config_path):
     DOCKER_IMAGE_NAME = config['docker']['image']['name']
     DOCKER_IMAGE_VER = config['docker']['image']['version']
     DOCKER_CONTAINER_NAME = config['docker']['container']['name']
-    GIT_SAMPLE_DIR_NAME = config['cubism']['git_sample_dir_name']
+    MODELS_DIR = config['cubism']['models_dir']
 
-    node_dir = f"/root/workspace/Cubism/{GIT_SAMPLE_DIR_NAME}/Samples/TypeScript/Demo"
+    models_path = Path(MODELS_DIR).parent.resolve().absolute()
+    samples_resources_dir="/root/workspace/Cubism/Samples/Samples/Resources"
+
+    print("=" * 50)
+    print("[Copy model resources from Cubism SDK for Web container]")
+    print(f"  src dir  : {DOCKER_CONTAINER_NAME}:{samples_resources_dir}")
+    print(f"  dist dir : {models_path}")
+    print("=" * 50)
 
     # Show running containers
     print("=" * 50)
-    print("[Start Cubism SDK for Web]")
+    print("[Docker Containers Running]")
     ps_filter_cmd = (
         f'docker ps --filter "ancestor={DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}" '
         f'--format "table {{{{.ID}}}}\\t{{{{.Image}}}}\\t{{{{.Status}}}}\\t{{{{.Names}}}}\\t{{{{.Ports}}}}"'
@@ -58,9 +65,9 @@ def main(work_dir, config_path):
     print("=" * 50)
 
     # Start container
-    print(f"# Restarting container {DOCKER_CONTAINER_NAME}...")
+    print(f"# Starting container {DOCKER_CONTAINER_NAME}...")
     result = run_command(
-        f"docker restart {DOCKER_CONTAINER_NAME}", capture_output=True)
+        f"docker start {DOCKER_CONTAINER_NAME}", capture_output=True)
     if result.returncode != 0:
         print(
             f"[Error] Failed to start container {DOCKER_CONTAINER_NAME}", file=sys.stderr)
@@ -70,8 +77,7 @@ def main(work_dir, config_path):
     # Run npm start inside container
     print("# Running npm start inside the container...")
     npm_cmd = (
-        f'docker exec -t {DOCKER_CONTAINER_NAME} /bin/sh '
-        f'-c "cd {node_dir} && npm run start"'
+        f'docker cp {DOCKER_CONTAINER_NAME}:{samples_resources_dir} {models_path}'
     )
 
     try:
@@ -82,13 +88,11 @@ def main(work_dir, config_path):
         sys.exit(1)
     except KeyboardInterrupt:
         print("\n# Shutting down...")
-        run_command(
-            f"docker stop {DOCKER_CONTAINER_NAME}", capture_output=True)
         sys.exit(0)
 
 
 if __name__ == "__main__":
-    work_dir = Path(__file__).parent.parent.parent.resolve()
+    work_dir = Path(__file__).parent.parent.parent.parent.resolve()
     os.chdir(work_dir)
-    config_path = Path("src").resolve().absolute() / "config.yaml"
+    config_path = Path("src").absolute() / "config.yaml"
     main(work_dir, config_path)

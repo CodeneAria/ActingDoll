@@ -3,6 +3,7 @@
 Docker container run script for Cubism SDK Web
 """
 
+import os
 import subprocess
 import sys
 import yaml
@@ -66,7 +67,7 @@ def main(work_dir, config_path):
         sys.exit(1)
 
     # Run npm start inside container
-    print("# Running npm start inside the container...")
+    print("# npm run clean inside the container...")
     # npm install -g npm && npm install && npm run build
     npm_cmd = (
         f'docker exec -t {DOCKER_CONTAINER_NAME} /bin/sh -c "'
@@ -87,6 +88,7 @@ def main(work_dir, config_path):
 
 
 if __name__ == "__main__":
-    work_dir = Path(__file__).parent.resolve()
-    config_path = Path("src").absolute() / "config.yaml"
+    work_dir = Path(__file__).parent.parent.parent.resolve()
+    os.chdir(work_dir)
+    config_path = Path("src").resolve().absolute() / "config.yaml"
     main(work_dir, config_path)

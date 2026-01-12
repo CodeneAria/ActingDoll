@@ -213,6 +213,6 @@ __marimo__/
 **/node_modules
 **/CubismSdkForWeb*
 src/Cubism/Core
-src/adapter/resources
+src/Cubism/Resources
 src/adapter/public
 src/adapter/dist

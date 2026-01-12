@@ -3,6 +3,7 @@
 Docker container run script for Cubism SDK Web
 """
 
+import os
 import subprocess
 import sys
 import yaml
@@ -86,6 +87,7 @@ def main(work_dir, config_path):
 
 
 if __name__ == "__main__":
-    work_dir = Path(__file__).parent.resolve()
-    config_path = Path("src").absolute() / "config.yaml"
+    work_dir = Path(__file__).parent.parent.parent.resolve()
+    os.chdir(work_dir)
+    config_path = Path("src").resolve().absolute() / "config.yaml"
     main(work_dir, config_path)

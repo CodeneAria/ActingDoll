@@ -12,7 +12,7 @@ docker:
     port_websocket: "8765"
 
   # Dockerfile name
-  dockerfile: "volume/Dockerfile"
+  dockerfile: "tools/CubismContainer/volume/Dockerfile"
 
 # Cubism SDK settings
 cubism:
@@ -26,10 +26,11 @@ cubism:
   git_sample_tag: "5-r.4"
   git_sample_dir_name: "Samples"
 
-  # Path to Core archive directory
-  archive_core_dir: "../../src/Cubism/Core"
+  # Path to archive directory
+  archive_core_dir: "src/Cubism/Core"
+  models_dir: "src/Cubism/Resources"
 
 # Custom code paths
 custom:
   # Path to adapter directory
-  adapter_dir: "../../src/adapter"
+  adapter_dir: "src/adapter"

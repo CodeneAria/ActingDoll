@@ -4,13 +4,6 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Docker:Create",
-            "type": "shell",
-            "command": "${workspaceFolder}/tools/CubismContainer/create_container.py",
-            "args": [],
-            "detail": "Dockerイメージとコンテナを作成する"
-        },
-        {
             "label": "Docker:Exec",
             "type": "shell",
             "command": "${workspaceFolder}/tools/CubismContainer/exec.py",
@@ -18,7 +11,28 @@
             "detail": "Dockerの中に入って操作できるコンソール",
         },
         {
-            "label": "Docker:model:Start-Demo",
+            "label": "Docker:00_Create",
+            "type": "shell",
+            "command": "${workspaceFolder}/tools/CubismContainer/create_container.py",
+            "args": [],
+            "detail": "Dockerイメージとコンテナを作成する"
+        },
+        {
+            "label": "Docker:01_Build",
+            "type": "shell",
+            "command": "${workspaceFolder}/tools/CubismContainer/build.py",
+            "args": [],
+            "detail": "モデルデータをビルドして dist フォルダに出力する"
+        },
+        {
+            "label": "Docker:02_Start",
+            "type": "shell",
+            "command": "${workspaceFolder}/tools/CubismContainer/start.py",
+            "args": [],
+            "detail": "Dockerコンテナを起動してモデルサーバーを立ち上げる"
+        },
+        {
+            "label": "Docker:Start-Demo",
             "type": "shell",
             "command": "${workspaceFolder}/tools/CubismContainer/start_demo.py",
             "args": [],
@@ -26,32 +40,25 @@
             "detail": "Demo版のモデルサーバーを起動する"
         },
         {
-            "label": "Docker:model:Start",
-            "type": "shell",
-            "command": "${workspaceFolder}/tools/CubismContainer/start.py",
-            "args": [],
-            "detail": "Dockerコンテナを起動してモデルサーバーを立ち上げる"
-        },
-        {
-            "label": "Docker:model:Build",
-            "type": "shell",
-            "command": "${workspaceFolder}/tools/CubismContainer/build.py",
-            "args": [],
-            "detail": "モデルデータをビルドして dist フォルダに出力する"
-        },
-        {
-            "label": "Docker:model:Bulid-Clean",
+            "label": "Docker:Build-Clean",
             "type": "shell",
             "command": "${workspaceFolder}/tools/CubismContainer/clean.py",
             "args": [],
             "detail": "Buildで作成したdistフォルダを削除する"
         },
         {
-            "label": "Docker:Model-DirUpdate",
+            "label": "Docker:Model:DirUpdate",
             "type": "shell",
-            "command": "${workspaceFolder}/src/adapter/resources/update_model_dirs.py",
+            "command": "${workspaceFolder}/src/Cubism/Resources/update_model_dirs.py",
             "args": [],
-            "detail": "src/adapter/resources/ 以下のモデルディレクトリを参照するように lappdefine.ts を更新する"
+            "detail": "src/Cubism/Resources/ 以下のモデルディレクトリを参照するように lappdefine.ts を更新する"
+        },
+        {
+            "label": "Docker:Model:Copy_from_CubismSamples",
+            "type": "shell",
+            "command": "${workspaceFolder}/src/Cubism/Resources/copy_from_CubismWebSamples.py",
+            "args": [],
+            "detail": "src/Cubism/Resources/ 以下にCubism Web Samples for Webのサンプルリソースをコピーする"
         },
         {
             "label": "Server:Websocket",

@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Set
 import moc3manager
 import websockets
-from websockets.server import WebSocketServerProtocol
+from websockets.server import ServerConnection
 
 # ロギング設定
 logging.basicConfig(
@@ -21,15 +21,15 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # 接続されたクライアントを管理
-connected_clients: Set[WebSocketServerProtocol] = set()
+connected_clients: Set[ServerConnection] = set()
 # クライアントIDとWebSocket接続のマッピング
-client_id_map: dict[str, WebSocketServerProtocol] = {}
+client_id_map: dict[str, ServerConnection] = {}
 
 # グローバルなモデルマネージャー（後で初期化）
 model_manager = None
 
 
-async def broadcast_message(message: dict, exclude: WebSocketServerProtocol = None):
+async def broadcast_message(message: dict, exclude: ServerConnection = None):
     """
     全クライアントにメッセージをブロードキャスト
 
@@ -85,7 +85,7 @@ async def send_to_client(client_id: str, message: dict) -> bool:
         return False
 
 
-def get_client_id(websocket: WebSocketServerProtocol) -> str:
+def get_client_id(websocket: ServerConnection) -> str:
     """
     WebSocket接続からクライアントIDを生成
 
@@ -105,7 +105,7 @@ def get_client_id(websocket: WebSocketServerProtocol) -> str:
         return "unknown"
 
 
-async def handle_client(websocket: WebSocketServerProtocol):
+async def handle_client(websocket: ServerConnection):
     """
     クライアント接続を処理
 
@@ -174,11 +174,18 @@ async def handle_client(websocket: WebSocketServerProtocol):
                     response = await process_command(command, client_id)
                     await websocket.send(json.dumps(response, ensure_ascii=False))
 
-                elif msg_type == "model_command":
+                elif msg_type == "model":
                     # モデルコマンド処理
                     command = data.get("command")
                     args = data.get("args", "")
                     response = await model_command(command, args)
+                    await websocket.send(json.dumps(response, ensure_ascii=False))
+
+                elif msg_type == "client":
+                    # クライアント状態管理コマンド処理
+                    command = data.get("command")
+                    args = data.get("args", {})
+                    response = await client_command(command, args, client_id)
                     await websocket.send(json.dumps(response, ensure_ascii=False))
 
                 else:
@@ -215,134 +222,348 @@ async def handle_client(websocket: WebSocketServerProtocol):
             "total_clients": len(connected_clients)
         })
 
-async def model_command(command: str, args:str) -> dict:
+async def model_command(command: str, args: str) -> dict:
     """
     モデル関連コマンドを処理
     Args:
         command: コマンド文字列
-        client_id: クライアントID
+        args: コマンド引数
+    Returns:
+        レスポンス辞書
     """
-    # コマンドをパースする
-    # parts = command.split(maxsplit=1)
-    # cmd = parts[0].lower()
-    # args = parts[1] if len(parts) > 1 else ""
-
-    # モデル関連コマンド
+    # 1. model list - 利用可能なモデル一覧を取得
     if command == "list":
-        print("List:")
-        print(model_manager.get_list_models())
-    elif command == "get_model":
+        models = model_manager.get_models()
+        logger.info(f"利用可能なモデル: {models}")
         return {
             "type": "command_response",
-            "command": "get_model",
-            "data": model_manager.get_models()
+            "command": "list",
+            "data": models
         }
 
-    # モーショングループ関連コマンド
-    elif command == "get_motion_groups":
-        return {
-            "type": "command_response",
-            "command": "get_motion_groups",
-            "data": model_manager.get_motion_groups()
-        }
-    elif command == "get_current_motion_group":
-        return {
-            "type": "command_response",
-            "command": "get_current_motion_group",
-            "data": model_manager.get_current_motion_group()
-        }
-    elif command == "set_motion_group":
+    # 2. model get_expressions <model_name> - モデルのexpressionsを取得
+    elif command == "get_expressions":
         if not args:
             return {
                 "type": "command_response",
-                "command": "set_motion_group",
-                "error": "モーショングループ名が必要です"
+                "command": "get_expressions",
+                "error": "モデル名が必要です"
             }
-        success = model_manager.set_current_motion_group(args)
+        model_info = model_manager.get_model_info(args)
+        if model_info:
+            expressions = model_info.get('FileReferences', {}).get('Expressions', [])
+            expression_names = [exp.get('Name') for exp in expressions]
+            logger.info(f"expressions一覧: {expression_names}")
+            return {
+                "type": "command_response",
+                "command": "get_expressions",
+                "data": {
+                    "model_name": args,
+                    "expressions": expressions
+                }
+            }
         return {
             "type": "command_response",
-            "command": "set_motion_group",
-            "data": {
-                "success": success,
-                "motion_group": args if success else None
-            }
+            "command": "get_expressions",
+            "error": f"モデル '{args}' が見つかりません"
         }
 
-    # モーション関連コマンド
+    # 3. model get_motions <model_name> - モデルのmotionsを取得
     elif command == "get_motions":
-        group = args or model_manager.get_current_motion_group()
+        if not args:
+            return {
+                "type": "command_response",
+                "command": "get_motions",
+                "error": "モデル名が必要です"
+            }
+        model_info = model_manager.get_model_info(args)
+        if model_info:
+            motions = model_info.get('FileReferences', {}).get('Motions', {})
+            motion_summary = {}
+            for group_name, motion_list in motions.items():
+                motion_summary[group_name] = [m.get('File') for m in motion_list]
+            logger.info(f"motions一覧: {motion_summary}")
+            return {
+                "type": "command_response",
+                "command": "get_motions",
+                "data": {
+                    "model_name": args,
+                    "motions": motions
+                }
+            }
         return {
             "type": "command_response",
             "command": "get_motions",
-            "data": {
-                "motion_group": group,
-                "motions": model_manager.get_motions(group)
-            }
+            "error": f"モデル '{args}' が見つかりません"
         }
-    elif command == "get_current_motion":
-        return {
-            "type": "command_response",
-            "command": "get_current_motion",
-            "data": {
-                "motion_group": model_manager.get_current_motion_group(),
-                "motion_index": model_manager.get_current_motion_index(),
-                "motion": model_manager.get_current_motion()
-            }
-        }
-    elif command == "set_motion_index":
-        try:
-            index = int(args)
-            success = model_manager.set_current_motion_index(index)
+
+    # 4. model get_parameters <model_name> - モデルのparametersを取得
+    elif command == "get_parameters":
+        if not args:
             return {
                 "type": "command_response",
-                "command": "set_motion_index",
+                "command": "get_parameters",
+                "error": "モデル名が必要です"
+            }
+        parameters = model_manager.get_parameters_exclude_physics(args)
+        if parameters:
+            # Id, Name, GroupIdを抽出して表示用に整形
+            param_summary = []
+            for param in parameters:
+                param_summary.append({
+                    "Id": param.get('Id'),
+                    "Name": param.get('Name'),
+                    "GroupId": param.get('GroupId', '')
+                })
+            logger.info(f"parameters一覧 ({len(param_summary)}件): {[p['Id'] for p in param_summary]}")
+            return {
+                "type": "command_response",
+                "command": "get_parameters",
                 "data": {
-                    "success": success,
-                    "motion_index": index if success else None,
-                    "motion": model_manager.get_current_motion() if success else None
+                    "model_name": args,
+                    "parameters": param_summary
                 }
             }
-        except ValueError:
-            return {
-                "type": "command_response",
-                "command": "set_motion_index",
-                "error": "有効な数値を指定してください"
-            }
-    elif command == "next_motion":
-        motion = model_manager.next_motion()
         return {
             "type": "command_response",
-            "command": "next_motion",
-            "data": {
-                "motion_group": model_manager.get_current_motion_group(),
-                "motion_index": model_manager.get_current_motion_index(),
-                "motion": motion
-            }
-        }
-    elif command == "previous_motion":
-        motion = model_manager.previous_motion()
-        return {
-            "type": "command_response",
-            "command": "previous_motion",
-            "data": {
-                "motion_group": model_manager.get_current_motion_group(),
-                "motion_index": model_manager.get_current_motion_index(),
-                "motion": motion
-            }
-        }
-    elif command == "get_model_info":
-        model_name = args if args else None
-        return {
-            "type": "command_response",
-            "command": "get_model_info",
-            "data": model_manager.get_model_info(model_name)
+            "command": "get_parameters",
+            "error": f"モデル '{args}' のパラメータ情報が見つかりません"
         }
 
     else:
         return {
             "type": "command_response",
             "command": command,
-            "error": "不明なコマンドです"
+            "error": f"不明なコマンド: {command}"
+        }
+
+
+async def client_command(command: str, args: dict, client_id: str) -> dict:
+    """
+    クライアント状態管理コマンドを処理
+
+    Args:
+        command: コマンド文字列
+        args: コマンド引数（辞書形式）
+        client_id: クライアントID
+
+    Returns:
+        レスポンス辞書
+    """
+    # モデル情報取得
+    if command == "get_model":
+        # クライアントに現在のモデル情報をリクエスト
+        if client_id not in client_id_map:
+            return {
+                "type": "client_response",
+                "command": "get_model",
+                "error": f"クライアント {client_id} が見つかりません"
+            }
+
+        # クライアントにモデル情報要求を送信
+        await send_to_client(client_id, {
+            "type": "request_model_info",
+            "timestamp": datetime.now().isoformat()
+        })
+
+        return {
+            "type": "client_response",
+            "command": "get_model",
+            "success": True,
+            "message": "クライアントにモデル情報をリクエストしました"
+        }
+
+    # アニメーション設定 - 自動目パチ
+    elif command == "get_eye_blink":
+        return {
+            "type": "client_response",
+            "command": "get_eye_blink",
+            "client_id": client_id,
+            "data": {"enabled": args.get("enabled")}
+        }
+
+    elif command == "set_eye_blink":
+        enabled = args.get("enabled", True)
+        # ブロードキャストでクライアントに通知
+        await broadcast_message({
+            "type": "set_eye_blink",
+            "client_id": client_id,
+            "enabled": enabled,
+            "timestamp": datetime.now().isoformat()
+        })
+        return {
+            "type": "client_response",
+            "command": "set_eye_blink",
+            "success": True,
+            "data": {"enabled": enabled}
+        }
+
+    # アニメーション設定 - 呼吸
+    elif command == "get_breath":
+        return {
+            "type": "client_response",
+            "command": "get_breath",
+            "client_id": client_id,
+            "data": {"enabled": args.get("enabled")}
+        }
+
+    elif command == "set_breath":
+        enabled = args.get("enabled", True)
+        await broadcast_message({
+            "type": "set_breath",
+            "client_id": client_id,
+            "enabled": enabled,
+            "timestamp": datetime.now().isoformat()
+        })
+        return {
+            "type": "client_response",
+            "command": "set_breath",
+            "success": True,
+            "data": {"enabled": enabled}
+        }
+
+    # アニメーション設定 - アイドリングモーション
+    elif command == "get_idle_motion":
+        return {
+            "type": "client_response",
+            "command": "get_idle_motion",
+            "client_id": client_id,
+            "data": {"enabled": args.get("enabled")}
+        }
+
+    elif command == "set_idle_motion":
+        enabled = args.get("enabled", False)
+        await broadcast_message({
+            "type": "set_idle_motion",
+            "client_id": client_id,
+            "enabled": enabled,
+            "timestamp": datetime.now().isoformat()
+        })
+        return {
+            "type": "client_response",
+            "command": "set_idle_motion",
+            "success": True,
+            "data": {"enabled": enabled}
+        }
+
+    # アニメーション設定 - ドラッグ追従
+    elif command == "get_drag_follow":
+        return {
+            "type": "client_response",
+            "command": "get_drag_follow",
+            "client_id": client_id,
+            "data": {"enabled": args.get("enabled")}
+        }
+
+    elif command == "set_drag_follow":
+        enabled = args.get("enabled", False)
+        await broadcast_message({
+            "type": "set_drag_follow",
+            "client_id": client_id,
+            "enabled": enabled,
+            "timestamp": datetime.now().isoformat()
+        })
+        return {
+            "type": "client_response",
+            "command": "set_drag_follow",
+            "success": True,
+            "data": {"enabled": enabled}
+        }
+
+    # Expressions
+    elif command == "get_expression":
+        return {
+            "type": "client_response",
+            "command": "get_expression",
+            "client_id": client_id,
+            "data": {"expression": args.get("expression")}
+        }
+
+    elif command == "set_expression":
+        expression = args.get("expression")
+        if not expression:
+            return {
+                "type": "client_response",
+                "command": "set_expression",
+                "error": "expression名が必要です"
+            }
+        await broadcast_message({
+            "type": "set_expression",
+            "client_id": client_id,
+            "expression": expression,
+            "timestamp": datetime.now().isoformat()
+        })
+        return {
+            "type": "client_response",
+            "command": "set_expression",
+            "success": True,
+            "data": {"expression": expression}
+        }
+
+    # Motions
+    elif command == "get_motion":
+        return {
+            "type": "client_response",
+            "command": "get_motion",
+            "client_id": client_id,
+            "data": {
+                "group": args.get("group"),
+                "index": args.get("index")
+            }
+        }
+
+    elif command == "set_motion":
+        group = args.get("group")
+        index = args.get("index")
+        if not group:
+            return {
+                "type": "client_response",
+                "command": "set_motion",
+                "error": "motion group名が必要です"
+            }
+        await broadcast_message({
+            "type": "set_motion",
+            "client_id": client_id,
+            "group": group,
+            "index": index,
+            "timestamp": datetime.now().isoformat()
+        })
+        return {
+            "type": "client_response",
+            "command": "set_motion",
+            "success": True,
+            "data": {"group": group, "index": index}
+        }
+
+    # Parameters (Setterのみ)
+    elif command == "set_parameter":
+        param_name = args.get("name")
+        param_value = args.get("value")
+        if param_name is None or param_value is None:
+            return {
+                "type": "client_response",
+                "command": "set_parameter",
+                "error": "parameter nameとvalueが必要です"
+            }
+        await broadcast_message({
+            "type": "set_parameter",
+            "client_id": client_id,
+            "name": param_name,
+            "value": param_value,
+            "timestamp": datetime.now().isoformat()
+        })
+        return {
+            "type": "client_response",
+            "command": "set_parameter",
+            "success": True,
+            "data": {"name": param_name, "value": param_value}
+        }
+
+    else:
+        return {
+            "type": "client_response",
+            "command": command,
+            "error": f"不明なクライアントコマンド: {command}"
         }
 
 
@@ -382,23 +603,32 @@ async def process_command(command: str, client_id: str) -> dict:
 
 def print_server_console():
     print("=== サーバーコンソール ===")
-    print("コマンド:")
+    print("サーバーコマンド:")
     print("  quit                       - サーバーを停止")
     print("  count                      - 接続数を表示")
     print("  list                       - 接続中のクライアント一覧")
     print("  notify <message>           - 全クライアントに通知を送信")
     print("  send <client_id> <message> - 特定のクライアントにメッセージを送信")
     print("モデルコマンド:")
-    print("  model get_model <client_id>   - 現在のモデルを取得")
-    print("  model list                    - 利用可能なモデル一覧を取得")
-    print("  model get_model_info [name]   - モデルの詳細情報を取得")
-    print("  model get_motion_groups       - モーショングループ一覧を取得")
-    print("  model get_current_motion_group- 現在のモーショングループを取得")
-    print("  model get_motions [group]     - モーション一覧を取得")
-    print("  model get_current_motion      - 現在のモーションを取得")
-    print("  model set_motion_group <name> - モーショングループを変更")
-    print("  model set_motion_index <idx>  - モーションインデックスを設定")
-    print("  model motion_start            - モーションを開始")
+    print("  model list                      - 利用可能なモデル一覧を取得")
+    print("  model get_expressions <name>    - モデルのexpressions一覧を取得")
+    print("  model get_motions <name>        - モデルのmotions一覧を取得")
+    print("  model get_parameters <name>     - モデルのparameters一覧を取得")
+    print("クライアント制御コマンド (WebSocket経由):")
+    print("  client get_model <client_id>        - 現在表示中のモデルを取得")
+    print("  client get_eye_blink <client_id>")
+    print("  client set_eye_blink ... <client_id>")
+    print("  client get_breath <client_id>")
+    print("  client set_breath ... <client_id>")
+    print("  client get_idle_motion <client_id>")
+    print("  client set_idle_motion ... <client_id>")
+    print("  client get_drag_follow <client_id>")
+    print("  client set_drag_follow ... <client_id>")
+    print("  client get_expression <client_id>")
+    print("  client set_expression ... <client_id>")
+    print("  client get_motion <client_id>")
+    print("  client set_motion ... <client_id>")
+    print("  client set_parameter ... <client_id>")
     print("========================\n")
 
 async def server_console():
@@ -417,7 +647,7 @@ async def server_console():
             if not user_input.strip():
                 continue
 
-            parts = user_input.strip().split(maxsplit=1)
+            parts = user_input.strip().split(maxsplit=2)
             command = parts[0].lower()
 
             if command == "quit":
@@ -471,6 +701,28 @@ async def server_console():
                 args = parts[2] if len(parts) > 2 else ""
                 await model_command(sub_command, args)
 
+            elif command == "client" and len(parts) > 1:
+                # 形式: client <sub_command> <client_id> [args...]
+                cmd_parts = parts[1].split(maxsplit=1)
+                if len(cmd_parts) < 2:
+                    logger.warning("使い方: client <command> <client_id> [args...]")
+                    continue
+
+                sub_command = cmd_parts[0]
+                target_client_id = cmd_parts[1].split()[0]  # client_idを抽出
+
+                # コマンドに応じた引数を構築
+                args = {}
+                if sub_command == "get_model":
+                    args = {}
+                elif sub_command.startswith("set_"):
+                    # 追加の引数があれば解析（例: enabled=true）
+                    # 簡易実装として、今後拡張可能
+                    pass
+
+                response = await client_command(sub_command, args, target_client_id)
+                logger.info(f"クライアントコマンド結果: {response}")
+
             else:
                 logger.warning(f"不明なコマンド: {command}")
                 print_server_console()
@@ -507,8 +759,8 @@ def parse_args():
     parser.add_argument(
         '--model-dir',
         type=str,
-        default=os.environ.get('CUBISM_MODEL_DIR', 'src/adapter/resources'),
-        help='モデルディレクトリのパス (デフォルト: src/adapter/resources, 環境変数: CUBISM_MODEL_DIR)'
+        default=os.environ.get('CUBISM_MODEL_DIR', 'src/Cubism/Resources'),
+        help='モデルディレクトリのパス (デフォルト: src/Cubism/Resources, 環境変数: CUBISM_MODEL_DIR)'
     )
     parser.add_argument(
         '--host',
@@ -541,7 +793,6 @@ async def main():
 
     # モデルマネージャーを初期化
     model_manager = moc3manager.ModelManager(args.model_dir)
-    logger.info(f"モデルディレクトリ: {args.model_dir}")
 
     host = args.host
     port = args.port
@@ -549,16 +800,15 @@ async def main():
     logger.info(f"WebSocketサーバーを起動中: ws://{host}:{port}")
 
     async with websockets.serve(handle_client, host, port):
-        logger.info("サーバーが起動しました。Ctrl+Cで停止します。")
-
         # サーバーコンソールを起動（--no-console が指定されていない場合のみ）
         if not args.no_console:
+            logger.info("サーバーが起動しました。Ctrl+Cで停止します。")
             console_task = asyncio.create_task(server_console())
             # コンソールタスクが終了するまで待機
             await console_task
         else:
             # コンソールなしモード：無限待機
-            logger.info("コンソールなしモードで動作中")
+            logger.info("サーバーが起動しました。コンソールなしで動作中")
             await asyncio.Future()  # 無限待機
 
         # オプション: 定期メッセージタスクをキャンセル

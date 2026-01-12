@@ -8,8 +8,7 @@
 "use strict";
 const fs = require('fs');
 const publicResources = [
-  { src: '../resources', dst: './../public/Resources' },
- // { src: '../Samples/Samples/Resources', dst: './public/Resources' },
+  { src: '../../Cubism/Resources', dst: './../public/Resources' },
   { src: '../../Cubism/Core', dst: './../public/Core' }
 ];
 

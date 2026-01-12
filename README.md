@@ -55,7 +55,7 @@ pip install -e ".[dev]"
 ### 環境変数
 
 | 変数名 | 説明 | デフォルト値 |
-|--------|------|--------------|
+| ----- | ---- | ----------- |
 | `LIVE2D_SERVER_URL` | Live2D Cubism SDK WebサーバーのURL | `http://localhost:8080` |
 
 ## MCP ツール一覧

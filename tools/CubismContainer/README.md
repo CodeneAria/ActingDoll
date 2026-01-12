@@ -113,12 +113,12 @@ python start_demo.py
 ```tree
 ${HOME}
 └── workspace
+    ├── adapter    : (ActingDoll用アダプタコード, src/adapterからマウント)
     └── Cubism
         ├── Core       : (Cubism Coreファイル, volume/Coreからマウント, 公式からダウンロードしたファイルを格納する)
         ├── Framework  : (Cubism Frameworkファイル, GitHubからクローンする)
         ├── Samples    : (Cubism Samplesファイル, GitHubからクローンする)
-        ├── adapter    : (ActingDoll用アダプタコード, src/adapterからマウント)
-        └── models     : (Live2Dモデルデータ, src/adapter/resourcesからマウント, ユーザーが配置する)
+        └── models     : (Live2Dモデルデータ, src/Cubism/Resourcesからマウント, ユーザーが配置する)
 ```
 
 

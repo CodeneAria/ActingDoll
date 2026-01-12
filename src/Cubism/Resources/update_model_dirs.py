@@ -78,23 +78,21 @@ def update_lappdefine_ts(file_path: Path, model_dirs: list[str]) -> bool:
     return True
 
 
-def main():
+def main(work_dir, config_path):
     """メイン処理"""
     # プロジェクトルートディレクトリを取得
-    script_dir = Path(__file__).parent
-    project_root = script_dir.parent
 
     # パスを設定
-    models_dir = project_root / "resources"
-    lappdefine_path = project_root / "controller" / "lappdefine.ts"
+    models_dir = work_dir / "Cubism" / "Resources"
+    lappdefine_path = work_dir /  "adapter" / "acting_doll"  / "src" / "lappdefine.ts"
 
     print("=" * 60)
     print("ModelDir自動更新スクリプト")
     print("=" * 60)
-    print(f"プロジェクトルート: {project_root}")
-    print(f"モデルディレクトリ: {models_dir}")
-    print(f"更新対象ファイル: {lappdefine_path}")
-    print()
+    print(f"プロジェクトルート : {work_dir}")
+    print(f"モデルディレクトリ : {models_dir}")
+    print(f"更新対象ファイル   : {lappdefine_path}")
+    print("=" * 60)
 
     # モデルディレクトリを検索
     print("モデルディレクトリを検索中...")
@@ -122,4 +120,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    work_dir = Path(__file__).parent.parent.parent.resolve()
+    os.chdir(work_dir)
+    config_path = work_dir / "config.yaml"
+    main(work_dir, config_path)

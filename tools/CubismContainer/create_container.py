@@ -6,7 +6,6 @@ Docker container creation script for Cubism SDK Web
 import os
 import sys
 import subprocess
-import json
 import yaml
 from pathlib import Path
 import shutil
@@ -30,8 +29,6 @@ def run_command(cmd, shell=True, capture_output=False, check=False):
 
 
 def main(work_dir, config_path):
-    os.chdir(work_dir)
-
     # Load settings from YAML
     try:
         with open(config_path, 'r', encoding='utf-8') as f:
@@ -58,26 +55,31 @@ def main(work_dir, config_path):
     GIT_SAMPLE_TAG = config['cubism']['git_sample_tag']
     GIT_SAMPLE_DIR_NAME = config['cubism']['git_sample_dir_name']
     ARCHIVE_CORE_DIR = config['cubism']['archive_core_dir']
+    MODELS_DIR = config['cubism']['models_dir']
     ADAPTER_DIR = config['custom']['adapter_dir']
 
     dockerfile_path = Path(work_dir / DOCKER_FILE_NAME).resolve().absolute()
     adapter_dir = Path(ADAPTER_DIR).resolve().absolute()
     archive_core_path = Path(ARCHIVE_CORE_DIR).resolve().absolute()
+    models_path = Path(MODELS_DIR).resolve().absolute()
     temp_core_dir = Path(work_dir / "volume" / "Core").resolve().absolute()
 
     # Display settings
     print("=" * 50)
     print("[Create Cubism SDK for Web Docker Container]")
     print(f"  Git")
-    print(f"    Framework      : {GIT_FRAMEWORK_REPO}[{GIT_FRAMEWORK_TAG}]")
-    print(f"    Sample         : {GIT_SAMPLE_REPO}[{GIT_SAMPLE_TAG}]")
-    print(f"  Working Dir      : {work_dir}")
-    print(f"  Config           : {config_path}")
-    print(f"  Archive Core Dir : {archive_core_path}")
-    print(f"  dockerfile       : {dockerfile_path}")
-    print(f"  Docker image     : {DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}")
-    print(f"  Docker container : {DOCKER_CONTAINER_NAME}")
-    print(f"      port         : {SERVER_PORT}")
+    print(f"    Framework : {GIT_FRAMEWORK_REPO}[{GIT_FRAMEWORK_TAG}]")
+    print(f"    Sample    : {GIT_SAMPLE_REPO}[{GIT_SAMPLE_TAG}]")
+    print(f"  Files")
+    print(f"    Working Dir       : {work_dir}")
+    print(f"    Config            : {config_path}")
+    print(f"    Cubism Core Dir   : {archive_core_path}")
+    print(f"    Cubism Models Dir : {models_path}")
+    print(f"  Docker")
+    print(f"    dockerfile : {dockerfile_path}")
+    print(f"    image      : {DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}")
+    print(f"    container  : {DOCKER_CONTAINER_NAME}")
+    print(f"        port   : {SERVER_PORT}")
     print("=" * 50)
 
     # Check Cubism Core files
@@ -157,6 +159,7 @@ def main(work_dir, config_path):
         "--name", DOCKER_CONTAINER_NAME,
         "-dit",
         "-v", f"{adapter_dir}:/root/workspace/adapter",
+        "-v", f"{models_path}:/root/workspace/Cubism/Resources",
         "-p", f"{SERVER_PORT}:5000",
         "-p", f"{WEBSOCKET_PORT}:8765",
         f"{DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}"
@@ -179,6 +182,7 @@ def main(work_dir, config_path):
 
 
 if __name__ == "__main__":
-    work_dir = Path(__file__).parent.resolve()
-    config_path = Path("src").absolute() / "config.yaml"
+    work_dir = Path(__file__).parent.parent.parent.resolve()
+    os.chdir(work_dir)
+    config_path = Path("src").resolve().absolute() / "config.yaml"
     main(work_dir, config_path)

@@ -45,7 +45,7 @@ RUN npm install -g npm && \
 WORKDIR /root/workspace/adapter
 
 # Set environment variable for model directory
-ENV CUBISM_MODEL_DIR=/root/workspace/adapter/resources
+ENV CUBISM_MODEL_DIR=/root/workspace/Cubism/Resources
 
 # Expose WebSocket port
 # python3 websocket_server.py --host 0.0.0.0 --port 8765
