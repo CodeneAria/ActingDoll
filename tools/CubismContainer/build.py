@@ -67,7 +67,7 @@ def main(work_dir, config_path):
         sys.exit(1)
 
     # Run npm start inside container
-    print("# Running npm start inside the container...")
+    print("# npm install and build inside the container...")
     # npm install -g npm && npm install && npm run build
     npm_cmd = (
         f'docker exec -t {DOCKER_CONTAINER_NAME} /bin/sh -c "'
@@ -82,7 +82,7 @@ def main(work_dir, config_path):
         # Run the command and show output in real-time
         subprocess.run(npm_cmd, shell=True, check=True)
     except subprocess.CalledProcessError as e:
-        print(f"[Error] running npm start: {e}", file=sys.stderr)
+        print(f"[Error] running npm install and build: {e}", file=sys.stderr)
         sys.exit(1)
     except KeyboardInterrupt:
         print("\n# Shutting down...")

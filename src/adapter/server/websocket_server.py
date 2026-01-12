@@ -222,6 +222,7 @@ async def handle_client(websocket: ServerConnection):
             "total_clients": len(connected_clients)
         })
 
+
 async def model_command(command: str, args: str) -> dict:
     """
     モデル関連コマンドを処理
@@ -251,7 +252,8 @@ async def model_command(command: str, args: str) -> dict:
             }
         model_info = model_manager.get_model_info(args)
         if model_info:
-            expressions = model_info.get('FileReferences', {}).get('Expressions', [])
+            expressions = model_info.get(
+                'FileReferences', {}).get('Expressions', [])
             expression_names = [exp.get('Name') for exp in expressions]
             logger.info(f"expressions一覧: {expression_names}")
             return {
@@ -281,7 +283,8 @@ async def model_command(command: str, args: str) -> dict:
             motions = model_info.get('FileReferences', {}).get('Motions', {})
             motion_summary = {}
             for group_name, motion_list in motions.items():
-                motion_summary[group_name] = [m.get('File') for m in motion_list]
+                motion_summary[group_name] = [
+                    m.get('File') for m in motion_list]
             logger.info(f"motions一覧: {motion_summary}")
             return {
                 "type": "command_response",
@@ -315,7 +318,8 @@ async def model_command(command: str, args: str) -> dict:
                     "Name": param.get('Name'),
                     "GroupId": param.get('GroupId', '')
                 })
-            logger.info(f"parameters一覧 ({len(param_summary)}件): {[p['Id'] for p in param_summary]}")
+            logger.info(
+                f"parameters一覧 ({len(param_summary)}件): {[p['Id'] for p in param_summary]}")
             return {
                 "type": "command_response",
                 "command": "get_parameters",
@@ -350,221 +354,231 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
     Returns:
         レスポンス辞書
     """
-    # モデル情報取得
-    if command == "get_model":
-        # クライアントに現在のモデル情報をリクエスト
-        if client_id not in client_id_map:
-            return {
-                "type": "client_response",
-                "command": "get_model",
-                "error": f"クライアント {client_id} が見つかりません"
-            }
-
-        # クライアントにモデル情報要求を送信
-        await send_to_client(client_id, {
-            "type": "request_model_info",
-            "timestamp": datetime.now().isoformat()
-        })
-
-        return {
-            "type": "client_response",
-            "command": "get_model",
-            "success": True,
-            "message": "クライアントにモデル情報をリクエストしました"
-        }
-
-    # アニメーション設定 - 自動目パチ
-    elif command == "get_eye_blink":
-        return {
-            "type": "client_response",
-            "command": "get_eye_blink",
-            "client_id": client_id,
-            "data": {"enabled": args.get("enabled")}
-        }
-
-    elif command == "set_eye_blink":
-        enabled = args.get("enabled", True)
-        # ブロードキャストでクライアントに通知
-        await broadcast_message({
-            "type": "set_eye_blink",
-            "client_id": client_id,
-            "enabled": enabled,
-            "timestamp": datetime.now().isoformat()
-        })
-        return {
-            "type": "client_response",
-            "command": "set_eye_blink",
-            "success": True,
-            "data": {"enabled": enabled}
-        }
-
-    # アニメーション設定 - 呼吸
-    elif command == "get_breath":
-        return {
-            "type": "client_response",
-            "command": "get_breath",
-            "client_id": client_id,
-            "data": {"enabled": args.get("enabled")}
-        }
-
-    elif command == "set_breath":
-        enabled = args.get("enabled", True)
-        await broadcast_message({
-            "type": "set_breath",
-            "client_id": client_id,
-            "enabled": enabled,
-            "timestamp": datetime.now().isoformat()
-        })
-        return {
-            "type": "client_response",
-            "command": "set_breath",
-            "success": True,
-            "data": {"enabled": enabled}
-        }
-
-    # アニメーション設定 - アイドリングモーション
-    elif command == "get_idle_motion":
-        return {
-            "type": "client_response",
-            "command": "get_idle_motion",
-            "client_id": client_id,
-            "data": {"enabled": args.get("enabled")}
-        }
-
-    elif command == "set_idle_motion":
-        enabled = args.get("enabled", False)
-        await broadcast_message({
-            "type": "set_idle_motion",
-            "client_id": client_id,
-            "enabled": enabled,
-            "timestamp": datetime.now().isoformat()
-        })
-        return {
-            "type": "client_response",
-            "command": "set_idle_motion",
-            "success": True,
-            "data": {"enabled": enabled}
-        }
-
-    # アニメーション設定 - ドラッグ追従
-    elif command == "get_drag_follow":
-        return {
-            "type": "client_response",
-            "command": "get_drag_follow",
-            "client_id": client_id,
-            "data": {"enabled": args.get("enabled")}
-        }
-
-    elif command == "set_drag_follow":
-        enabled = args.get("enabled", False)
-        await broadcast_message({
-            "type": "set_drag_follow",
-            "client_id": client_id,
-            "enabled": enabled,
-            "timestamp": datetime.now().isoformat()
-        })
-        return {
-            "type": "client_response",
-            "command": "set_drag_follow",
-            "success": True,
-            "data": {"enabled": enabled}
-        }
-
-    # Expressions
-    elif command == "get_expression":
-        return {
-            "type": "client_response",
-            "command": "get_expression",
-            "client_id": client_id,
-            "data": {"expression": args.get("expression")}
-        }
-
-    elif command == "set_expression":
-        expression = args.get("expression")
-        if not expression:
-            return {
-                "type": "client_response",
-                "command": "set_expression",
-                "error": "expression名が必要です"
-            }
-        await broadcast_message({
-            "type": "set_expression",
-            "client_id": client_id,
-            "expression": expression,
-            "timestamp": datetime.now().isoformat()
-        })
-        return {
-            "type": "client_response",
-            "command": "set_expression",
-            "success": True,
-            "data": {"expression": expression}
-        }
-
-    # Motions
-    elif command == "get_motion":
-        return {
-            "type": "client_response",
-            "command": "get_motion",
-            "client_id": client_id,
-            "data": {
-                "group": args.get("group"),
-                "index": args.get("index")
-            }
-        }
-
-    elif command == "set_motion":
-        group = args.get("group")
-        index = args.get("index")
-        if not group:
-            return {
-                "type": "client_response",
-                "command": "set_motion",
-                "error": "motion group名が必要です"
-            }
-        await broadcast_message({
-            "type": "set_motion",
-            "client_id": client_id,
-            "group": group,
-            "index": index,
-            "timestamp": datetime.now().isoformat()
-        })
-        return {
-            "type": "client_response",
-            "command": "set_motion",
-            "success": True,
-            "data": {"group": group, "index": index}
-        }
-
-    # Parameters (Setterのみ)
-    elif command == "set_parameter":
-        param_name = args.get("name")
-        param_value = args.get("value")
-        if param_name is None or param_value is None:
-            return {
-                "type": "client_response",
-                "command": "set_parameter",
-                "error": "parameter nameとvalueが必要です"
-            }
-        await broadcast_message({
-            "type": "set_parameter",
-            "client_id": client_id,
-            "name": param_name,
-            "value": param_value,
-            "timestamp": datetime.now().isoformat()
-        })
-        return {
-            "type": "client_response",
-            "command": "set_parameter",
-            "success": True,
-            "data": {"name": param_name, "value": param_value}
-        }
-
-    else:
+    if client_id not in client_id_map:
         return {
             "type": "client_response",
             "command": command,
-            "error": f"不明なクライアントコマンド: {command}"
+            "error": f"クライアント '{client_id}' が見つかりません"
         }
+
+    if command.startswith("set_"):
+        if command == "set_eye_blink":  # アニメーション設定 - 自動目パチ
+            enabled = args.get("enabled", True)
+            await send_to_client(client_id, {
+                "type": "set_eye_blink",
+                "client_id": client_id,
+                "enabled": enabled,
+                "timestamp": datetime.now().isoformat()
+            })
+            return {
+                "type": "client_response",
+                "command": "set_eye_blink",
+                "success": True,
+                "message": "クライアントにモデル情報をリクエストしました"
+            }
+
+        elif command == "set_breath":  # アニメーション設定 - 呼吸
+            enabled = args.get("enabled", True)
+            await send_to_client(client_id, {
+                "type": "set_breath",
+                "client_id": client_id,
+                "enabled": enabled,
+                "timestamp": datetime.now().isoformat()
+            })
+            return {
+                "type": "client_response",
+                "command": "set_breath",
+                "success": True,
+                "message": "クライアントにモデル情報をリクエストしました"
+            }
+
+        elif command == "set_idle_motion":  # アニメーション設定 - アイドリングモーション
+            enabled = args.get("enabled", False)
+            await send_to_client(client_id, {
+                "type": "set_idle_motion",
+                "client_id": client_id,
+                "enabled": enabled,
+                "timestamp": datetime.now().isoformat()
+            })
+            return {
+                "type": "client_response",
+                "command": "set_idle_motion",
+                "success": True,
+                "message": "クライアントにモデル情報をリクエストしました"
+            }
+
+        elif command == "set_drag_follow":  # アニメーション設定 - ドラッグ追従
+            enabled = args.get("enabled", False)
+            await send_to_client(client_id, {
+                "type": "set_drag_follow",
+                "client_id": client_id,
+                "enabled": enabled,
+                "timestamp": datetime.now().isoformat()
+            })
+            return {
+                "type": "client_response",
+                "command": "set_drag_follow",
+                "success": True,
+                "message": "クライアントにモデル情報をリクエストしました"
+            }
+
+        elif command == "set_expression":  # Expressions
+            expression = args.get("expression")
+            if not expression:
+                return {
+                    "type": "client_response",
+                    "command": "set_expression",
+                    "error": "expression名が必要です"
+                }
+            await send_to_client(client_id, {
+                "type": "set_expression",
+                "client_id": client_id,
+                "expression": expression,
+                "timestamp": datetime.now().isoformat()
+            })
+            return {
+                "type": "client_response",
+                "command": "set_expression",
+                "success": True,
+                "message": "クライアントにモデル情報をリクエストしました"
+            }
+
+        elif command == "set_motion":  # Motions
+            group = args.get("group")
+            index = args.get("index")
+            if not group:
+                return {
+                    "type": "client_response",
+                    "command": "set_motion",
+                    "error": "motion group名が必要です"
+                }
+            await send_to_client(client_id, {
+                "type": "set_motion",
+                "client_id": client_id,
+                "group": group,
+                "index": index,
+                "timestamp": datetime.now().isoformat()
+            })
+            return {
+                "type": "client_response",
+                "command": "set_motion",
+                "success": True,
+                "message": "クライアントにモデル情報をリクエストしました"
+            }
+
+        elif command == "set_parameter":  # Parameters
+            param_name = args.get("name")
+            param_value = args.get("value")
+            if param_name is None or param_value is None:
+                return {
+                    "type": "client_response",
+                    "command": "set_parameter",
+                    "error": "parameter nameとvalueが必要です"
+                }
+            await send_to_client(client_id, {
+                "type": "set_parameter",
+                "client_id": client_id,
+                "name": param_name,
+                "value": param_value,
+                "timestamp": datetime.now().isoformat()
+            })
+            return {
+                "type": "client_response",
+                "command": "set_parameter",
+                "success": True,
+                "message": "クライアントにモデル情報をリクエストしました"
+            }
+
+    elif command.startswith("get_"):
+        if command == "get_eye_blink":  # アニメーション設定 - 自動目パチ
+            await send_to_client(client_id, {
+                "type": "request_get_eye_blink",
+                "timestamp": datetime.now().isoformat()
+            })
+            return {
+                "type": "client_response",
+                "command": "get_eye_blink",
+                "client_id": client_id,
+                "message": "クライアントにモデル情報をリクエストしました"
+            }
+
+        elif command == "get_breath":  # アニメーション設定 - 呼吸
+            await send_to_client(client_id, {
+                "type": "request_get_breath",
+                "timestamp": datetime.now().isoformat()
+            })
+            return {
+                "type": "client_response",
+                "command": "get_breath",
+                "client_id": client_id,
+                "message": "クライアントにモデル情報をリクエストしました"
+            }
+
+        elif command == "get_idle_motion":  # アニメーション設定 - アイドリングモーション
+            await send_to_client(client_id, {
+                "type": "request_get_idle_motion",
+                "timestamp": datetime.now().isoformat()
+            })
+            return {
+                "type": "client_response",
+                "command": "get_idle_motion",
+                "client_id": client_id,
+                "message": "クライアントにモデル情報をリクエストしました"
+            }
+
+        elif command == "get_drag_follow":  # アニメーション設定 - ドラッグ追従
+            await send_to_client(client_id, {
+                "type": "request_get_drag_follow",
+                "timestamp": datetime.now().isoformat()
+            })
+            return {
+                "type": "client_response",
+                "command": "get_drag_follow",
+                "client_id": client_id,
+                "message": "クライアントにモデル情報をリクエストしました"
+            }
+
+        elif command == "get_expression":  # Expressions
+            await send_to_client(client_id, {
+                "type": "request_get_expression",
+                "timestamp": datetime.now().isoformat()
+            })
+            return {
+                "type": "client_response",
+                "command": "get_expression",
+                "client_id": client_id,
+                "message": "クライアントにモデル情報をリクエストしました"
+            }
+
+        elif command == "get_motion":  # Motions
+            await send_to_client(client_id, {
+                "type": "request_get_motion",
+                "timestamp": datetime.now().isoformat()
+            })
+            return {
+                "type": "client_response",
+                "command": "get_motion",
+                "client_id": client_id,
+                "message": "クライアントにモデル情報をリクエストしました"
+            }
+
+        elif command == "get_model":  # クライアントにモデル情報要求を送信
+            await send_to_client(client_id, {
+                "type": "request_get_model",
+                "timestamp": datetime.now().isoformat()
+            })
+            return {
+                "type": "client_response",
+                "command": "get_model",
+                "success": True,
+                "message": "クライアントにモデル情報をリクエストしました"
+            }
+
+    return {
+        "type": "client_response",
+        "command": command,
+        "error": f"不明なクライアントコマンド: {command}"
+    }
 
 
 async def process_command(command: str, client_id: str) -> dict:
@@ -603,33 +617,43 @@ async def process_command(command: str, client_id: str) -> dict:
 
 def print_server_console():
     print("=== サーバーコンソール ===")
+
     print("サーバーコマンド:")
     print("  quit                       - サーバーを停止")
     print("  count                      - 接続数を表示")
     print("  list                       - 接続中のクライアント一覧")
     print("  notify <message>           - 全クライアントに通知を送信")
     print("  send <client_id> <message> - 特定のクライアントにメッセージを送信")
+
     print("モデルコマンド:")
     print("  model list                      - 利用可能なモデル一覧を取得")
     print("  model get_expressions <name>    - モデルのexpressions一覧を取得")
     print("  model get_motions <name>        - モデルのmotions一覧を取得")
     print("  model get_parameters <name>     - モデルのparameters一覧を取得")
+
     print("クライアント制御コマンド (WebSocket経由):")
-    print("  client get_model <client_id>        - 現在表示中のモデルを取得")
-    print("  client get_eye_blink <client_id>")
-    print("  client set_eye_blink ... <client_id>")
-    print("  client get_breath <client_id>")
-    print("  client set_breath ... <client_id>")
-    print("  client get_idle_motion <client_id>")
-    print("  client set_idle_motion ... <client_id>")
-    print("  client get_drag_follow <client_id>")
-    print("  client set_drag_follow ... <client_id>")
-    print("  client get_expression <client_id>")
-    print("  client set_expression ... <client_id>")
-    print("  client get_motion <client_id>")
-    print("  client set_motion ... <client_id>")
-    print("  client set_parameter ... <client_id>")
+    print("  client <client_id> get_eye_blink")
+    print("  client <client_id> set_eye_blink ...")
+
+    print("  client <client_id> get_breath")
+    print("  client <client_id> set_breath ...")
+
+    print("  client <client_id> get_idle_motion")
+    print("  client <client_id> set_idle_motion ...")
+
+    print("  client <client_id> get_drag_follow")
+    print("  client <client_id> set_drag_follow ...")
+
+    print("  client <client_id> get_expression")
+    print("  client <client_id> set_expression ...")
+
+    print("  client <client_id> get_motion")
+    print("  client <client_id> set_motion ...")
+
+    print("  client <client_id> get_model")
+    print("  client <client_id> set_parameter ...")
     print("========================\n")
+
 
 async def server_console():
     """
@@ -653,7 +677,6 @@ async def server_console():
             if command == "quit":
                 logger.info("サーバーを停止します...")
                 break
-
 
             elif command == "send" and len(parts) > 1:
                 # 形式: send <client_id> <message>
@@ -702,23 +725,17 @@ async def server_console():
                 await model_command(sub_command, args)
 
             elif command == "client" and len(parts) > 1:
-                # 形式: client <sub_command> <client_id> [args...]
-                cmd_parts = parts[1].split(maxsplit=1)
-                if len(cmd_parts) < 2:
-                    logger.warning("使い方: client <command> <client_id> [args...]")
+                # 形式: client <client_id> <sub_command> [args...]
+                if len(parts) < 3:
+                    logger.warning(
+                        "使い方: client <client_id> <command> [args...]")
                     continue
-
+                cmd_parts = parts[2].split(maxsplit=1)
                 sub_command = cmd_parts[0]
-                target_client_id = cmd_parts[1].split()[0]  # client_idを抽出
-
-                # コマンドに応じた引数を構築
+                target_client_id = parts[1]  # client_idを抽出
                 args = {}
-                if sub_command == "get_model":
-                    args = {}
-                elif sub_command.startswith("set_"):
-                    # 追加の引数があれば解析（例: enabled=true）
-                    # 簡易実装として、今後拡張可能
-                    pass
+                if len(cmd_parts) > 1:
+                    args = cmd_parts[1]
 
                 response = await client_command(sub_command, args, target_client_id)
                 logger.info(f"クライアントコマンド結果: {response}")

@@ -46,35 +46,38 @@ class ModelManager:
                 model_json = model_dir / f"{model_name}.model3.json"
                 cdi3_json = model_dir / f"{model_name}.cdi3.json"
                 physics3_json = model_dir / f"{model_name}.physics3.json"
+                is_success = True
 
+                # model3.jsonを読み込む
                 if model_json.exists():
                     try:
                         with open(model_json, 'r', encoding='utf-8') as f:
                             model_data = json.load(f)
                             self.models[model_name] = model_data
-                        logger.info(f"  モデル読み込み成功: {model_name}")
-
-                        # cdi3.jsonも読み込む
-                        if cdi3_json.exists():
-                            try:
-                                with open(cdi3_json, 'r', encoding='utf-8') as f:
-                                    cdi3_data = json.load(f)
-                                    self.cdi3_data[model_name] = cdi3_data
-                                logger.info(f"  cdi3.json読み込み成功: {model_name}")
-                            except Exception as e:
-                                logger.error(f"  cdi3.json読み込み失敗 {model_name}: {e}")
-
-                        # physics3.jsonも読み込む
-                        if physics3_json.exists():
-                            try:
-                                with open(physics3_json, 'r', encoding='utf-8') as f:
-                                    physics3_data = json.load(f)
-                                    self.physics3_data[model_name] = physics3_data
-                                logger.info(f"  physics3.json読み込み成功: {model_name}")
-                            except Exception as e:
-                                logger.error(f"  physics3.json読み込み失敗 {model_name}: {e}")
                     except Exception as e:
-                        logger.error(f"  モデル読み込み失敗 {model_name}: {e}")
+                        is_success = False
+                        logger.error(f"  => モデル読み込み失敗 {model_name}: {e}")
+                # cdi3.jsonも読み込む
+                if cdi3_json.exists():
+                    try:
+                        with open(cdi3_json, 'r', encoding='utf-8') as f:
+                            cdi3_data = json.load(f)
+                            self.cdi3_data[model_name] = cdi3_data
+                    except Exception as e:
+                        is_success = False
+                        logger.error(f"  => cdi3.json読み込み失敗 {model_name}: {e}")
+
+                # physics3.jsonも読み込む
+                if physics3_json.exists():
+                    try:
+                        with open(physics3_json, 'r', encoding='utf-8') as f:
+                            physics3_data = json.load(f)
+                            self.physics3_data[model_name] = physics3_data
+                    except Exception as e:
+                        is_success = False
+                        logger.error(f"  => physics3.json読み込み失敗 {model_name}: {e}")
+                if is_success:
+                    logger.info(f"  => モデル読み込み成功: {model_name}")
 
     def get_models(self) -> List[str]:
         """

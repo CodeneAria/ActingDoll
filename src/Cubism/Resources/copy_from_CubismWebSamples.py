@@ -75,7 +75,7 @@ def main(work_dir, config_path):
         sys.exit(1)
 
     # Run npm start inside container
-    print("# Running npm start inside the container...")
+    print("# Copying resources from container...")
     npm_cmd = (
         f'docker cp {DOCKER_CONTAINER_NAME}:{samples_resources_dir} {models_path}'
     )

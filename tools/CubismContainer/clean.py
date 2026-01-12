@@ -48,7 +48,7 @@ def main(work_dir, config_path):
 
     # Show running containers
     print("=" * 50)
-    print("[Build model inside Cubism SDK for Web container]")
+    print("[Clean build artifacts inside Cubism SDK for Web container]")
     ps_filter_cmd = (
         f'docker ps --filter "ancestor={DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}" '
         f'--format "table {{{{.ID}}}}\\t{{{{.Image}}}}\\t{{{{.Status}}}}\\t{{{{.Names}}}}\\t{{{{.Ports}}}}"'
@@ -80,7 +80,7 @@ def main(work_dir, config_path):
         # Run the command and show output in real-time
         subprocess.run(npm_cmd, shell=True, check=True)
     except subprocess.CalledProcessError as e:
-        print(f"[Error] running npm start: {e}", file=sys.stderr)
+        print(f"[Error] running npm run clean: {e}", file=sys.stderr)
         sys.exit(1)
     except KeyboardInterrupt:
         print("\n# Shutting down...")
