@@ -23,7 +23,7 @@ export default defineConfig((env: ConfigEnv): UserConfig => {
       rollupOptions: {
         input: {
           main: path.resolve(__dirname, 'index.html'),
-          controller: path.resolve(__dirname, 'controller.html'),
+          api: path.resolve(__dirname, 'API.html'),
         },
       },
     },
