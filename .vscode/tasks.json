@@ -49,14 +49,14 @@
         {
             "label": "Docker:Model:DirUpdate",
             "type": "shell",
-            "command": "${workspaceFolder}/src/Cubism/Resources/update_model_dirs.py",
+            "command": "${workspaceFolder}/src/Cubism/update_model_dirs.py",
             "args": [],
             "detail": "src/Cubism/Resources/ 以下のモデルディレクトリを参照するように lappdefine.ts を更新する"
         },
         {
             "label": "Docker:Model:Copy_from_CubismSamples",
             "type": "shell",
-            "command": "${workspaceFolder}/src/Cubism/Resources/copy_from_CubismWebSamples.py",
+            "command": "${workspaceFolder}/src/Cubism/copy_from_CubismWebSamples.py",
             "args": [],
             "detail": "src/Cubism/Resources/ 以下にCubism Web Samples for Webのサンプルリソースをコピーする"
         },
