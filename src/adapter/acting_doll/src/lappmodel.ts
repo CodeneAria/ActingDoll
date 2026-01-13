@@ -45,6 +45,7 @@ import { LAppWavFileHandler } from './lappwavfilehandler';
 import { CubismMoc } from '@framework/model/cubismmoc';
 import { LAppDelegate } from './lappdelegate';
 import { LAppSubdelegate } from './lappsubdelegate';
+import { LAppUI } from './lappui';
 
 enum LoadStep {
   LoadAssets,
@@ -613,6 +614,12 @@ export class LAppModel extends CubismUserModel {
   public setEyeBlinkEnabled(enabled: boolean): void {
     this._eyeBlinkEnabled = enabled;
   }
+  /**
+   * 自動目パチの状態を取得する
+   */
+  public getEyeBlinkEnabled(): boolean {
+    return this._eyeBlinkEnabled;
+  }
 
   /**
    * 呼吸を有効/無効にする
@@ -620,6 +627,12 @@ export class LAppModel extends CubismUserModel {
    */
   public setBreathEnabled(enabled: boolean): void {
     this._breathEnabled = enabled;
+  }
+  /**
+   * 呼吸の状態を取得する
+   */
+  public getBreathEnabled(): boolean {
+    return this._breathEnabled;
   }
 
   /**
@@ -629,6 +642,12 @@ export class LAppModel extends CubismUserModel {
   public setIdleMotionEnabled(enabled: boolean): void {
     this._idleMotionEnabled = enabled;
   }
+  /**
+   * アイドリングモーションの状態を取得する
+   */
+  public getIdleMotionEnabled(): boolean {
+    return this._idleMotionEnabled;
+  }
 
   /**
    * ドラッグ追従を有効/無効にする
@@ -636,6 +655,12 @@ export class LAppModel extends CubismUserModel {
    */
   public setDragFollowEnabled(enabled: boolean): void {
     this._dragFollowEnabled = enabled;
+  }
+  /**
+   * ドラッグ追従の状態を取得する
+   */
+  public getDragFollowEnabled(): boolean {
+    return this._dragFollowEnabled;
   }
 
   /**
@@ -779,6 +804,17 @@ export class LAppModel extends CubismUserModel {
     if (this._debugMode) {
       LAppPal.printMessage(`[APP]start motion: [${group}_${no}]`);
     }
+
+    // 現在のモーション情報を保存
+    this._currentMotionGroup = group;
+    this._currentMotionNo = no;
+
+    // Update UI select
+    const ui = LAppUI.getInstance();
+    if (ui) {
+      ui.updateMotionSelect(group, no);
+    }
+
     return this._motionManager.startMotionPriority(
       motion,
       autoDelete,
@@ -830,11 +866,40 @@ export class LAppModel extends CubismUserModel {
 
     if (motion != null) {
       this._expressionManager.startMotion(motion, false);
+      this._currentExpressionId = expressionId;
+
+      // Update UI select
+      const ui = LAppUI.getInstance();
+      if (ui) {
+        ui.updateExpressionSelect(expressionId);
+      }
     } else {
       if (this._debugMode) {
         LAppPal.printMessage(`[APP]expression[${expressionId}] is null`);
       }
     }
+  }
+
+  /**
+   * 現在設定されている表情IDを取得する
+   * @returns 現在の表情ID（設定されていない場合はnull）
+   */
+  public getCurrentExpression(): string | null {
+    return this._currentExpressionId;
+  }
+
+  /**
+   * 現在再生中のモーション情報を取得する
+   * @returns 現在のモーション情報（グループ名と番号）。再生中でない場合はnull
+   */
+  public getCurrentMotion(): { group: string; no: number } | null {
+    if (this._currentMotionGroup !== null && this._currentMotionNo !== null) {
+      return {
+        group: this._currentMotionGroup,
+        no: this._currentMotionNo
+      };
+    }
+    return null;
   }
 
   /**
@@ -854,6 +919,45 @@ export class LAppModel extends CubismUserModel {
         return;
       }
     }
+  }
+
+  public getModelName(): string {
+    if (this._modelSetting.getModelFileName() != '') {
+      const modelFileName = this._modelSetting.getModelFileName();
+      // 拡張子を削除
+      const lastDotIndex = modelFileName.lastIndexOf('.');
+      if (lastDotIndex > 0) {
+        return modelFileName.substring(0, lastDotIndex);
+      }
+      return modelFileName;
+    } else {
+      return '[Unknown]';
+    }
+  }
+
+  /**
+   * パラメータ名からインデックスを取得
+   * @param paramName パラメータ名（文字列）
+   * @returns パラメータインデックス。見つからない場合は-1
+   */
+  public getParameterIndex(paramName: string): number {
+    if (!this._model) {
+      return -1;
+    }
+    const paramId = CubismFramework.getIdManager().getId(paramName);
+    return this._model.getParameterIndex(paramId);
+  }
+
+  /**
+   * インデックスでパラメータ値を設定
+   * @param paramIndex パラメータインデックス
+   * @param value 設定する値
+   */
+  public setParameterValueByIndex(paramIndex: number, value: number): void {
+    if (!this._model || paramIndex < 0) {
+      return;
+    }
+    this._model.setParameterValueByIndex(paramIndex, value);
   }
 
   /**
@@ -894,7 +998,7 @@ export class LAppModel extends CubismUserModel {
             websocketClient.sendCustomMessage('model_hit', {
               moc_name: this._modelSetting.getModelFileName(),
               sprite: drawId.getString().s,
-              position:{ x, y }
+              position: { x, y }
             });
           }
           return true;
@@ -1084,6 +1188,9 @@ export class LAppModel extends CubismUserModel {
 
     this._motions = new csmMap<string, ACubismMotion>();
     this._expressions = new csmMap<string, ACubismMotion>();
+    this._currentExpressionId = null;
+    this._currentMotionGroup = null;
+    this._currentMotionNo = null;
 
     this._hitArea = new csmVector<csmRect>();
     this._userArea = new csmVector<csmRect>();
@@ -1141,6 +1248,9 @@ export class LAppModel extends CubismUserModel {
 
   _motions: csmMap<string, ACubismMotion>; // 読み込まれているモーションのリスト
   _expressions: csmMap<string, ACubismMotion>; // 読み込まれている表情のリスト
+  _currentExpressionId: string | null; // 現在設定されている表情ID
+  _currentMotionGroup: string | null; // 現在再生中のモーショングループ名
+  _currentMotionNo: number | null; // 現在再生中のモーション番号
 
   _hitArea: csmVector<csmRect>;
   _userArea: csmVector<csmRect>;

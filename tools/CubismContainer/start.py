@@ -57,7 +57,7 @@ def main(work_dir, config_path):
     print("=" * 50)
 
     # Restart container
-    print(f"# Starting container {DOCKER_CONTAINER_NAME}...")
+    print(f"# Restarting container {DOCKER_CONTAINER_NAME}...")
     result = run_command(
         f"docker restart {DOCKER_CONTAINER_NAME}", capture_output=True)
     if result.returncode != 0:

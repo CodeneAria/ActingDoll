@@ -12,6 +12,7 @@ import { LAppPal } from './lapppal';
 import { LAppSubdelegate } from './lappsubdelegate';
 import { CubismLogError } from '@framework/utils/cubismdebug';
 import { WebSocketClient } from './websocketclient';
+import { LAppUI } from './lappui';
 
 export let s_instance: LAppDelegate = null;
 
@@ -299,6 +300,230 @@ export class LAppDelegate {
       this._websocketClient.connect().catch((error) => {
         console.error('[WebSocket] 接続に失敗しました:', error);
       });
+
+      // 各リクエストに対するハンドラーを登録して状態を返す
+      this._websocketClient.onMessage('request_eye_blink', () => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const live2DManager = subdelegate.getLive2DManager();
+          const model = live2DManager.getModel(0);
+          if (model) {
+            const enabled = model.getEyeBlinkEnabled();
+            this._websocketClient.sendEyeBlinkStatus(enabled);
+          }
+        }
+      });
+
+      this._websocketClient.onMessage('request_breath', () => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const live2DManager = subdelegate.getLive2DManager();
+          const model = live2DManager.getModel(0);
+          if (model) {
+            const enabled = model.getBreathEnabled();
+            this._websocketClient.sendBreathStatus(enabled);
+          }
+        }
+      });
+
+      this._websocketClient.onMessage('request_idle_motion', () => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const live2DManager = subdelegate.getLive2DManager();
+          const model = live2DManager.getModel(0);
+          if (model) {
+            const enabled = model.getIdleMotionEnabled();
+            this._websocketClient.sendIdleMotionStatus(enabled);
+          }
+        }
+      });
+
+      this._websocketClient.onMessage('request_drag_follow', () => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const live2DManager = subdelegate.getLive2DManager();
+          const model = live2DManager.getModel(0);
+          if (model) {
+            const enabled = model.getDragFollowEnabled();
+            this._websocketClient.sendDragFollowStatus(enabled);
+          }
+        }
+      });
+      this._websocketClient.onMessage('request_expression', () => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const live2DManager = subdelegate.getLive2DManager();
+          const model = live2DManager.getModel(0);
+          if (model) {
+            const expression = model.getCurrentExpression();
+            this._websocketClient.sendExpressionStatus(expression || '');
+          }
+        }
+      });
+
+      this._websocketClient.onMessage('request_motion', () => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const live2DManager = subdelegate.getLive2DManager();
+          const model = live2DManager.getModel(0);
+          if (model) {
+            const motionInfo = model.getCurrentMotion();
+            if (motionInfo) {
+              this._websocketClient.sendMotionStatus(motionInfo.group, motionInfo.no);
+            } else {
+              this._websocketClient.sendMotionStatus('', 0);
+            }
+          }
+        }
+      });
+
+      this._websocketClient.onMessage('request_model_info', () => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const live2DManager = subdelegate.getLive2DManager();
+          const model = live2DManager.getModel(0);
+          if (model) {
+            const modelName = model.getModelName();
+            this._websocketClient.sendModelInfo(modelName);
+          }
+        }
+      });
+
+      // 設定メッセージのハンドラー
+      this._websocketClient.onMessage('set_eye_blink', (data: any) => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const live2DManager = subdelegate.getLive2DManager();
+          const model = live2DManager.getModel(0);
+          if (model) {
+            model.setEyeBlinkEnabled(data.enabled);
+            // Update UI toggle
+            const ui = LAppUI.getInstance();
+            if (ui) {
+              ui.updateEyeBlinkToggle(data.enabled);
+            }
+            console.log('[WebSocket] 自動目パチを設定しました:', data.enabled);
+          }
+        }
+      });
+
+      this._websocketClient.onMessage('set_breath', (data: any) => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const live2DManager = subdelegate.getLive2DManager();
+          const model = live2DManager.getModel(0);
+          if (model) {
+            model.setBreathEnabled(data.enabled);
+            // Update UI toggle
+            const ui = LAppUI.getInstance();
+            if (ui) {
+              ui.updateBreathToggle(data.enabled);
+            }
+            console.log('[WebSocket] 呼吸を設定しました:', data.enabled);
+          }
+        }
+      });
+
+      this._websocketClient.onMessage('set_idle_motion', (data: any) => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const live2DManager = subdelegate.getLive2DManager();
+          const model = live2DManager.getModel(0);
+          if (model) {
+            model.setIdleMotionEnabled(data.enabled);
+            // Update UI toggle
+            const ui = LAppUI.getInstance();
+            if (ui) {
+              ui.updateIdleMotionToggle(data.enabled);
+            }
+            console.log('[WebSocket] アイドリングモーションを設定しました:', data.enabled);
+          }
+        }
+      });
+
+      this._websocketClient.onMessage('set_drag_follow', (data: any) => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const live2DManager = subdelegate.getLive2DManager();
+          const model = live2DManager.getModel(0);
+          if (model) {
+            model.setDragFollowEnabled(data.enabled);
+            // Update UI toggle
+            const ui = LAppUI.getInstance();
+            if (ui) {
+              ui.updateDragFollowToggle(data.enabled);
+            }
+            console.log('[WebSocket] ドラッグ追従を設定しました:', data.enabled);
+          }
+        }
+      });
+
+      this._websocketClient.onMessage('set_expression', (data: any) => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const live2DManager = subdelegate.getLive2DManager();
+          const model = live2DManager.getModel(0);
+          if (model && data.expression) {
+            model.setExpression(data.expression);
+            // Update UI select
+            const ui = LAppUI.getInstance();
+            if (ui) {
+              ui.updateExpressionSelect(data.expression);
+            }
+            console.log('[WebSocket] 表情を設定しました:', data.expression);
+          }
+        }
+      });
+
+      this._websocketClient.onMessage('set_motion', (data: any) => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const live2DManager = subdelegate.getLive2DManager();
+          const model = live2DManager.getModel(0);
+          if (model && data.group !== undefined) {
+            const index = data.index !== undefined ? data.index : 0;
+            model.startMotion(data.group, index, LAppDefine.PriorityNormal);
+            // Update UI select
+            const ui = LAppUI.getInstance();
+            if (ui) {
+              ui.updateMotionSelect(data.group, index);
+            }
+            console.log('[WebSocket] モーションを設定しました:', data.group, index);
+          }
+        }
+      });
+
+      this._websocketClient.onMessage('set_parameter', (data: any) => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const live2DManager = subdelegate.getLive2DManager();
+          const model = live2DManager.getModel(0);
+          if (model && data.parameters) {
+            // 一括設定モード: {"parameters": {"ParamAngleX": 30, "ParamAngleY": -15, ...}}
+            let setCount = 0;
+            let notFoundCount = 0;
+            const ui = LAppUI.getInstance();
+
+            for (const paramName in data.parameters) {
+              const paramValue = data.parameters[paramName];
+              const paramIndex = model.getParameterIndex(paramName);
+              if (paramIndex >= 0) {
+                model.setParameterValueByIndex(paramIndex, paramValue);
+                // Update UI slider
+                if (ui) {
+                  ui.updateParameterSlider(paramName, paramValue);
+                }
+                setCount++;
+              } else {
+                console.warn('[WebSocket] パラメータが見つかりません:', paramName);
+                notFoundCount++;
+              }
+            }
+            console.log(`[WebSocket] パラメータを一括設定しました: ${setCount}個成功, ${notFoundCount}個失敗`);
+          }
+        }
+      });
+
 
       console.log('[WebSocket] WebSocketクライアントを初期化しました');
     }

@@ -31,7 +31,7 @@ export class LAppGlManager {
   /**
    * 解放する。
    */
-  public release(): void {}
+  public release(): void { }
 
   public getGl(): WebGLRenderingContext | WebGL2RenderingContext {
     return this._gl;

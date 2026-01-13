@@ -548,6 +548,103 @@ export class LAppUI {
   }
 
   /**
+   * Update eye blink toggle checkbox
+   */
+  public updateEyeBlinkToggle(enabled: boolean): void {
+    if (this._eyeBlinkToggle) {
+      this._eyeBlinkToggle.checked = enabled;
+    }
+  }
+
+  /**
+   * Update breath toggle checkbox
+   */
+  public updateBreathToggle(enabled: boolean): void {
+    if (this._breathToggle) {
+      this._breathToggle.checked = enabled;
+    }
+  }
+
+  /**
+   * Update idle motion toggle checkbox
+   */
+  public updateIdleMotionToggle(enabled: boolean): void {
+    if (this._idleMotionToggle) {
+      this._idleMotionToggle.checked = enabled;
+    }
+  }
+
+  /**
+   * Update drag follow toggle checkbox
+   */
+  public updateDragFollowToggle(enabled: boolean): void {
+    if (this._dragFollowToggle) {
+      this._dragFollowToggle.checked = enabled;
+    }
+  }
+
+  /**
+   * Update expression select value
+   */
+  public updateExpressionSelect(expression: string): void {
+    if (this._expressionSelect) {
+      this._expressionSelect.value = expression;
+    }
+  }
+
+  /**
+   * Update motion select value
+   */
+  public updateMotionSelect(group: string, index: number): void {
+    if (this._motionSelect) {
+      this._motionSelect.value = `${group}_${index}`;
+    }
+  }
+
+  /**
+   * Update parameter slider value
+   * @param paramName パラメータ名
+   * @param value パラメータ値
+   */
+  public updateParameterSlider(paramName: string, value: number): void {
+    const slider = this._parameterSliders.get(paramName);
+    const valueSpan = this._parameterValues.get(paramName);
+
+    if (slider) {
+      slider.value = value.toString();
+    }
+    if (valueSpan) {
+      valueSpan.textContent = value.toFixed(2);
+    }
+
+    // モデルの保持値も更新して手動制御フラグを設定
+    const delegate = LAppDelegate.getInstance();
+    const subdelegate = delegate.getSubdelegate(0);
+
+    if (!subdelegate) return;
+
+    const manager = subdelegate.getLive2DManager();
+    const model = manager.getModel(0);
+
+    if (model) {
+      const cubismModel = model.getModel();
+      if (cubismModel) {
+        const paramIndex = model.getParameterIndex(paramName);
+        if (paramIndex >= 0) {
+          // パラメータ値を設定
+          cubismModel.setParameterValueByIndex(paramIndex, value);
+
+          // 保存された状態も更新（loadParameters()で上書きされないように）
+          cubismModel.saveParameters();
+
+          // モデルに手動制御フラグを設定
+          model.setParameterManualControl(paramIndex);
+        }
+      }
+    }
+  }
+
+  /**
    * Release resources
    */
   public release(): void {

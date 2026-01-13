@@ -356,14 +356,23 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
     """
     if client_id not in client_id_map:
         return {
-            "type": "client_response",
+            "type": "client",
             "command": command,
             "error": f"クライアント '{client_id}' が見つかりません"
         }
 
-    if command.startswith("set_"):
+    if command.startswith("response_"):
+        return {
+            "type": "client_response",
+            "command": command,
+            "success": True,
+            "client_id": client_id,
+            "data": args,
+            "message": "クライアントからレスポンスを受信しました"
+        }
+    elif command.startswith("set_"):
         if command == "set_eye_blink":  # アニメーション設定 - 自動目パチ
-            enabled = args.get("enabled", True)
+            enabled = args.get("enabled", True) if isinstance(args, dict) else ("enabled" in str(args).lower())
             await send_to_client(client_id, {
                 "type": "set_eye_blink",
                 "client_id": client_id,
@@ -371,14 +380,15 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
                 "timestamp": datetime.now().isoformat()
             })
             return {
-                "type": "client_response",
+                "type": "client_request",
                 "command": "set_eye_blink",
                 "success": True,
-                "message": "クライアントにモデル情報をリクエストしました"
+                "data": {"enabled": enabled},
+                "message": "クライアントに自動目パチ設定を送信しました"
             }
 
         elif command == "set_breath":  # アニメーション設定 - 呼吸
-            enabled = args.get("enabled", True)
+            enabled = args.get("enabled", True) if isinstance(args, dict) else ("enabled" in str(args).lower())
             await send_to_client(client_id, {
                 "type": "set_breath",
                 "client_id": client_id,
@@ -386,14 +396,15 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
                 "timestamp": datetime.now().isoformat()
             })
             return {
-                "type": "client_response",
+                "type": "client_request",
                 "command": "set_breath",
                 "success": True,
-                "message": "クライアントにモデル情報をリクエストしました"
+                "data": {"enabled": enabled},
+                "message": "クライアントに呼吸設定を送信しました"
             }
 
         elif command == "set_idle_motion":  # アニメーション設定 - アイドリングモーション
-            enabled = args.get("enabled", False)
+            enabled = args.get("enabled", False) if isinstance(args, dict) else ("enabled" in str(args).lower())
             await send_to_client(client_id, {
                 "type": "set_idle_motion",
                 "client_id": client_id,
@@ -401,14 +412,15 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
                 "timestamp": datetime.now().isoformat()
             })
             return {
-                "type": "client_response",
+                "type": "client_request",
                 "command": "set_idle_motion",
                 "success": True,
-                "message": "クライアントにモデル情報をリクエストしました"
+                "data": {"enabled": enabled},
+                "message": "クライアントにアイドリングモーション設定を送信しました"
             }
 
         elif command == "set_drag_follow":  # アニメーション設定 - ドラッグ追従
-            enabled = args.get("enabled", False)
+            enabled = args.get("enabled", False) if isinstance(args, dict) else ("enabled" in str(args).lower())
             await send_to_client(client_id, {
                 "type": "set_drag_follow",
                 "client_id": client_id,
@@ -416,17 +428,19 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
                 "timestamp": datetime.now().isoformat()
             })
             return {
-                "type": "client_response",
+                "type": "client_request",
                 "command": "set_drag_follow",
                 "success": True,
-                "message": "クライアントにモデル情報をリクエストしました"
+                "data": {"enabled": enabled},
+                "message": "クライアントにドラッグ追従設定を送信しました"
             }
 
         elif command == "set_expression":  # Expressions
-            expression = args.get("expression")
+            parts = args.strip().split(maxsplit=1) if len(args) > 0 else ""
+            expression = parts[0] if len(parts) > 0 else ""
             if not expression:
                 return {
-                    "type": "client_response",
+                    "type": "client_request",
                     "command": "set_expression",
                     "error": "expression名が必要です"
                 }
@@ -437,20 +451,28 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
                 "timestamp": datetime.now().isoformat()
             })
             return {
-                "type": "client_response",
+                "type": "client_request",
                 "command": "set_expression",
                 "success": True,
-                "message": "クライアントにモデル情報をリクエストしました"
+                "data": {"client_id": client_id, "expression": expression},
+                "message": "クライアントに表情設定を送信しました"
             }
 
         elif command == "set_motion":  # Motions
-            group = args.get("group")
-            index = args.get("index")
+            parts = args.strip().split(maxsplit=2) if len(args) > 0 else ""
+            group = parts[0] if len(parts) > 1 else ""
+            index = parts[1] if len(parts) > 1 else ""
             if not group:
                 return {
-                    "type": "client_response",
+                    "type": "client_request",
                     "command": "set_motion",
                     "error": "motion group名が必要です"
+                }
+            if not index:
+                return {
+                    "type": "client_request",
+                    "command": "set_motion",
+                    "error": "motion indexが必要です"
                 }
             await send_to_client(client_id, {
                 "type": "set_motion",
@@ -460,122 +482,179 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
                 "timestamp": datetime.now().isoformat()
             })
             return {
-                "type": "client_response",
+                "type": "client_request",
                 "command": "set_motion",
                 "success": True,
-                "message": "クライアントにモデル情報をリクエストしました"
+                "data": {"group": group, "index": index},
+                "message": "クライアントにモーション情報を送信しました"
             }
 
-        elif command == "set_parameter":  # Parameters
-            param_name = args.get("name")
-            param_value = args.get("value")
-            if param_name is None or param_value is None:
+        elif command == "set_parameter":  # パラメータ設定（一括）
+            # 一括設定モード: args = {"ParamAngleX": 30, "ParamAngleY": -15, ...}
+            # または文字列形式: "ParamAngleX=30 ParamAngleY=-15"
+            parameters = {}
+
+            if isinstance(args, dict):
+                # 既に辞書形式の場合はそのまま使用
+                parameters = args
+            elif isinstance(args, str):
+                # 文字列形式の場合は解析してJSON形式に変換
+                # 例: "ParamAngleX=30 ParamAngleY=-15 ParamEyeBallX=0.5"
+                if not args.strip():
+                    return {
+                        "type": "client",
+                        "command": command,
+                        "error": "パラメータを指定してください: ParamName=value ParamName2=value2 ..."
+                    }
+
+                try:
+                    # スペースで分割して各KEY=VALUEペアを処理
+                    for param_pair in args.split():
+                        if '=' in param_pair:
+                            key, value = param_pair.split('=', 1)
+                            # 値を数値に変換を試みる
+                            try:
+                                # 小数点を含む場合はfloat、そうでない場合はintに変換
+                                if '.' in value:
+                                    parameters[key] = float(value)
+                                else:
+                                    parameters[key] = int(value)
+                            except ValueError:
+                                # 数値変換に失敗した場合は文字列として扱う
+                                parameters[key] = value
+                        else:
+                            logger.warning(f"無効なパラメータ形式: {param_pair}")
+                except Exception as e:
+                    return {
+                        "type": "client",
+                        "command": command,
+                        "error": f"パラメータの解析に失敗しました: {str(e)}"
+                    }
+            else:
                 return {
-                    "type": "client_response",
-                    "command": "set_parameter",
-                    "error": "parameter nameとvalueが必要です"
+                    "type": "client",
+                    "command": command,
+                    "error": "パラメータは辞書形式または 'ParamName=value' 形式で指定してください"
                 }
-            await send_to_client(client_id, {
+
+            if not parameters:
+                return {
+                    "type": "client",
+                    "command": command,
+                    "error": "有効なパラメータが指定されていません"
+                }
+
+            # クライアントにパラメータ設定を送信
+            success = await send_to_client(client_id, {
                 "type": "set_parameter",
                 "client_id": client_id,
-                "name": param_name,
-                "value": param_value,
+                "parameters": parameters,
                 "timestamp": datetime.now().isoformat()
             })
-            return {
-                "type": "client_response",
-                "command": "set_parameter",
-                "success": True,
-                "message": "クライアントにモデル情報をリクエストしました"
-            }
+
+            if success:
+                return {
+                    "type": "client",
+                    "command": command,
+                    "success": True,
+                    "client_id": client_id,
+                    "parameters": parameters,
+                    "message": f"パラメータ設定コマンドを送信しました（{len(parameters)}個）"
+                }
+            else:
+                return {
+                    "type": "client",
+                    "command": command,
+                    "error": f"パラメータ設定の送信に失敗しました"
+                }
 
     elif command.startswith("get_"):
         if command == "get_eye_blink":  # アニメーション設定 - 自動目パチ
             await send_to_client(client_id, {
-                "type": "request_get_eye_blink",
+                "type": "request_eye_blink",
                 "timestamp": datetime.now().isoformat()
             })
             return {
-                "type": "client_response",
+                "type": "client_request",
                 "command": "get_eye_blink",
                 "client_id": client_id,
-                "message": "クライアントにモデル情報をリクエストしました"
+                "message": "クライアントに自動目パチ設定をリクエストしました"
             }
 
         elif command == "get_breath":  # アニメーション設定 - 呼吸
             await send_to_client(client_id, {
-                "type": "request_get_breath",
+                "type": "request_breath",
                 "timestamp": datetime.now().isoformat()
             })
             return {
-                "type": "client_response",
+                "type": "client_request",
                 "command": "get_breath",
                 "client_id": client_id,
-                "message": "クライアントにモデル情報をリクエストしました"
+                "message": "クライアントに呼吸設定をリクエストしました"
             }
 
         elif command == "get_idle_motion":  # アニメーション設定 - アイドリングモーション
             await send_to_client(client_id, {
-                "type": "request_get_idle_motion",
+                "type": "request_idle_motion",
                 "timestamp": datetime.now().isoformat()
             })
             return {
-                "type": "client_response",
+                "type": "client_request",
                 "command": "get_idle_motion",
                 "client_id": client_id,
-                "message": "クライアントにモデル情報をリクエストしました"
+                "message": "クライアントにアイドリングモーション設定をリクエストしました"
             }
 
         elif command == "get_drag_follow":  # アニメーション設定 - ドラッグ追従
             await send_to_client(client_id, {
-                "type": "request_get_drag_follow",
+                "type": "request_drag_follow",
                 "timestamp": datetime.now().isoformat()
             })
             return {
-                "type": "client_response",
+                "type": "client_request",
                 "command": "get_drag_follow",
                 "client_id": client_id,
-                "message": "クライアントにモデル情報をリクエストしました"
+                "message": "クライアントにドラッグ追従設定をリクエストしました"
             }
 
         elif command == "get_expression":  # Expressions
             await send_to_client(client_id, {
-                "type": "request_get_expression",
+                "type": "request_expression",
                 "timestamp": datetime.now().isoformat()
             })
             return {
-                "type": "client_response",
+                "type": "client_request",
                 "command": "get_expression",
                 "client_id": client_id,
-                "message": "クライアントにモデル情報をリクエストしました"
+                "message": "クライアントに表情設定をリクエストしました"
             }
 
         elif command == "get_motion":  # Motions
             await send_to_client(client_id, {
-                "type": "request_get_motion",
+                "type": "request_motion",
                 "timestamp": datetime.now().isoformat()
             })
             return {
-                "type": "client_response",
+                "type": "client_request",
                 "command": "get_motion",
                 "client_id": client_id,
-                "message": "クライアントにモデル情報をリクエストしました"
+                "message": "クライアントにモーション情報をリクエストしました"
             }
 
         elif command == "get_model":  # クライアントにモデル情報要求を送信
             await send_to_client(client_id, {
-                "type": "request_get_model",
+                "type": "request_model_info",
                 "timestamp": datetime.now().isoformat()
             })
             return {
-                "type": "client_response",
+                "type": "client_request",
                 "command": "get_model",
                 "success": True,
                 "message": "クライアントにモデル情報をリクエストしました"
             }
 
     return {
-        "type": "client_response",
+        "type": "client",
         "command": command,
         "error": f"不明なクライアントコマンド: {command}"
     }
@@ -633,25 +712,25 @@ def print_server_console():
 
     print("クライアント制御コマンド (WebSocket経由):")
     print("  client <client_id> get_eye_blink")
-    print("  client <client_id> set_eye_blink ...")
+    print("  client <client_id> set_eye_blink [enabled|disabled]")
 
     print("  client <client_id> get_breath")
-    print("  client <client_id> set_breath ...")
+    print("  client <client_id> set_breath [enabled|disabled]")
 
     print("  client <client_id> get_idle_motion")
-    print("  client <client_id> set_idle_motion ...")
+    print("  client <client_id> set_idle_motion [enabled|disabled]")
 
     print("  client <client_id> get_drag_follow")
-    print("  client <client_id> set_drag_follow ...")
+    print("  client <client_id> set_drag_follow [enabled|disabled]")
 
     print("  client <client_id> get_expression")
-    print("  client <client_id> set_expression ...")
+    print("  client <client_id> set_expression [expression_name]")
 
     print("  client <client_id> get_motion")
-    print("  client <client_id> set_motion ...")
+    print("  client <client_id> set_motion [group_name] [no]")
 
     print("  client <client_id> get_model")
-    print("  client <client_id> set_parameter ...")
+    print("  client <client_id> set_parameter ID01=VALUE01 ID02=VALUE02 ...")
     print("========================\n")
 
 

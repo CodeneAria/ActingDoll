@@ -32,7 +32,7 @@
             "detail": "Dockerコンテナを起動してモデルサーバーを立ち上げる"
         },
         {
-            "label": "Docker:Start-Demo",
+            "label": "Docker:SubCommand:Start-Demo",
             "type": "shell",
             "command": "${workspaceFolder}/tools/CubismContainer/start_demo.py",
             "args": [],
@@ -40,7 +40,7 @@
             "detail": "Demo版のモデルサーバーを起動する"
         },
         {
-            "label": "Docker:Build-Clean",
+            "label": "Docker:SubCommand:Build-Clean",
             "type": "shell",
             "command": "${workspaceFolder}/tools/CubismContainer/clean.py",
             "args": [],
@@ -61,7 +61,7 @@
             "detail": "src/Cubism/Resources/ 以下にCubism Web Samples for Webのサンプルリソースをコピーする"
         },
         {
-            "label": "Server:Websocket",
+            "label": "Debug:Server:Websocket(Port8766)",
             "type": "shell",
             "command": "${workspaceFolder}/src/adapter/server/websocket_server.py",
             "args": [

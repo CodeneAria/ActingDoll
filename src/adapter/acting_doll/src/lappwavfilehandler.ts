@@ -77,8 +77,8 @@ export class LAppWavFileHandler {
     }
     rms = Math.sqrt(
       rms /
-        (this._wavFileInfo._numberOfChannels *
-          (goalOffset - this._sampleOffset))
+      (this._wavFileInfo._numberOfChannels *
+        (goalOffset - this._sampleOffset))
     );
 
     this._lastRms = rms;

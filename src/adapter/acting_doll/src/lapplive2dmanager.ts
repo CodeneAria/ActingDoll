@@ -189,7 +189,7 @@ export class LAppLive2DManager {
   /**
    * 解放する。
    */
-  public release(): void {}
+  public release(): void { }
 
   /**
    * 初期化する。

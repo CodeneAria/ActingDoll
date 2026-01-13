@@ -99,6 +99,130 @@ export interface ErrorMessage extends WebSocketMessage {
 }
 
 /**
+ * 目パチ設定メッセージ
+ */
+export interface SetEyeBlinkMessage extends WebSocketMessage {
+  type: 'set_eye_blink';
+  enabled: boolean;
+  client_id: string;
+}
+
+/**
+ * 呼吸設定メッセージ
+ */
+export interface SetBreathMessage extends WebSocketMessage {
+  type: 'set_breath';
+  enabled: boolean;
+  client_id: string;
+}
+
+/**
+ * アイドリングモーション設定メッセージ
+ */
+export interface SetIdleMotionMessage extends WebSocketMessage {
+  type: 'set_idle_motion';
+  enabled: boolean;
+  client_id: string;
+}
+
+/**
+ * ドラッグ追従設定メッセージ
+ */
+export interface SetDragFollowMessage extends WebSocketMessage {
+  type: 'set_drag_follow';
+  enabled: boolean;
+  client_id: string;
+}
+
+/**
+ * 表情設定メッセージ
+ */
+export interface SetExpressionMessage extends WebSocketMessage {
+  type: 'set_expression';
+  expression: string;
+  client_id: string;
+}
+
+/**
+ * モーション設定メッセージ
+ */
+export interface SetMotionMessage extends WebSocketMessage {
+  type: 'set_motion';
+  group: string;
+  index?: number;
+  client_id: string;
+}
+
+/**
+ * パラメータ設定メッセージ
+ */
+export interface SetParameterMessage extends WebSocketMessage {
+  type: 'set_parameter';
+  name: string;
+  value: number;
+  client_id: string;
+}
+
+/**
+ * モデル情報リクエストメッセージ
+ */
+export interface RequestModelInfoMessage extends WebSocketMessage {
+  type: 'request_model_info';
+}
+
+/**
+ * 目パチ情報リクエストメッセージ
+ */
+export interface RequestEyeBlinkMessage extends WebSocketMessage {
+  type: 'request_eye_blink';
+}
+
+/**
+ * 呼吸情報リクエストメッセージ
+ */
+export interface RequestBreathMessage extends WebSocketMessage {
+  type: 'request_breath';
+}
+
+/**
+ * アイドリングモーション情報リクエストメッセージ
+ */
+export interface RequestIdleMotionMessage extends WebSocketMessage {
+  type: 'request_idle_motion';
+}
+
+/**
+ * ドラッグ追従情報リクエストメッセージ
+ */
+export interface RequestDragFollowMessage extends WebSocketMessage {
+  type: 'request_drag_follow';
+}
+
+/**
+ * 表情情報リクエストメッセージ
+ */
+export interface RequestExpressionMessage extends WebSocketMessage {
+  type: 'request_expression';
+}
+
+/**
+ * モーション情報リクエストメッセージ
+ */
+export interface RequestMotionMessage extends WebSocketMessage {
+  type: 'request_motion';
+}
+
+/**
+ * クライアントレスポンスメッセージ
+ */
+export interface ClientResponseMessage extends WebSocketMessage {
+  type: 'client';
+  command: string;
+  args: any;
+}
+
+
+/**
  * メッセージハンドラの型
  */
 export type MessageHandler = (data: WebSocketMessage) => void;
@@ -276,7 +400,7 @@ export class WebSocketClient {
     }
 
     // デフォルトのログ出力
-    this.logMessage(data);
+    //this.logMessage(data);
   }
 
   /**
@@ -314,6 +438,54 @@ export class WebSocketClient {
         break;
       case 'error':
         console.error(`エラー: ${(data as ErrorMessage).message}`);
+        break;
+      case 'set_eye_blink':
+        const eyeBlink = data as SetEyeBlinkMessage;
+        console.log(`目パチ設定: ${eyeBlink.enabled ? '有効' : '無効'}`);
+        break;
+      case 'set_breath':
+        const breath = data as SetBreathMessage;
+        console.log(`呼吸設定: ${breath.enabled ? '有効' : '無効'}`);
+        break;
+      case 'set_idle_motion':
+        const idleMotion = data as SetIdleMotionMessage;
+        console.log(`アイドリングモーション設定: ${idleMotion.enabled ? '有効' : '無効'}`);
+        break;
+      case 'set_drag_follow':
+        const dragFollow = data as SetDragFollowMessage;
+        console.log(`ドラッグ追従設定: ${dragFollow.enabled ? '有効' : '無効'}`);
+        break;
+      case 'set_expression':
+        const expression = data as SetExpressionMessage;
+        console.log(`表情設定: ${expression.expression}`);
+        break;
+      case 'set_motion':
+        const motion = data as SetMotionMessage;
+        console.log(`モーション設定: グループ=${motion.group}, インデックス=${motion.index ?? 'ランダム'}`);
+        break;
+      case 'set_parameter':
+        console.log(`パラメータ設定を受信`);
+        break;
+      case 'request_model_info':
+        console.log(`モデル情報リクエストを受信`);
+        break;
+      case 'request_eye_blink':
+        console.log(`目パチ情報リクエストを受信`);
+        break;
+      case 'request_breath':
+        console.log(`呼吸情報リクエストを受信`);
+        break;
+      case 'request_idle_motion':
+        console.log(`アイドリングモーション情報リクエストを受信`);
+        break;
+      case 'request_drag_follow':
+        console.log(`ドラッグ追従情報リクエストを受信`);
+        break;
+      case 'request_expression':
+        console.log(`表情情報リクエストを受信`);
+        break;
+      case 'request_motion':
+        console.log(`モーション情報リクエストを受信`);
         break;
       default:
         console.log(`未処理のメッセージタイプ: ${msgType}`, data);
@@ -359,5 +531,76 @@ export class WebSocketClient {
    */
   public isRunning(): boolean {
     return this.running;
+  }
+
+  /**
+   * クライアントレスポンスをサーバーに送信
+   * @param command コマンド名
+   * @param args レスポンスデータ
+   */
+  public sendClientResponse(command: string, args: any): void {
+    this.sendMessage({
+      type: 'client',
+      command: command,
+      args: args
+    });
+  }
+
+  /**
+   * 目パチ状態を送信
+   * @param enabled 有効/無効
+   */
+  public sendEyeBlinkStatus(enabled: boolean): void {
+    this.sendClientResponse('response_eye_blink', { enabled });
+  }
+
+  /**
+   * 呼吸状態を送信
+   * @param enabled 有効/無効
+   */
+  public sendBreathStatus(enabled: boolean): void {
+    this.sendClientResponse('response_breath', { enabled });
+  }
+
+  /**
+   * アイドリングモーション状態を送信
+   * @param enabled 有効/無効
+   */
+  public sendIdleMotionStatus(enabled: boolean): void {
+    this.sendClientResponse('response_idle_motion', { enabled });
+  }
+
+  /**
+   * ドラッグ追従状態を送信
+   * @param enabled 有効/無効
+   */
+  public sendDragFollowStatus(enabled: boolean): void {
+    this.sendClientResponse('response_drag_follow', { enabled });
+  }
+
+  /**
+   * 現在の表情を送信
+   * @param expression 表情名
+   */
+  public sendExpressionStatus(expression: string): void {
+    this.sendClientResponse('response_expression', { expression });
+  }
+
+  /**
+   * 現在のモーションを送信
+   * @param group モーショングループ
+   * @param index モーションインデックス
+   */
+  public sendMotionStatus(group: string, index: number): void {
+    this.sendClientResponse('response_motion', { group, index });
+  }
+
+  /**
+   * 現在のモデル情報を送信
+   * @param modelName モデル名
+   * @param modelData モデル情報
+   */
+  public sendModelInfo(modelName: string, modelData?: any): void {
+    this.sendClientResponse('response_model', { model_name: modelName, ...modelData });
   }
 }
