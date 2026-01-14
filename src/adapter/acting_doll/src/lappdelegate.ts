@@ -349,6 +349,19 @@ export class LAppDelegate {
           }
         }
       });
+
+      this._websocketClient.onMessage('request_physics', () => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const live2DManager = subdelegate.getLive2DManager();
+          const model = live2DManager.getModel(0);
+          if (model) {
+            const enabled = model.getPhysicsEnabled();
+            this._websocketClient.sendPhysicsStatus(enabled);
+          }
+        }
+      });
+
       this._websocketClient.onMessage('request_expression', () => {
         const subdelegate = this.getSubdelegate(0);
         if (subdelegate) {
@@ -454,6 +467,23 @@ export class LAppDelegate {
               ui.updateDragFollowToggle(data.enabled);
             }
             console.log('[WebSocket] ドラッグ追従を設定しました:', data.enabled);
+          }
+        }
+      });
+
+      this._websocketClient.onMessage('set_physics', (data: any) => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const live2DManager = subdelegate.getLive2DManager();
+          const model = live2DManager.getModel(0);
+          if (model) {
+            model.setPhysicsEnabled(data.enabled);
+            // Update UI toggle
+            const ui = LAppUI.getInstance();
+            if (ui) {
+              ui.updatePhysicsToggle(data.enabled);
+            }
+            console.log('[WebSocket] 物理演算を設定しました:', data.enabled);
           }
         }
       });

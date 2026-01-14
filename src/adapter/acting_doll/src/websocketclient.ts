@@ -135,6 +135,15 @@ export interface SetDragFollowMessage extends WebSocketMessage {
 }
 
 /**
+ * 物理演算設定メッセージ
+ */
+export interface SetPhysicsMessage extends WebSocketMessage {
+  type: 'set_physics';
+  enabled: boolean;
+  client_id: string;
+}
+
+/**
  * 表情設定メッセージ
  */
 export interface SetExpressionMessage extends WebSocketMessage {
@@ -455,6 +464,10 @@ export class WebSocketClient {
         const dragFollow = data as SetDragFollowMessage;
         console.log(`ドラッグ追従設定: ${dragFollow.enabled ? '有効' : '無効'}`);
         break;
+      case 'set_physics':
+        const physics = data as SetPhysicsMessage;
+        console.log(`物理演算設定: ${physics.enabled ? '有効' : '無効'}`);
+        break;
       case 'set_expression':
         const expression = data as SetExpressionMessage;
         console.log(`表情設定: ${expression.expression}`);
@@ -480,6 +493,9 @@ export class WebSocketClient {
         break;
       case 'request_drag_follow':
         console.log(`ドラッグ追従情報リクエストを受信`);
+        break;
+      case 'request_physics':
+        console.log(`物理演算情報リクエストを受信`);
         break;
       case 'request_expression':
         console.log(`表情情報リクエストを受信`);
@@ -576,6 +592,14 @@ export class WebSocketClient {
    */
   public sendDragFollowStatus(enabled: boolean): void {
     this.sendClientResponse('response_drag_follow', { enabled });
+  }
+
+  /**
+   * 物理演算状態を送信
+   * @param enabled 有効/無効
+   */
+  public sendPhysicsStatus(enabled: boolean): void {
+    this.sendClientResponse('response_physics', { enabled });
   }
 
   /**

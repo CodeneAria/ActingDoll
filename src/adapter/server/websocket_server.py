@@ -372,7 +372,16 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
         }
     elif command.startswith("set_"):
         if command == "set_eye_blink":  # アニメーション設定 - 自動目パチ
-            enabled = args.get("enabled", True) if isinstance(args, dict) else ("enabled" in str(args).lower())
+            if not args:
+                return {
+                    "type": "client",
+                    "command": command,
+                    "error": "パラメータを指定してください: enabled or disabled"
+                }
+            if isinstance(args, dict):
+                enabled = args.get("enabled", True)
+            else:
+                enabled = ("enabled" in str(args).lower())
             await send_to_client(client_id, {
                 "type": "set_eye_blink",
                 "client_id": client_id,
@@ -388,7 +397,16 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
             }
 
         elif command == "set_breath":  # アニメーション設定 - 呼吸
-            enabled = args.get("enabled", True) if isinstance(args, dict) else ("enabled" in str(args).lower())
+            if not args:
+                return {
+                    "type": "client",
+                    "command": command,
+                    "error": "パラメータを指定してください: enabled or disabled"
+                }
+            if isinstance(args, dict):
+                enabled = args.get("enabled", True)
+            else:
+                enabled = ("enabled" in str(args).lower())
             await send_to_client(client_id, {
                 "type": "set_breath",
                 "client_id": client_id,
@@ -404,7 +422,16 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
             }
 
         elif command == "set_idle_motion":  # アニメーション設定 - アイドリングモーション
-            enabled = args.get("enabled", False) if isinstance(args, dict) else ("enabled" in str(args).lower())
+            if not args:
+                return {
+                    "type": "client",
+                    "command": command,
+                    "error": "パラメータを指定してください: enabled or disabled"
+                }
+            if isinstance(args, dict):
+                enabled = args.get("enabled", True)
+            else:
+                enabled = ("enabled" in str(args).lower())
             await send_to_client(client_id, {
                 "type": "set_idle_motion",
                 "client_id": client_id,
@@ -420,7 +447,16 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
             }
 
         elif command == "set_drag_follow":  # アニメーション設定 - ドラッグ追従
-            enabled = args.get("enabled", False) if isinstance(args, dict) else ("enabled" in str(args).lower())
+            if not args:
+                return {
+                    "type": "client",
+                    "command": command,
+                    "error": "パラメータを指定してください: enabled or disabled"
+                }
+            if isinstance(args, dict):
+                enabled = args.get("enabled", True)
+            else:
+                enabled = ("enabled" in str(args).lower())
             await send_to_client(client_id, {
                 "type": "set_drag_follow",
                 "client_id": client_id,
@@ -433,6 +469,31 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
                 "success": True,
                 "data": {"enabled": enabled},
                 "message": "クライアントにドラッグ追従設定を送信しました"
+            }
+
+        elif command == "set_physics":  # アニメーション設定 - 物理演算
+            if not args:
+                return {
+                    "type": "client",
+                    "command": command,
+                    "error": "パラメータを指定してください: enabled or disabled"
+                }
+            if isinstance(args, dict):
+                enabled = args.get("enabled", True)
+            else:
+                enabled = ("enabled" in str(args).lower())
+            await send_to_client(client_id, {
+                "type": "set_physics",
+                "client_id": client_id,
+                "enabled": enabled,
+                "timestamp": datetime.now().isoformat()
+            })
+            return {
+                "type": "client_request",
+                "command": "set_physics",
+                "success": True,
+                "data": {"enabled": enabled},
+                "message": "クライアントに物理演算設定を送信しました"
             }
 
         elif command == "set_expression":  # Expressions
@@ -617,6 +678,18 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
                 "message": "クライアントにドラッグ追従設定をリクエストしました"
             }
 
+        elif command == "get_physics":  # アニメーション設定 - 物理演算
+            await send_to_client(client_id, {
+                "type": "request_physics",
+                "timestamp": datetime.now().isoformat()
+            })
+            return {
+                "type": "client_request",
+                "command": "get_physics",
+                "client_id": client_id,
+                "message": "クライアントに物理演算設定をリクエストしました"
+            }
+
         elif command == "get_expression":  # Expressions
             await send_to_client(client_id, {
                 "type": "request_expression",
@@ -699,7 +772,7 @@ def print_server_console():
 
     print("サーバーコマンド:")
     print("  quit                       - サーバーを停止")
-    print("  count                      - 接続数を表示")
+    # print("  count                      - 接続数を表示")
     print("  list                       - 接続中のクライアント一覧")
     print("  notify <message>           - 全クライアントに通知を送信")
     print("  send <client_id> <message> - 特定のクライアントにメッセージを送信")
@@ -722,6 +795,9 @@ def print_server_console():
 
     print("  client <client_id> get_drag_follow")
     print("  client <client_id> set_drag_follow [enabled|disabled]")
+
+    print("  client <client_id> get_physics")
+    print("  client <client_id> set_physics [enabled|disabled]")
 
     print("  client <client_id> get_expression")
     print("  client <client_id> set_expression [expression_name]")
@@ -759,13 +835,12 @@ async def server_console():
 
             elif command == "send" and len(parts) > 1:
                 # 形式: send <client_id> <message>
-                send_parts = parts[1].split(maxsplit=1)
-                if len(send_parts) < 2:
+                if len(parts)<3:
                     logger.warning("使い方: send <client_id> <message>")
                     continue
 
-                target_client_id = send_parts[0]
-                message = send_parts[1]
+                target_client_id = parts[1]
+                message = parts[2]
 
                 success = await send_to_client(target_client_id, {
                     "type": "server_direct_message",
@@ -795,8 +870,8 @@ async def server_console():
                 else:
                     logger.info("接続中のクライアントはありません")
 
-            elif command == "count":
-                logger.info(f"接続数: {len(connected_clients)}")
+            #elif command == "count":
+            #    logger.info(f"接続数: {len(connected_clients)}")
 
             elif command == "model" and len(parts) > 1:
                 sub_command = parts[1]

@@ -577,13 +577,13 @@ export class LAppModel extends CubismUserModel {
       }
     }
 
-    // 呼吸など（手動制御中のパラメータには適用しない）
-    if (this._breath != null && this._breathEnabled && !this._hasManuallyControlledParams) {
+    // 呼吸など
+    if (this._breath != null && this._breathEnabled) {
       this._breath.updateParameters(this._model, deltaTimeSeconds);
     }
 
     // 物理演算の設定
-    if (this._physics != null) {
+    if (this._physics != null && this._physicsEnabled) {
       this._physics.evaluate(this._model, deltaTimeSeconds);
     }
 
@@ -647,6 +647,20 @@ export class LAppModel extends CubismUserModel {
    */
   public getIdleMotionEnabled(): boolean {
     return this._idleMotionEnabled;
+  }
+
+  /**
+   * 物理演算を有効/無効にする
+   * @param enabled 有効にする場合はtrue、無効にする場合はfalse
+   */
+  public setPhysicsEnabled(enabled: boolean): void {
+    this._physicsEnabled = enabled;
+  }
+  /**
+   * 物理演算の状態を取得する
+   */
+  public getPhysicsEnabled(): boolean {
+    return this._physicsEnabled;
   }
 
   /**
@@ -720,6 +734,56 @@ export class LAppModel extends CubismUserModel {
     }
 
     return physicsParams;
+  }
+
+  /**
+   * 呼吸が適用されているパラメータ名のセットを取得
+   * @returns 呼吸が適用されているパラメータ名のセット
+   */
+  public getBreathParameterNames(): Set<string> {
+    const breathParams = new Set<string>();
+
+    if (!this._breath || !this._model) {
+      return breathParams;
+    }
+
+    // 呼吸のパラメータを取得
+    try {
+      const breathData = (this._breath as any)._breathParameters?._ptr;
+      if (breathData) {
+        for (let i = 0; i < breathData.length; i++) {
+          const param = breathData[i];
+          const paramId = param?.parameterId;
+          if (paramId) {
+            breathParams.add(paramId.getString().s);
+          }
+        }
+      }
+    } catch (e) {
+      CubismLogError(`Failed to get breath parameter names: ${e}`);
+    }
+
+    return breathParams;
+  }
+
+  /**
+   * 自動目パチが適用されているパラメータ名のセットを取得
+   * @returns 自動目パチが適用されているパラメータ名のセット
+   */
+  public getEyeBlinkParameterNames(): Set<string> {
+    const eyeBlinkParams = new Set<string>();
+
+    if (!this._eyeBlink || !this._model) {
+      return eyeBlinkParams;
+    }
+
+    // 目パチのパラメータIDを取得
+    for (let i = 0; i < this._eyeBlinkIds.getSize(); i++) {
+      const paramId = this._eyeBlinkIds.at(i);
+      eyeBlinkParams.add(paramId.getString().s);
+    }
+
+    return eyeBlinkParams;
   }
 
   /**
@@ -1242,6 +1306,7 @@ export class LAppModel extends CubismUserModel {
   _breathEnabled: boolean = true; // 呼吸の有効/無効
   _idleMotionEnabled: boolean = false; // アイドリングモーションの有効/無効
   _dragFollowEnabled: boolean = false; // ドラッグ追従の有効/無効
+  _physicsEnabled: boolean = true; // 物理演算の有効/無効
   _manuallyControlledParams: Set<number> = new Set(); // 手動制御中のパラメータインデックス
   _hasManuallyControlledParams: boolean = false; // 手動制御中のパラメータがあるか
   _lipSyncIds: csmVector<CubismIdHandle>; // モデルに設定されたリップシンク機能用パラメータID

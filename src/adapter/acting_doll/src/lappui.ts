@@ -20,6 +20,7 @@ export class LAppUI {
   private _breathToggle!: HTMLInputElement;
   private _idleMotionToggle!: HTMLInputElement;
   private _dragFollowToggle!: HTMLInputElement;
+  private _physicsToggle!: HTMLInputElement;
   private _parameterSliders: Map<string, HTMLInputElement> = new Map();
   private _parameterValues: Map<string, HTMLSpanElement> = new Map();
   private _manualControlParams: Set<number> = new Set();
@@ -40,6 +41,7 @@ export class LAppUI {
     this._breathToggle = document.getElementById('breathToggle') as HTMLInputElement;
     this._idleMotionToggle = document.getElementById('idleMotionToggle') as HTMLInputElement;
     this._dragFollowToggle = document.getElementById('dragFollowToggle') as HTMLInputElement;
+    this._physicsToggle = document.getElementById('physicsToggle') as HTMLInputElement;
     this._expressionSelect = document.getElementById('expressionSelect') as HTMLSelectElement;
     this._motionSelect = document.getElementById('motionSelect') as HTMLSelectElement;
     this._parametersContainer = document.getElementById('parametersContainer') as HTMLDivElement;
@@ -100,6 +102,12 @@ export class LAppUI {
       this.setDragFollowEnabled(target.checked);
     });
 
+    // Setup physics toggle
+    this._physicsToggle.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement;
+      this.setPhysicsEnabled(target.checked);
+    });
+
     // Listen for model loaded events
     window.addEventListener('modelLoaded', () => {
       console.log('[LAppUI] Model loaded, updating UI');
@@ -138,6 +146,9 @@ export class LAppUI {
       model.setEyeBlinkEnabled(enabled);
       console.log(`[LAppUI] Eye blink ${enabled ? 'enabled' : 'disabled'}`);
     }
+
+    // Enable or disable eye blink parameter sliders
+    this.updateSliderStates();
   }
 
   /**
@@ -158,6 +169,9 @@ export class LAppUI {
       model.setBreathEnabled(enabled);
       console.log(`[LAppUI] Breath ${enabled ? 'enabled' : 'disabled'}`);
     }
+
+    // Enable or disable breath parameter sliders
+    this.updateSliderStates();
   }
 
   /**
@@ -200,6 +214,29 @@ export class LAppUI {
   }
 
   /**
+   * Enable or disable physics
+   */
+  public setPhysicsEnabled(enabled: boolean): void {
+    const delegate = LAppDelegate.getInstance();
+    const subdelegate = delegate.getSubdelegate(0);
+
+    if (!subdelegate) {
+      return;
+    }
+
+    const manager = subdelegate.getLive2DManager();
+    const model = manager.getModel(0);
+
+    if (model) {
+      model.setPhysicsEnabled(enabled);
+      console.log(`[LAppUI] Physics ${enabled ? 'enabled' : 'disabled'}`);
+    }
+
+    // Enable or disable physics parameter sliders
+    this.updateSliderStates();
+  }
+
+  /**
    * Update UI with current model data
    */
   public updateUI(): void {
@@ -223,6 +260,9 @@ export class LAppUI {
 
     // Apply current checkbox settings to the new model
     this.applyCheckboxSettings();
+
+    // Update slider states based on current toggle states
+    this.updateSliderStates();
   }
 
   /**
@@ -333,6 +373,8 @@ export class LAppUI {
 
     // Get physics parameter names
     const physicsParams = model.getPhysicsParameterNames();
+    const breathParams = model.getBreathParameterNames();
+    const eyeBlinkParams = model.getEyeBlinkParameterNames();
 
     // Create sliders for each parameter
     for (let i = 0; i < parameterCount; i++) {
@@ -372,9 +414,15 @@ export class LAppUI {
       slider.value = currentValue.toString();
       slider.dataset.paramIndex = i.toString();
 
-      // Add physics class if this parameter uses physics
+      // Add classes based on which features affect this parameter
       if (physicsParams.has(parameterName)) {
         slider.classList.add('physics-param');
+      }
+      if (breathParams.has(parameterName)) {
+        slider.classList.add('breath-param');
+      }
+      if (eyeBlinkParams.has(parameterName)) {
+        slider.classList.add('eyeblink-param');
       }
 
       slider.addEventListener('input', (e) => {
@@ -554,6 +602,7 @@ export class LAppUI {
     if (this._eyeBlinkToggle) {
       this._eyeBlinkToggle.checked = enabled;
     }
+    this.updateSliderStates();
   }
 
   /**
@@ -563,6 +612,7 @@ export class LAppUI {
     if (this._breathToggle) {
       this._breathToggle.checked = enabled;
     }
+    this.updateSliderStates();
   }
 
   /**
@@ -581,6 +631,49 @@ export class LAppUI {
     if (this._dragFollowToggle) {
       this._dragFollowToggle.checked = enabled;
     }
+  }
+
+  /**
+   * Update physics toggle checkbox
+   */
+  public updatePhysicsToggle(enabled: boolean): void {
+    if (this._physicsToggle) {
+      this._physicsToggle.checked = enabled;
+    }
+    this.updateSliderStates();
+  }
+
+  /**
+   * Update slider states based on enabled features
+   */
+  private updateSliderStates(): void {
+    const eyeBlinkEnabled = this._eyeBlinkToggle?.checked ?? false;
+    const breathEnabled = this._breathToggle?.checked ?? false;
+    const physicsEnabled = this._physicsToggle?.checked ?? false;
+
+    // Update all sliders
+    this._parameterSliders.forEach((slider, paramName) => {
+      const isEyeBlink = slider.classList.contains('eyeblink-param');
+      const isBreath = slider.classList.contains('breath-param');
+      const isPhysics = slider.classList.contains('physics-param');
+
+      // Disable slider if any of its controlling features are enabled
+      const shouldDisable =
+        (isEyeBlink && eyeBlinkEnabled) ||
+        (isBreath && breathEnabled) ||
+        (isPhysics && physicsEnabled);
+
+      slider.disabled = shouldDisable;
+
+      // Add visual indication
+      if (shouldDisable) {
+        slider.style.opacity = '0.5';
+        //slider.style.cursor = 'not-allowed';
+      } else {
+        slider.style.opacity = '1';
+        //slider.style.cursor = 'pointer';
+      }
+    });
   }
 
   /**
