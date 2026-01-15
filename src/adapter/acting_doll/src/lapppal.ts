@@ -44,13 +44,6 @@ export class LAppPal {
     this.lastFrame = this.currentFrame;
   }
 
-  /**
-   * メッセージを出力する
-   * @param message 文字列
-   */
-  public static printMessage(message: string): void {
-    console.log(message);
-  }
 
   static lastUpdate = Date.now();
 

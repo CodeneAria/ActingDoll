@@ -5,6 +5,10 @@
 
 import { WebSocketClient, CommandResponse } from './websocketclient';
 import * as LAppDefine from './lappdefine';
+import {
+  CubismLogError,
+  CubismLogInfo
+} from '@framework/utils/cubismdebug';
 
 /**
  * Live2Dコントローラークラス
@@ -28,14 +32,14 @@ class Live2DController {
     // コントロールパネルを取得
     this.controlPanel = document.getElementById('article_controlPanel');
     if (!this.controlPanel) {
-      console.error('コントロールパネルが見つかりません');
+      CubismLogError('コントロールパネルが見つかりません');
       return;
     }
 
     // WebSocket接続
     try {
       await this.wsClient.connect();
-      console.log('WebSocketサーバーに接続しました');
+     CubismLogInfo('WebSocketサーバーに接続しました');
 
       // UIを構築
       this.buildUI();
@@ -43,7 +47,7 @@ class Live2DController {
       // 初期データを取得
       this.loadInitialData();
     } catch (error) {
-      console.error('WebSocket接続に失敗しました:', error);
+      CubismLogError('WebSocket接続に失敗しました:', error.toString());
       this.showError('WebSocketサーバーに接続できませんでした。');
     }
   }
@@ -55,7 +59,7 @@ class Live2DController {
     // コマンドレスポンスハンドラ
     this.wsClient.onMessage('command_response', (data) => {
       const response = data as CommandResponse;
-      console.log('コマンド応答:', response);
+     CubismLogInfo('コマンド応答:', response);
 
       // コマンドに応じた処理
       this.handleCommandResponse(response);
@@ -63,13 +67,13 @@ class Live2DController {
 
     // エラーハンドラ
     this.wsClient.onMessage('error', (data) => {
-      console.error('サーバーエラー:', data);
+      CubismLogError('サーバーエラー:', data);
       this.showError(`サーバーエラー: ${data.message}`);
     });
 
     // ウェルカムメッセージハンドラ
     this.wsClient.onMessage('welcome', (data) => {
-      console.log('ウェルカムメッセージ:', data);
+     CubismLogInfo('ウェルカムメッセージ:', data);
       this.showMessage('サーバーに接続されました');
     });
   }
@@ -300,7 +304,7 @@ class Live2DController {
         this.displayCurrentMotion(response.data);
         break;
       default:
-        console.log('未処理のコマンド:', response.command, response.data);
+       CubismLogInfo('未処理のコマンド:', response.command, response.data);
     }
   }
 

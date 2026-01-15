@@ -6,6 +6,10 @@
 import { LAppDelegate } from './lappdelegate';
 import { LAppModel } from './lappmodel';
 import * as LAppDefine from './lappdefine';
+import {
+  CubismLogError,
+  CubismLogInfo
+} from '@framework/utils/cubismdebug';
 
 /**
  * UI Controller for Live2D model manipulation
@@ -49,7 +53,7 @@ export class LAppUI {
     this._wsStatusIndicator = document.getElementById('wsStatusIndicator') as HTMLSpanElement;
 
     if (!this._controlPanel || !this._toggleButton) {
-      console.error('[LAppUI] Required UI elements not found');
+      CubismLogError('[LAppUI] Required UI elements not found');
       return;
     }
 
@@ -110,7 +114,7 @@ export class LAppUI {
 
     // Listen for model loaded events
     window.addEventListener('modelLoaded', () => {
-      console.log('[LAppUI] Model loaded, updating UI');
+     CubismLogInfo('[LAppUI] Model loaded, updating UI');
       this.updateUI();
     });
 
@@ -144,7 +148,7 @@ export class LAppUI {
 
     if (model) {
       model.setEyeBlinkEnabled(enabled);
-      console.log(`[LAppUI] Eye blink ${enabled ? 'enabled' : 'disabled'}`);
+     CubismLogInfo(`[LAppUI] Eye blink ${enabled ? 'enabled' : 'disabled'}`);
     }
 
     // Enable or disable eye blink parameter sliders
@@ -167,7 +171,7 @@ export class LAppUI {
 
     if (model) {
       model.setBreathEnabled(enabled);
-      console.log(`[LAppUI] Breath ${enabled ? 'enabled' : 'disabled'}`);
+     CubismLogInfo(`[LAppUI] Breath ${enabled ? 'enabled' : 'disabled'}`);
     }
 
     // Enable or disable breath parameter sliders
@@ -190,7 +194,7 @@ export class LAppUI {
 
     if (model) {
       model.setIdleMotionEnabled(enabled);
-      console.log(`[LAppUI] Idle motion ${enabled ? 'enabled' : 'disabled'}`);
+     CubismLogInfo(`[LAppUI] Idle motion ${enabled ? 'enabled' : 'disabled'}`);
     }
   }
   /**
@@ -209,7 +213,7 @@ export class LAppUI {
 
     if (model) {
       model.setDragFollowEnabled(enabled);
-      console.log(`[LAppUI] Drag follow ${enabled ? 'enabled' : 'disabled'}`);
+     CubismLogInfo(`[LAppUI] Drag follow ${enabled ? 'enabled' : 'disabled'}`);
     }
   }
 
@@ -229,7 +233,7 @@ export class LAppUI {
 
     if (model) {
       model.setPhysicsEnabled(enabled);
-      console.log(`[LAppUI] Physics ${enabled ? 'enabled' : 'disabled'}`);
+     CubismLogInfo(`[LAppUI] Physics ${enabled ? 'enabled' : 'disabled'}`);
     }
 
     // Enable or disable physics parameter sliders

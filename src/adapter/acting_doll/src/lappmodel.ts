@@ -143,7 +143,7 @@ export class LAppModel extends CubismUserModel {
 
       this._state = LoadStep.WaitLoadModel;
     } else {
-      LAppPal.printMessage('Model data does not exist.');
+      CubismLogInfo('Model data does not exist.');
     }
 
     // Expression
@@ -453,7 +453,7 @@ export class LAppModel extends CubismUserModel {
       ) {
         // テクスチャ名が空文字だった場合はロード・バインド処理をスキップ
         if (this._modelSetting.getTextureFileName(modelTextureNumber) == '') {
-          LAppPal.printMessage('getTextureFileName null');
+          CubismLogInfo('getTextureFileName null');
           continue;
         }
 
@@ -547,34 +547,22 @@ export class LAppModel extends CubismUserModel {
     // ドラッグによる変化
     if (this._dragFollowEnabled) {
       // ドラッグによる顔の向きの調整
-      if (!this.isParameterManuallyControlled(this._idParamAngleX)) {
-        this._model.addParameterValueById(this._idParamAngleX, this._dragX * 30); // -30から30の値を加える
-      }
-      if (!this.isParameterManuallyControlled(this._idParamAngleY)) {
-        this._model.addParameterValueById(this._idParamAngleY, this._dragY * 30);
-      }
-      if (!this.isParameterManuallyControlled(this._idParamAngleZ)) {
-        this._model.addParameterValueById(
-          this._idParamAngleZ,
-          this._dragX * this._dragY * -30
-        );
-      }
+      this._model.addParameterValueById(this._idParamAngleX, this._dragX * 30); // -30から30の値を加える
+      this._model.addParameterValueById(this._idParamAngleY, this._dragY * 30);
+      this._model.addParameterValueById(
+        this._idParamAngleZ,
+        this._dragX * this._dragY * -30
+      );
 
       // ドラッグによる体の向きの調整
-      if (!this.isParameterManuallyControlled(this._idParamBodyAngleX)) {
-        this._model.addParameterValueById(
-          this._idParamBodyAngleX,
-          this._dragX * 10
-        ); // -10から10の値を加える
-      }
+      this._model.addParameterValueById(
+        this._idParamBodyAngleX,
+        this._dragX * 10
+      ); // -10から10の値を加える
 
       // ドラッグによる目の向きの調整
-      if (!this.isParameterManuallyControlled(this._idParamEyeBallX)) {
-        this._model.addParameterValueById(this._idParamEyeBallX, this._dragX); // -1から1の値を加える
-      }
-      if (!this.isParameterManuallyControlled(this._idParamEyeBallY)) {
-        this._model.addParameterValueById(this._idParamEyeBallY, this._dragY);
-      }
+      this._model.addParameterValueById(this._idParamEyeBallX, this._dragX); // -1から1の値を加える
+      this._model.addParameterValueById(this._idParamEyeBallY, this._dragY);
     }
 
     // 呼吸など
@@ -805,7 +793,7 @@ export class LAppModel extends CubismUserModel {
       this._motionManager.setReservePriority(priority);
     } else if (!this._motionManager.reserveMotion(priority)) {
       if (this._debugMode) {
-        LAppPal.printMessage("[APP] can't start motion.");
+        CubismLogInfo("[APP] can't start motion.");
       }
       return InvalidMotionQueueEntryHandleValue;
     }
@@ -866,7 +854,7 @@ export class LAppModel extends CubismUserModel {
     }
 
     if (this._debugMode) {
-      LAppPal.printMessage(`[APP] start motion: [${group}_${no}]`);
+      CubismLogInfo(`[APP] start motion: [${group}_${no}]`);
     }
 
     // 現在のモーション情報を保存
@@ -925,7 +913,7 @@ export class LAppModel extends CubismUserModel {
     const motion: ACubismMotion = this._expressions.getValue(expressionId);
 
     if (this._debugMode) {
-      LAppPal.printMessage(`[APP] expression: [${expressionId}]`);
+      CubismLogInfo(`[APP] expression: [${expressionId}]`);
     }
 
     if (motion != null) {
@@ -939,7 +927,7 @@ export class LAppModel extends CubismUserModel {
       }
     } else {
       if (this._debugMode) {
-        LAppPal.printMessage(`[APP] expression[${expressionId}] is null`);
+        CubismLogInfo(`[APP] expression[${expressionId}] is null`);
       }
     }
   }
@@ -1086,7 +1074,7 @@ export class LAppModel extends CubismUserModel {
       // ex) idle_0
       const name = `${group}_${i}`;
       if (this._debugMode) {
-        LAppPal.printMessage(
+        CubismLogInfo(
           `[APP] load motion: ${motionFileName} => [${name}]`
         );
       }
@@ -1218,7 +1206,7 @@ export class LAppModel extends CubismUserModel {
 
       return this._consistency;
     } else {
-      LAppPal.printMessage('Model data does not exist.');
+      CubismLogInfo('Model data does not exist.');
     }
   }
 

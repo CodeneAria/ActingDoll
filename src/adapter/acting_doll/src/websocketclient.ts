@@ -3,6 +3,12 @@
  * ブラウザ環境でのWebSocket通信クライアント
  */
 
+import {
+  CubismLogVerbose,
+  CubismLogError,
+  CubismLogInfo
+} from '@framework/utils/cubismdebug';
+
 /**
  * WebSocketメッセージの基本型
  */
@@ -261,35 +267,35 @@ export class WebSocketClient {
    */
   public connect(): Promise<void> {
     return new Promise((resolve, reject) => {
-      console.log(`サーバーに接続中: ${this.uri}`);
+     CubismLogInfo(`サーバーに接続中: ${this.uri}`);
 
       this.websocket = new WebSocket(this.uri);
 
       this.websocket.onopen = () => {
-        console.log('WebSocketサーバーに接続しました');
+       CubismLogInfo('WebSocketサーバーに接続しました');
         this.running = true;
         this.reconnectAttempts = 0;
         resolve();
       };
 
       this.websocket.onclose = (event) => {
-        console.log('WebSocket接続が閉じられました', event);
+       CubismLogInfo('WebSocket接続が閉じられました', event);
         this.running = false;
         this.handleReconnect();
       };
 
       this.websocket.onerror = (error) => {
-        console.error('WebSocketエラー:', error);
+        CubismLogError('WebSocketエラー:', error.toString());
         reject(error);
       };
 
       this.websocket.onmessage = (event) => {
         try {
           const data: WebSocketMessage = JSON.parse(event.data);
-          console.debug('受信:', data);
+          CubismLogVerbose('受信:', data);
           this.handleMessage(data);
         } catch (error) {
-          console.error('不正なJSON形式:', event.data, error);
+          CubismLogError('不正なJSON形式:', event.data, error.toString());
         }
       };
     });
@@ -303,7 +309,7 @@ export class WebSocketClient {
       this.running = false;
       this.websocket.close();
       this.websocket = null;
-      console.log('WebSocketサーバーから切断しました');
+     CubismLogInfo('WebSocketサーバーから切断しました');
     }
   }
 
@@ -313,17 +319,17 @@ export class WebSocketClient {
   private handleReconnect(): void {
     if ((this.reconnectAttempts < this.maxReconnectAttempts) || (0 === this.maxReconnectAttempts)) {
       this.reconnectAttempts++;
-      console.log(
+     CubismLogInfo(
         `再接続を試みます... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`
       );
 
       setTimeout(() => {
         this.connect().catch((error) => {
-          console.error('再接続に失敗しました:', error);
+          CubismLogError('再接続に失敗しました:', error.toString());
         });
       }, this.reconnectDelay);
     } else {
-      console.error('最大再接続試行回数に達しました');
+      CubismLogError('最大再接続試行回数に達しました');
     }
   }
 
@@ -338,9 +344,9 @@ export class WebSocketClient {
         timestamp: new Date().toISOString()
       });
       this.websocket.send(messageJson);
-      console.log('送信:', message);
+     CubismLogInfo('送信:', message);
     } else {
-      console.error('WebSocket接続が開いていません');
+      CubismLogError('WebSocket接続が開いていません');
     }
   }
 
@@ -421,90 +427,90 @@ export class WebSocketClient {
 
     switch (msgType) {
       case 'welcome':
-        console.log(`ウェルカムメッセージ: ${(data as WelcomeResponse).message}`);
+       CubismLogInfo(`ウェルカムメッセージ: ${(data as WelcomeResponse).message}`);
         break;
       case 'echo_response':
-        console.log(`エコー応答:`, (data as EchoResponse).original);
+       CubismLogInfo(`エコー応答:`, (data as EchoResponse).original);
         break;
       case 'broadcast_message':
         const broadcast = data as BroadcastResponse;
-        console.log(`ブロードキャスト from ${broadcast.from}: ${broadcast.content}`);
+       CubismLogInfo(`ブロードキャスト from ${broadcast.from}: ${broadcast.content}`);
         break;
       case 'client_connected':
         const connected = data as ClientConnectedMessage;
-        console.log(
+       CubismLogInfo(
           `新しいクライアントが接続しました (合計: ${connected.total_clients})`
         );
         break;
       case 'client_disconnected':
         const disconnected = data as ClientDisconnectedMessage;
-        console.log(
+       CubismLogInfo(
           `クライアントが切断しました (合計: ${disconnected.total_clients})`
         );
         break;
       case 'command_response':
-        console.log(`コマンド応答:`, data);
+       CubismLogInfo(`コマンド応答:`, data);
         break;
       case 'error':
-        console.error(`エラー: ${(data as ErrorMessage).message}`);
+        CubismLogError(`エラー: ${(data as ErrorMessage).message}`);
         break;
       case 'set_eye_blink':
         const eyeBlink = data as SetEyeBlinkMessage;
-        console.log(`目パチ設定: ${eyeBlink.enabled ? '有効' : '無効'}`);
+       CubismLogInfo(`目パチ設定: ${eyeBlink.enabled ? '有効' : '無効'}`);
         break;
       case 'set_breath':
         const breath = data as SetBreathMessage;
-        console.log(`呼吸設定: ${breath.enabled ? '有効' : '無効'}`);
+       CubismLogInfo(`呼吸設定: ${breath.enabled ? '有効' : '無効'}`);
         break;
       case 'set_idle_motion':
         const idleMotion = data as SetIdleMotionMessage;
-        console.log(`アイドリングモーション設定: ${idleMotion.enabled ? '有効' : '無効'}`);
+       CubismLogInfo(`アイドリングモーション設定: ${idleMotion.enabled ? '有効' : '無効'}`);
         break;
       case 'set_drag_follow':
         const dragFollow = data as SetDragFollowMessage;
-        console.log(`ドラッグ追従設定: ${dragFollow.enabled ? '有効' : '無効'}`);
+       CubismLogInfo(`ドラッグ追従設定: ${dragFollow.enabled ? '有効' : '無効'}`);
         break;
       case 'set_physics':
         const physics = data as SetPhysicsMessage;
-        console.log(`物理演算設定: ${physics.enabled ? '有効' : '無効'}`);
+       CubismLogInfo(`物理演算設定: ${physics.enabled ? '有効' : '無効'}`);
         break;
       case 'set_expression':
         const expression = data as SetExpressionMessage;
-        console.log(`表情設定: ${expression.expression}`);
+       CubismLogInfo(`表情設定: ${expression.expression}`);
         break;
       case 'set_motion':
         const motion = data as SetMotionMessage;
-        console.log(`モーション設定: グループ=${motion.group}, インデックス=${motion.index ?? 'ランダム'}`);
+       CubismLogInfo(`モーション設定: グループ=${motion.group}, インデックス=${motion.index ?? 'ランダム'}`);
         break;
       case 'set_parameter':
-        console.log(`パラメータ設定を受信`);
+       CubismLogInfo(`パラメータ設定を受信`);
         break;
       case 'request_model_info':
-        console.log(`モデル情報リクエストを受信`);
+       CubismLogInfo(`モデル情報リクエストを受信`);
         break;
       case 'request_eye_blink':
-        console.log(`目パチ情報リクエストを受信`);
+       CubismLogInfo(`目パチ情報リクエストを受信`);
         break;
       case 'request_breath':
-        console.log(`呼吸情報リクエストを受信`);
+       CubismLogInfo(`呼吸情報リクエストを受信`);
         break;
       case 'request_idle_motion':
-        console.log(`アイドリングモーション情報リクエストを受信`);
+       CubismLogInfo(`アイドリングモーション情報リクエストを受信`);
         break;
       case 'request_drag_follow':
-        console.log(`ドラッグ追従情報リクエストを受信`);
+       CubismLogInfo(`ドラッグ追従情報リクエストを受信`);
         break;
       case 'request_physics':
-        console.log(`物理演算情報リクエストを受信`);
+       CubismLogInfo(`物理演算情報リクエストを受信`);
         break;
       case 'request_expression':
-        console.log(`表情情報リクエストを受信`);
+       CubismLogInfo(`表情情報リクエストを受信`);
         break;
       case 'request_motion':
-        console.log(`モーション情報リクエストを受信`);
+       CubismLogInfo(`モーション情報リクエストを受信`);
         break;
       default:
-        console.log(`未処理のメッセージタイプ: ${msgType}`, data);
+       CubismLogInfo(`未処理のメッセージタイプ: ${msgType}`, data);
     }
   }
 

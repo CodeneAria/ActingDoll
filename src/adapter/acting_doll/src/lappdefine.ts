@@ -77,7 +77,7 @@ export const DebugLogEnable = true;
 export const DebugTouchLogEnable = false;
 
 // Frameworkから出力するログのレベル設定
-export const CubismLoggingLevel: LogLevel = LogLevel.LogLevel_Verbose;
+export const CubismLoggingLevel: LogLevel = LogLevel.LogLevel_Info;
 
 // デフォルトのレンダーターゲットサイズ
 export const RenderTargetWidth = 1900;

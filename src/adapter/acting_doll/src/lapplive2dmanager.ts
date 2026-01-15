@@ -13,6 +13,9 @@ import * as LAppDefine from './lappdefine';
 import { LAppModel } from './lappmodel';
 import { LAppPal } from './lapppal';
 import { LAppSubdelegate } from './lappsubdelegate';
+import {
+  CubismLogInfo
+} from '@framework/utils/cubismdebug';
 
 /**
  * サンプルアプリケーションにおいてCubismModelを管理するクラス
@@ -72,7 +75,7 @@ export class LAppLive2DManager {
    */
   public onTap(x: number, y: number): void {
     if (LAppDefine.DebugLogEnable) {
-      LAppPal.printMessage(
+      CubismLogInfo(
         `[APP] tap point: {x: ${x.toFixed(2)} y: ${y.toFixed(2)}}`
       );
     }
@@ -81,12 +84,12 @@ export class LAppLive2DManager {
 
     if (model.hitTest(LAppDefine.HitAreaNameHead, x, y)) {
       if (LAppDefine.DebugLogEnable) {
-        LAppPal.printMessage(`[APP] hit area: [${LAppDefine.HitAreaNameHead}]`);
+        CubismLogInfo(`[APP] hit area: [${LAppDefine.HitAreaNameHead}]`);
       }
       model.setRandomExpression();
     } else if (model.hitTest(LAppDefine.HitAreaNameBody, x, y)) {
       if (LAppDefine.DebugLogEnable) {
-        LAppPal.printMessage(`[APP] hit area: [${LAppDefine.HitAreaNameBody}]`);
+        CubismLogInfo(`[APP] hit area: [${LAppDefine.HitAreaNameBody}]`);
       }
       model.startRandomMotion(
         LAppDefine.MotionGroupTapBody,
@@ -144,7 +147,7 @@ export class LAppLive2DManager {
     this._sceneIndex = index;
 
     if (LAppDefine.DebugLogEnable) {
-      LAppPal.printMessage(`[APP] model index: ${this._sceneIndex}`);
+      CubismLogInfo(`[APP] model index: ${this._sceneIndex}`);
     }
 
     // ModelDir[]に保持したディレクトリ名から
@@ -223,13 +226,13 @@ export class LAppLive2DManager {
 
   // モーション再生開始のコールバック関数
   beganMotion = (self: ACubismMotion): void => {
-    LAppPal.printMessage('Motion Began:');
-    //LAppPal.printMessage(self);
+    CubismLogInfo('Motion Began:');
+    //CubismLogInfo(self);
   };
   // モーション再生終了のコールバック関数
   finishedMotion = (self: ACubismMotion): void => {
-    LAppPal.printMessage('Motion Finished:');
-    //LAppPal.printMessage(self);
+    CubismLogInfo('Motion Finished:');
+    //CubismLogInfo(self);
   };
 
   private static s_instance: LAppLive2DManager = null;

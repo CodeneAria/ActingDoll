@@ -11,6 +11,9 @@ import { LAppLive2DManager } from './lapplive2dmanager';
 import { LAppPal } from './lapppal';
 import { LAppTextureManager } from './lapptexturemanager';
 import { LAppView } from './lappview';
+import {
+  CubismLogInfo
+} from '@framework/utils/cubismdebug';
 
 /**
  * Canvasに関連する操作を取りまとめるクラス
@@ -159,7 +162,7 @@ export class LAppSubdelegate {
     const vertexShaderId = gl.createShader(gl.VERTEX_SHADER);
 
     if (vertexShaderId == null) {
-      LAppPal.printMessage('failed to create vertexShader');
+      CubismLogInfo('Failed to create vertexShader');
       return null;
     }
 
@@ -181,7 +184,7 @@ export class LAppSubdelegate {
     const fragmentShaderId = gl.createShader(gl.FRAGMENT_SHADER);
 
     if (fragmentShaderId == null) {
-      LAppPal.printMessage('failed to create fragmentShader');
+      CubismLogInfo('Failed to create fragmentShader');
       return null;
     }
 
@@ -249,7 +252,7 @@ export class LAppSubdelegate {
    */
   public onPointBegan(pageX: number, pageY: number): void {
     if (!this._view) {
-      LAppPal.printMessage('view notfound');
+      CubismLogInfo('view notfound');
       return;
     }
     this._captured = true;
@@ -281,7 +284,7 @@ export class LAppSubdelegate {
     this._captured = false;
 
     if (!this._view) {
-      LAppPal.printMessage('view notfound');
+      CubismLogInfo('view notfound');
       return;
     }
 
@@ -298,7 +301,7 @@ export class LAppSubdelegate {
     this._captured = false;
 
     if (!this._view) {
-      LAppPal.printMessage('view notfound');
+      CubismLogInfo('view notfound');
       return;
     }
 

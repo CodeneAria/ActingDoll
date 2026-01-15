@@ -5,6 +5,10 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
+import {
+  CubismLogError
+} from '@framework/utils/cubismdebug';
+
 /** @deprecated この変数は getInstance() が非推奨になったことに伴い、非推奨となりました。 */
 export let s_instance: LAppWavFileHandler = null;
 
@@ -229,7 +233,7 @@ export class LAppWavFileHandler {
 
           resolveValue(ret);
         } catch (e) {
-          console.log(e);
+          CubismLogError(e.toString());
         }
       })().then(() => {
         resolveValue(ret);
