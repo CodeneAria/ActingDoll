@@ -11,11 +11,8 @@ import { csmVector } from '@framework/type/csmvector';
 
 import * as LAppDefine from './lappdefine';
 import { LAppModel } from './lappmodel';
-import { LAppPal } from './lapppal';
 import { LAppSubdelegate } from './lappsubdelegate';
-import {
-  CubismLogInfo
-} from '@framework/utils/cubismdebug';
+import { CubismLogInfo } from '@framework/utils/cubismdebug';
 
 /**
  * サンプルアプリケーションにおいてCubismModelを管理するクラス

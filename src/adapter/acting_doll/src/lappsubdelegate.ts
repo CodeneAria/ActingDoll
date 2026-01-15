@@ -8,12 +8,9 @@
 import * as LAppDefine from './lappdefine';
 import { LAppGlManager } from './lappglmanager';
 import { LAppLive2DManager } from './lapplive2dmanager';
-import { LAppPal } from './lapppal';
 import { LAppTextureManager } from './lapptexturemanager';
 import { LAppView } from './lappview';
-import {
-  CubismLogInfo
-} from '@framework/utils/cubismdebug';
+import { CubismLogInfo } from '@framework/utils/cubismdebug';
 
 /**
  * Canvasに関連する操作を取りまとめるクラス

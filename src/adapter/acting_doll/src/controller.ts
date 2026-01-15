@@ -39,7 +39,7 @@ class Live2DController {
     // WebSocket接続
     try {
       await this.wsClient.connect();
-     CubismLogInfo('WebSocketサーバーに接続しました');
+      CubismLogInfo('WebSocketサーバーに接続しました');
 
       // UIを構築
       this.buildUI();
@@ -59,7 +59,7 @@ class Live2DController {
     // コマンドレスポンスハンドラ
     this.wsClient.onMessage('command_response', (data) => {
       const response = data as CommandResponse;
-     CubismLogInfo('コマンド応答:', response);
+      CubismLogInfo('コマンド応答:', response);
 
       // コマンドに応じた処理
       this.handleCommandResponse(response);
@@ -73,7 +73,7 @@ class Live2DController {
 
     // ウェルカムメッセージハンドラ
     this.wsClient.onMessage('welcome', (data) => {
-     CubismLogInfo('ウェルカムメッセージ:', data);
+      CubismLogInfo('ウェルカムメッセージ:', data);
       this.showMessage('サーバーに接続されました');
     });
   }
@@ -304,7 +304,7 @@ class Live2DController {
         this.displayCurrentMotion(response.data);
         break;
       default:
-       CubismLogInfo('未処理のコマンド:', response.command, response.data);
+        CubismLogInfo('未処理のコマンド:', response.command, response.data);
     }
   }
 

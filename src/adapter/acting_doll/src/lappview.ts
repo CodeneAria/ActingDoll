@@ -10,14 +10,11 @@ import { CubismViewMatrix } from '@framework/math/cubismviewmatrix';
 
 import * as LAppDefine from './lappdefine';
 import { LAppDelegate } from './lappdelegate';
-import { LAppPal } from './lapppal';
 import { LAppSprite } from './lappsprite';
 import { TextureInfo } from './lapptexturemanager';
 import { TouchManager } from './touchmanager';
 import { LAppSubdelegate } from './lappsubdelegate';
-import {
-  CubismLogInfo
-} from '@framework/utils/cubismdebug';
+import { CubismLogInfo } from '@framework/utils/cubismdebug';
 
 /**
  * 描画クラス。

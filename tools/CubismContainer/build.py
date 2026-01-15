@@ -80,13 +80,14 @@ def main(work_dir, config_path):
 
     try:
         # Run the command and show output in real-time
-        subprocess.run(npm_cmd, shell=True, check=True)
+        result = subprocess.run(npm_cmd, shell=True, check=True)
+        if result.returncode != 0:
+            print(f"[Error] Build failed.", file=sys.stderr)
+            sys.exit(1)
+        print("== Build completed ==")
     except subprocess.CalledProcessError as e:
         print(f"[Error] running npm install and build: {e}", file=sys.stderr)
         sys.exit(1)
-    except KeyboardInterrupt:
-        print("\n# Shutting down...")
-        sys.exit(0)
 
 
 if __name__ == "__main__":

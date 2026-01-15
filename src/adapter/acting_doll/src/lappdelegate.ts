@@ -293,11 +293,11 @@ export class LAppDelegate {
 
       // メッセージハンドラを登録
       this._websocketClient.onMessage('welcome', (data) => {
-       CubismLogInfo('[WebSocket] ウェルカムメッセージを受信しました');
+        CubismLogInfo('[WebSocket] ウェルカムメッセージを受信しました');
       });
 
       this._websocketClient.onMessage('broadcast_message', (data) => {
-       CubismLogInfo('[WebSocket] ブロードキャストメッセージを受信:', data);
+        CubismLogInfo('[WebSocket] ブロードキャストメッセージを受信:', data);
       });
 
       // 接続を試みる
@@ -419,7 +419,7 @@ export class LAppDelegate {
             if (ui) {
               ui.updateEyeBlinkToggle(data.enabled);
             }
-           CubismLogInfo('[WebSocket] 自動目パチを設定しました:', data.enabled);
+            CubismLogInfo('[WebSocket] 自動目パチを設定しました:', data.enabled);
           }
         }
       });
@@ -436,7 +436,7 @@ export class LAppDelegate {
             if (ui) {
               ui.updateBreathToggle(data.enabled);
             }
-           CubismLogInfo('[WebSocket] 呼吸を設定しました:', data.enabled);
+            CubismLogInfo('[WebSocket] 呼吸を設定しました:', data.enabled);
           }
         }
       });
@@ -453,7 +453,7 @@ export class LAppDelegate {
             if (ui) {
               ui.updateIdleMotionToggle(data.enabled);
             }
-           CubismLogInfo('[WebSocket] アイドリングモーションを設定しました:', data.enabled);
+            CubismLogInfo('[WebSocket] アイドリングモーションを設定しました:', data.enabled);
           }
         }
       });
@@ -470,7 +470,7 @@ export class LAppDelegate {
             if (ui) {
               ui.updateDragFollowToggle(data.enabled);
             }
-           CubismLogInfo('[WebSocket] ドラッグ追従を設定しました:', data.enabled);
+            CubismLogInfo('[WebSocket] ドラッグ追従を設定しました:', data.enabled);
           }
         }
       });
@@ -487,7 +487,7 @@ export class LAppDelegate {
             if (ui) {
               ui.updatePhysicsToggle(data.enabled);
             }
-           CubismLogInfo('[WebSocket] 物理演算を設定しました:', data.enabled);
+            CubismLogInfo('[WebSocket] 物理演算を設定しました:', data.enabled);
           }
         }
       });
@@ -504,7 +504,7 @@ export class LAppDelegate {
             if (ui) {
               ui.updateExpressionSelect(data.expression);
             }
-           CubismLogInfo('[WebSocket] 表情を設定しました:', data.expression);
+            CubismLogInfo('[WebSocket] 表情を設定しました:', data.expression);
           }
         }
       });
@@ -522,7 +522,7 @@ export class LAppDelegate {
             if (ui) {
               ui.updateMotionSelect(data.group, index);
             }
-           CubismLogInfo('[WebSocket] モーションを設定しました:', data.group, index);
+            CubismLogInfo('[WebSocket] モーションを設定しました:', data.group, index);
           }
         }
       });
@@ -553,13 +553,13 @@ export class LAppDelegate {
                 notFoundCount++;
               }
             }
-           CubismLogInfo(`[WebSocket] パラメータを一括設定しました: ${setCount}個成功, ${notFoundCount}個失敗`);
+            CubismLogInfo(`[WebSocket] パラメータを一括設定しました: ${setCount}個成功, ${notFoundCount}個失敗`);
           }
         }
       });
 
 
-     CubismLogInfo('[WebSocket] WebSocketクライアントを初期化しました');
+      CubismLogInfo('[WebSocket] WebSocketクライアントを初期化しました');
     }
   }
 
@@ -570,7 +570,7 @@ export class LAppDelegate {
     if (this._websocketClient) {
       this._websocketClient.disconnect();
       this._websocketClient = null;
-     CubismLogInfo('[WebSocket] WebSocketクライアントを解放しました');
+      CubismLogInfo('[WebSocket] WebSocketクライアントを解放しました');
     }
   }
 

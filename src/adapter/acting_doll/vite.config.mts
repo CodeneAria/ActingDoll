@@ -22,7 +22,7 @@ export default defineConfig((env: ConfigEnv): UserConfig => {
       sourcemap: env.mode == 'development' ? true : false,
       rollupOptions: {
         input: {
-          main: path.resolve(__dirname, 'index.html'),
+          index: path.resolve(__dirname, 'index.html'),
           api: path.resolve(__dirname, 'API.html'),
         },
       },

@@ -7,7 +7,6 @@
 
 import { LAppDelegate } from './lappdelegate';
 import { LAppUI } from './lappui';
-import * as LAppDefine from './lappdefine';
 
 /**
  * ブラウザロード後の処理
