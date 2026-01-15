@@ -250,9 +250,9 @@ export class WebSocketClient {
 
   /**
    * コンストラクタ
-   * @param uri WebSocketサーバーのURI（デフォルト: ws://localhost:8765）
+   * @param uri WebSocketサーバーのURI
    */
-  constructor(uri: string = 'ws://localhost:8765') {
+  constructor(uri: string) {
     this.uri = uri;
   }
 
@@ -286,7 +286,7 @@ export class WebSocketClient {
       this.websocket.onmessage = (event) => {
         try {
           const data: WebSocketMessage = JSON.parse(event.data);
-          console.log('受信:', data);
+          console.debug('受信:', data);
           this.handleMessage(data);
         } catch (error) {
           console.error('不正なJSON形式:', event.data, error);

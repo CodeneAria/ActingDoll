@@ -215,4 +215,5 @@ __marimo__/
 src/Cubism/Core
 src/Cubism/Resources
 src/adapter/public
-src/adapter/dist
+src/adapter/acting_doll/dist
+src/Cubism/Framework

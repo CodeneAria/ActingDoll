@@ -73,7 +73,7 @@ export class LAppLive2DManager {
   public onTap(x: number, y: number): void {
     if (LAppDefine.DebugLogEnable) {
       LAppPal.printMessage(
-        `[APP]tap point: {x: ${x.toFixed(2)} y: ${y.toFixed(2)}}`
+        `[APP] tap point: {x: ${x.toFixed(2)} y: ${y.toFixed(2)}}`
       );
     }
 
@@ -81,12 +81,12 @@ export class LAppLive2DManager {
 
     if (model.hitTest(LAppDefine.HitAreaNameHead, x, y)) {
       if (LAppDefine.DebugLogEnable) {
-        LAppPal.printMessage(`[APP]hit area: [${LAppDefine.HitAreaNameHead}]`);
+        LAppPal.printMessage(`[APP] hit area: [${LAppDefine.HitAreaNameHead}]`);
       }
       model.setRandomExpression();
     } else if (model.hitTest(LAppDefine.HitAreaNameBody, x, y)) {
       if (LAppDefine.DebugLogEnable) {
-        LAppPal.printMessage(`[APP]hit area: [${LAppDefine.HitAreaNameBody}]`);
+        LAppPal.printMessage(`[APP] hit area: [${LAppDefine.HitAreaNameBody}]`);
       }
       model.startRandomMotion(
         LAppDefine.MotionGroupTapBody,
@@ -144,7 +144,7 @@ export class LAppLive2DManager {
     this._sceneIndex = index;
 
     if (LAppDefine.DebugLogEnable) {
-      LAppPal.printMessage(`[APP]model index: ${this._sceneIndex}`);
+      LAppPal.printMessage(`[APP] model index: ${this._sceneIndex}`);
     }
 
     // ModelDir[]に保持したディレクトリ名から
@@ -224,12 +224,12 @@ export class LAppLive2DManager {
   // モーション再生開始のコールバック関数
   beganMotion = (self: ACubismMotion): void => {
     LAppPal.printMessage('Motion Began:');
-    console.log(self);
+    //LAppPal.printMessage(self);
   };
   // モーション再生終了のコールバック関数
   finishedMotion = (self: ACubismMotion): void => {
     LAppPal.printMessage('Motion Finished:');
-    console.log(self);
+    //LAppPal.printMessage(self);
   };
 
   private static s_instance: LAppLive2DManager = null;

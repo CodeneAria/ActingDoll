@@ -453,7 +453,7 @@ export class LAppModel extends CubismUserModel {
       ) {
         // テクスチャ名が空文字だった場合はロード・バインド処理をスキップ
         if (this._modelSetting.getTextureFileName(modelTextureNumber) == '') {
-          console.log('getTextureFileName null');
+          LAppPal.printMessage('getTextureFileName null');
           continue;
         }
 
@@ -805,7 +805,7 @@ export class LAppModel extends CubismUserModel {
       this._motionManager.setReservePriority(priority);
     } else if (!this._motionManager.reserveMotion(priority)) {
       if (this._debugMode) {
-        LAppPal.printMessage("[APP]can't start motion.");
+        LAppPal.printMessage("[APP] can't start motion.");
       }
       return InvalidMotionQueueEntryHandleValue;
     }
@@ -866,7 +866,7 @@ export class LAppModel extends CubismUserModel {
     }
 
     if (this._debugMode) {
-      LAppPal.printMessage(`[APP]start motion: [${group}_${no}]`);
+      LAppPal.printMessage(`[APP] start motion: [${group}_${no}]`);
     }
 
     // 現在のモーション情報を保存
@@ -925,7 +925,7 @@ export class LAppModel extends CubismUserModel {
     const motion: ACubismMotion = this._expressions.getValue(expressionId);
 
     if (this._debugMode) {
-      LAppPal.printMessage(`[APP]expression: [${expressionId}]`);
+      LAppPal.printMessage(`[APP] expression: [${expressionId}]`);
     }
 
     if (motion != null) {
@@ -939,7 +939,7 @@ export class LAppModel extends CubismUserModel {
       }
     } else {
       if (this._debugMode) {
-        LAppPal.printMessage(`[APP]expression[${expressionId}] is null`);
+        LAppPal.printMessage(`[APP] expression[${expressionId}] is null`);
       }
     }
   }
@@ -1087,7 +1087,7 @@ export class LAppModel extends CubismUserModel {
       const name = `${group}_${i}`;
       if (this._debugMode) {
         LAppPal.printMessage(
-          `[APP]load motion: ${motionFileName} => [${name}]`
+          `[APP] load motion: ${motionFileName} => [${name}]`
         );
       }
 

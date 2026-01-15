@@ -5,7 +5,7 @@
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "./../dist",
+    "outDir": "./dist",
     "removeComments": true,
     "sourceMap": true,
     "baseUrl": "./",

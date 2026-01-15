@@ -120,7 +120,7 @@ def main(work_dir, config_path):
 
 
 if __name__ == "__main__":
-    work_dir = Path(__file__).parent.parent.parent.resolve()
+    work_dir = Path(__file__).parent.parent.resolve()
     os.chdir(work_dir)
     config_path = work_dir / "config.yaml"
     main(work_dir, config_path)

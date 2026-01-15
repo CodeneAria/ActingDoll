@@ -18,7 +18,7 @@ export default defineConfig((env: ConfigEnv): UserConfig => {
     build: {
       target: 'modules',
       assetsDir: 'assets',
-      outDir: './../dist',
+      outDir: './dist',
       sourcemap: env.mode == 'development' ? true : false,
       rollupOptions: {
         input: {

@@ -8,8 +8,8 @@
 "use strict";
 const fs = require('fs');
 const publicResources = [
-  { src: '../../Cubism/Resources', dst: './../public/Resources' },
-  { src: '../../Cubism/Core', dst: './../public/Core' }
+  { src: '../../Cubism/Core', dst: './../public/Core' },
+  { src: '../../Cubism/Resources', dst: './../public/Resources' }
 ];
 
 publicResources.forEach((e)=>{if (fs.existsSync(e.dst)) fs.rmSync(e.dst, { recursive: true })});
