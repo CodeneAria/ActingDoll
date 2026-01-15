@@ -172,6 +172,7 @@ async def handle_client(websocket: ServerConnection):
                     # コマンド処理の例
                     command = data.get("command")
                     response = await process_command(command, client_id)
+                    logger.info(f"{client_id}::{response}")
                     await websocket.send(json.dumps(response, ensure_ascii=False))
 
                 elif msg_type == "model":
@@ -758,6 +759,25 @@ async def process_command(command: str, client_id: str) -> dict:
             "type": "command_response",
             "command": "ping",
             "data": "pong"
+        }
+    elif command == "list":
+        json_data = {}
+        if client_id_map:
+            # コマンド送信者自身を除外したクライアントリストを作成
+            other_clients = [cid for cid in client_id_map.keys() if cid != client_id]
+            json_data = {
+                "clients": other_clients,
+                "count": len(other_clients)
+            }
+        else:
+            json_data = {
+                "clients": [],
+                "count": 0
+            }
+        return {
+            "type": "command_response",
+            "command": command,
+            "data": json_data
         }
     else:
         return {

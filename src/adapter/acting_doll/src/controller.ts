@@ -16,6 +16,13 @@ import {
 class Live2DController {
   private wsClient: WebSocketClient;
   private controlPanel: HTMLElement | null = null;
+  private clients: string[] = [];
+  private models: string[] = [];
+  private expressions: string[] = [];
+  private motions: { [key: string]: number } = {};
+  private parameters: Array<{ id: string; value: number }> = [];
+  private selectedClientId: string = '';
+  private selectedModel: string = '';
 
   constructor() {
     // WebSocketクライアントを初期化
@@ -90,70 +97,113 @@ class Live2DController {
 
         <div class="status-section">
           <h2>接続状態</h2>
-          <div id="connection-status">接続中...</div>
+          <div id="connection-status">接続済み</div>
         </div>
 
         <div class="message-section">
           <div id="message-display"></div>
         </div>
 
-        <div class="model-section">
-          <h2>モデル操作</h2>
-          <button id="btn-get-models">モデル一覧取得</button>
-          <button id="btn-get-model-info">モデル情報取得</button>
-          <div id="model-info"></div>
-        </div>
-
-        <div class="animation-settings-section">
-          <h2>アニメーション設定</h2>
-          <div style="margin-top: 8px;">
-            <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
-              <input type="checkbox" id="eyeBlinkToggle" checked style="margin-right: 8px;">
-              <span>自動目パチ (Eye Blink)</span>
-            </label>
-            <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
-              <input type="checkbox" id="breathToggle" checked style="margin-right: 8px;">
-              <span>呼吸 (Breath)</span>
-            </label>
-            <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
-              <input type="checkbox" id="idleMotionToggle" style="margin-right: 8px;">
-              <span>アイドリングモーション (Idle Motion)</span>
-            </label>
-            <label style="display: flex; align-items: center; cursor: pointer;">
-              <input type="checkbox" id="dragFollowToggle" style="margin-right: 8px;">
-              <span>ドラッグ追従 (Drag Follow)</span>
-            </label>
+        <div class="basic-commands-section">
+          <h2>基本コマンド</h2>
+          <div style="margin-top: 10px;">
+            <input type="text" id="input-notify" placeholder="通知メッセージ" style="width: 300px;" />
+            <button id="btn-notify">通知送信 (notify)</button>
           </div>
         </div>
 
-        <div class="motion-group-section">
-          <h2>モーショングループ</h2>
-          <button id="btn-get-motion-groups">モーショングループ一覧</button>
-          <button id="btn-get-current-group">現在のグループ取得</button>
-          <div id="motion-groups"></div>
-          <select id="select-motion-group" style="margin-top: 10px;">
-            <option value="">モーショングループを選択...</option>
+        <div class="client-selection-section">
+          <h2>クライアント選択</h2>
+          <select id="select-client" style="width: 300px;">
+            <option value="">クライアントを選択...</option>
           </select>
-          <button id="btn-set-motion-group">グループ設定</button>
+          <button id="btn-list">クライアント一覧取得 (list)</button>
+        </div>
+
+        <div class="model-section">
+          <div style="margin-top: 10px;">
+            <input type="text" id="input-send-message" placeholder="メッセージ" style="width: 200px;" />
+            <button id="btn-send">メッセージ送信 (send)</button>
+          </div>
+          <h2>モデル操作</h2>
+          <button id="btn-model-list">モデル一覧取得 (model list)</button>
+          <select id="select-model" style="width: 300px; margin-left: 10px;">
+            <option value="">モデルを選択...</option>
+          </select>
+          <div style="margin-top: 10px;">
+            <button id="btn-model-expressions">表情一覧取得</button>
+            <button id="btn-model-motions">モーション一覧取得</button>
+            <button id="btn-model-parameters">パラメータ一覧取得</button>
+          </div>
+          <div id="model-info" style="margin-top: 10px;"></div>
+        </div>
+
+        <div class="client-commands-section">
+          <h2>クライアント制御</h2>
+          <button id="btn-client-get-model">モデル取得 (get_model)</button>
+
+          <h3 style="margin-top: 15px;">アニメーション設定</h3>
+          <div style="margin-top: 8px;">
+            <button id="btn-get-eye-blink">目パチ/状態取得</button>
+            <button id="btn-set-eye-blink-enabled">目パチ/有効</button>
+            <button id="btn-set-eye-blink-disabled">目パチ/無効</button>
+          </div>
+          <div style="margin-top: 8px;">
+            <button id="btn-get-breath">呼吸/状態取得</button>
+            <button id="btn-set-breath-enabled">呼吸/有効</button>
+            <button id="btn-set-breath-disabled">呼吸/無効</button>
+          </div>
+          <div style="margin-top: 8px;">
+            <button id="btn-get-idle-motion">アイドリングモーション/状態取得</button>
+            <button id="btn-set-idle-motion-enabled">アイドリングモーション/有効</button>
+            <button id="btn-set-idle-motion-disabled">アイドリングモーション/無効</button>
+          </div>
+          <div style="margin-top: 8px;">
+            <button id="btn-get-drag-follow">ドラッグ追従/状態取得</button>
+            <button id="btn-set-drag-follow-enabled">ドラッグ追従/有効</button>
+            <button id="btn-set-drag-follow-disabled">ドラッグ追従/無効</button>
+          </div>
+          <div style="margin-top: 8px;">
+            <button id="btn-get-physics">物理演算/状態取得</button>
+            <button id="btn-set-physics-enabled">物理演算/有効</button>
+            <button id="btn-set-physics-disabled">物理演算/無効</button>
+          </div>
+        </div>
+
+        <div class="expression-section">
+          <h2>表情操作</h2>
+          <button id="btn-get-expression">現在の表情取得</button>
+          <div style="margin-top: 10px;">
+            <select id="select-expression" style="width: 300px;">
+              <option value="">表情を選択...</option>
+            </select>
+            <button id="btn-set-expression">表情設定</button>
+          </div>
         </div>
 
         <div class="motion-section">
           <h2>モーション操作</h2>
-          <button id="btn-get-motions">モーション一覧</button>
-          <button id="btn-get-current-motion">現在のモーション</button>
-          <button id="btn-previous-motion">前のモーション</button>
-          <button id="btn-next-motion">次のモーション</button>
-          <div id="motion-list"></div>
-          <select id="select-motion" style="margin-top: 10px;">
-            <option value="">モーションを選択...</option>
-          </select>
-          <button id="btn-set-motion">モーション設定</button>
+          <button id="btn-get-motion">現在のモーション取得</button>
+          <div style="margin-top: 10px;">
+            <select id="select-motion-group" style="width: 200px;">
+              <option value="">グループを選択...</option>
+            </select>
+            <select id="select-motion-no" style="width: 100px;">
+              <option value="">番号...</option>
+            </select>
+            <button id="btn-set-motion">モーション設定</button>
+          </div>
+        </div>
+
+        <div class="parameter-section">
+          <h2>パラメータ操作</h2>
+          <div id="parameter-list" style="margin-top: 10px; max-height: 300px; overflow-y: auto;"></div>
+          <button id="btn-set-parameters" style="margin-top: 10px;">パラメータ設定</button>
         </div>
 
         <div class="custom-command-section">
           <h2>カスタムコマンド</h2>
-          <input type="text" id="input-command" placeholder="コマンドを入力..." />
-          <input type="text" id="input-args" placeholder="引数（オプション）..." />
+          <input type="text" id="input-command" placeholder="コマンドを入力..." style="width: 500px;" />
           <button id="btn-send-command">送信</button>
         </div>
       </div>
@@ -169,99 +219,194 @@ class Live2DController {
    * イベントリスナーを設定
    */
   private setupEventListeners(): void {
-    // アニメーション設定
-    document.getElementById('eyeBlinkToggle')?.addEventListener('change', (e) => {
-      const target = e.target as HTMLInputElement;
-      this.sendModelCommand('set_eye_blink', target.checked ? 'true' : 'false');
+    // 基本コマンド
+    document.getElementById('btn-list')?.addEventListener('click', () => {
+      this.sendCommand('list');
     });
 
-    document.getElementById('breathToggle')?.addEventListener('change', (e) => {
-      const target = e.target as HTMLInputElement;
-      this.sendModelCommand('set_breath', target.checked ? 'true' : 'false');
-    });
-
-    document.getElementById('idleMotionToggle')?.addEventListener('change', (e) => {
-      const target = e.target as HTMLInputElement;
-      this.sendModelCommand('set_idle_motion', target.checked ? 'true' : 'false');
-    });
-
-    document.getElementById('dragFollowToggle')?.addEventListener('change', (e) => {
-      const target = e.target as HTMLInputElement;
-      this.sendModelCommand('set_drag_follow', target.checked ? 'true' : 'false');
-    });
-
-    // モデル関連
-    document.getElementById('btn-get-models')?.addEventListener('click', () => {
-      this.sendModelCommand('get_model', '');
-    });
-
-    document.getElementById('btn-get-model-info')?.addEventListener('click', () => {
-      this.sendModelCommand('get_model_info', '');
-    });
-
-    // モーショングループ関連
-    document.getElementById('btn-get-motion-groups')?.addEventListener('click', () => {
-      this.sendModelCommand('get_motion_groups', '');
-    });
-
-    document.getElementById('btn-get-current-group')?.addEventListener('click', () => {
-      this.sendModelCommand('get_current_motion_group', '');
-    });
-
-    document.getElementById('btn-set-motion-group')?.addEventListener('click', () => {
-      const select = document.getElementById('select-motion-group') as HTMLSelectElement;
-      if (select && select.value) {
-        this.sendModelCommand('set_motion_group', select.value);
-      } else {
-        this.showError('モーショングループを選択してください');
+    document.getElementById('btn-notify')?.addEventListener('click', () => {
+      const input = document.getElementById('input-notify') as HTMLInputElement;
+      if (input && input.value) {
+        this.sendCommand(`notify ${input.value}`);
       }
     });
 
-    // モーション関連
-    document.getElementById('btn-get-motions')?.addEventListener('click', () => {
-      this.sendModelCommand('get_motions', '');
+    document.getElementById('btn-send')?.addEventListener('click', () => {
+      const input = document.getElementById('input-send-message') as HTMLInputElement;
+      if (input && input.value && this.selectedClientId) {
+        this.sendCommand(`send ${this.selectedClientId} ${input.value}`);
+      } else {
+        this.showError('クライアントとメッセージを入力してください');
+      }
     });
 
-    document.getElementById('btn-get-current-motion')?.addEventListener('click', () => {
-      this.sendModelCommand('get_current_motion', '');
+
+    document.getElementById('select-client')?.addEventListener('change', (e) => {
+      const target = e.target as HTMLSelectElement;
+      this.selectedClientId = target.value;
+      this.showMessage(`クライアント選択: ${this.selectedClientId}`);
     });
 
-    document.getElementById('btn-previous-motion')?.addEventListener('click', () => {
-      this.sendModelCommand('previous_motion', '');
+    // モデル関連
+    document.getElementById('btn-model-list')?.addEventListener('click', () => {
+      this.sendCommand('model list');
     });
 
-    document.getElementById('btn-next-motion')?.addEventListener('click', () => {
-      this.sendModelCommand('next_motion', '');
+    document.getElementById('select-model')?.addEventListener('change', (e) => {
+      const target = e.target as HTMLSelectElement;
+      this.selectedModel = target.value;
+      this.showMessage(`モデル選択: ${this.selectedModel}`);
+    });
+
+    document.getElementById('btn-model-expressions')?.addEventListener('click', () => {
+      if (this.selectedModel) {
+        this.sendCommand(`model get_expressions ${this.selectedModel}`);
+      } else {
+        this.showError('モデルを選択してください');
+      }
+    });
+
+    document.getElementById('btn-model-motions')?.addEventListener('click', () => {
+      if (this.selectedModel) {
+        this.sendCommand(`model get_motions ${this.selectedModel}`);
+      } else {
+        this.showError('モデルを選択してください');
+      }
+    });
+
+    document.getElementById('btn-model-parameters')?.addEventListener('click', () => {
+      if (this.selectedModel) {
+        this.sendCommand(`model get_parameters ${this.selectedModel}`);
+      } else {
+        this.showError('モデルを選択してください');
+      }
+    });
+
+    // クライアントコマンド - モデル取得
+    document.getElementById('btn-client-get-model')?.addEventListener('click', () => {
+      if (this.selectedClientId) {
+        this.sendCommand(`client ${this.selectedClientId} get_model`);
+      } else {
+        this.showError('クライアントを選択してください');
+      }
+    });
+
+    // アニメーション設定
+    this.setupAnimationButtons();
+
+    // 表情操作
+    document.getElementById('btn-get-expression')?.addEventListener('click', () => {
+      if (this.selectedClientId) {
+        this.sendCommand(`client ${this.selectedClientId} get_expression`);
+      } else {
+        this.showError('クライアントを選択してください');
+      }
+    });
+
+    document.getElementById('btn-set-expression')?.addEventListener('click', () => {
+      const select = document.getElementById('select-expression') as HTMLSelectElement;
+      if (this.selectedClientId && select && select.value) {
+        this.sendCommand(`client ${this.selectedClientId} set_expression ${select.value}`);
+      } else {
+        this.showError('クライアントと表情を選択してください');
+      }
+    });
+
+    // モーション操作
+    document.getElementById('btn-get-motion')?.addEventListener('click', () => {
+      if (this.selectedClientId) {
+        this.sendCommand(`client ${this.selectedClientId} get_motion`);
+      } else {
+        this.showError('クライアントを選択してください');
+      }
     });
 
     document.getElementById('btn-set-motion')?.addEventListener('click', () => {
-      const select = document.getElementById('select-motion') as HTMLSelectElement;
-      if (select && select.value) {
-        this.sendModelCommand('set_motion_index', select.value);
+      const groupSelect = document.getElementById('select-motion-group') as HTMLSelectElement;
+      const noSelect = document.getElementById('select-motion-no') as HTMLSelectElement;
+      if (this.selectedClientId && groupSelect && groupSelect.value && noSelect && noSelect.value) {
+        this.sendCommand(`client ${this.selectedClientId} set_motion ${groupSelect.value} ${noSelect.value}`);
       } else {
-        this.showError('モーションを選択してください');
+        this.showError('クライアント、グループ、番号を選択してください');
+      }
+    });
+
+    // パラメータ設定
+    document.getElementById('btn-set-parameters')?.addEventListener('click', () => {
+      if (!this.selectedClientId) {
+        this.showError('クライアントを選択してください');
+        return;
+      }
+
+      const params: string[] = [];
+      this.parameters.forEach((param, index) => {
+        const input = document.getElementById(`param-value-${index}`) as HTMLInputElement;
+        if (input && input.value) {
+          params.push(`${param.id}=${input.value}`);
+        }
+      });
+
+      if (params.length > 0) {
+        this.sendCommand(`client ${this.selectedClientId} set_parameter ${params.join(' ')}`);
+      } else {
+        this.showError('パラメータ値を入力してください');
       }
     });
 
     // カスタムコマンド
     document.getElementById('btn-send-command')?.addEventListener('click', () => {
       const cmdInput = document.getElementById('input-command') as HTMLInputElement;
-      const argsInput = document.getElementById('input-args') as HTMLInputElement;
       if (cmdInput && cmdInput.value) {
-        this.sendModelCommand(cmdInput.value, argsInput?.value || '');
+        this.sendCommand(cmdInput.value);
       }
     });
   }
 
   /**
-   * モデルコマンドを送信
+   * アニメーション設定ボタンをセットアップ
    */
-  private sendModelCommand(command: string, args: string): void {
-    this.wsClient.sendCustomMessage('model_command', {
-      command: command,
-      args: args
+  private setupAnimationButtons(): void {
+    const commands = [
+      { get: 'btn-get-eye-blink', enable: 'btn-set-eye-blink-enabled', disable: 'btn-set-eye-blink-disabled', name: 'eye_blink' },
+      { get: 'btn-get-breath', enable: 'btn-set-breath-enabled', disable: 'btn-set-breath-disabled', name: 'breath' },
+      { get: 'btn-get-idle-motion', enable: 'btn-set-idle-motion-enabled', disable: 'btn-set-idle-motion-disabled', name: 'idle_motion' },
+      { get: 'btn-get-drag-follow', enable: 'btn-set-drag-follow-enabled', disable: 'btn-set-drag-follow-disabled', name: 'drag_follow' },
+      { get: 'btn-get-physics', enable: 'btn-set-physics-enabled', disable: 'btn-set-physics-disabled', name: 'physics' }
+    ];
+
+    commands.forEach(cmd => {
+      document.getElementById(cmd.get)?.addEventListener('click', () => {
+        if (this.selectedClientId) {
+          this.sendCommand(`client ${this.selectedClientId} get_${cmd.name}`);
+        } else {
+          this.showError('クライアントを選択してください');
+        }
+      });
+
+      document.getElementById(cmd.enable)?.addEventListener('click', () => {
+        if (this.selectedClientId) {
+          this.sendCommand(`client ${this.selectedClientId} set_${cmd.name} enabled`);
+        } else {
+          this.showError('クライアントを選択してください');
+        }
+      });
+
+      document.getElementById(cmd.disable)?.addEventListener('click', () => {
+        if (this.selectedClientId) {
+          this.sendCommand(`client ${this.selectedClientId} set_${cmd.name} disabled`);
+        } else {
+          this.showError('クライアントを選択してください');
+        }
+      });
     });
-    this.showMessage(`コマンド送信: ${command} ${args}`);
+  }
+
+  /**
+   * コマンドを送信
+   */
+  private sendCommand(command: string): void {
+    this.wsClient.sendCommand(command);
+    this.showMessage(`コマンド送信: ${command}`);
   }
 
   /**
@@ -273,130 +418,200 @@ class Live2DController {
       return;
     }
 
-    // コマンドごとの処理
-    switch (response.command) {
-      case 'get_model':
-        this.displayModelInfo(response.data);
-        break;
-      case 'get_model_info':
-        this.displayDetailedModelInfo(response.data);
-        break;
-      case 'get_motion_groups':
-        this.displayMotionGroups(response.data);
-        break;
-      case 'get_current_motion_group':
-        this.displayCurrentMotionGroup(response.data);
-        break;
-      case 'set_motion_group':
-        this.showMessage(`モーショングループを設定しました: ${response.data?.motion_group}`);
-        break;
-      case 'get_motions':
-        this.displayMotions(response.data);
-        break;
-      case 'get_current_motion':
-        this.displayCurrentMotion(response.data);
-        break;
-      case 'set_motion_index':
-        this.showMessage(`モーションを設定しました: ${response.data?.motion}`);
-        break;
-      case 'next_motion':
-      case 'previous_motion':
-        this.displayCurrentMotion(response.data);
-        break;
-      default:
-        CubismLogInfo('未処理のコマンド:', response.command, response.data);
+    const data = response.data || {};
+    this.showMessage(`応答: ${JSON.stringify(data)}`);
+
+    // listコマンドの応答
+    if (data.clients) {
+      this.updateClientList(data.clients);
+    }
+
+    // model listの応答
+    if (data.models) {
+      this.updateModelList(data.models);
+    }
+
+    // model get_expressionsの応答
+    if (data.expressions) {
+      this.updateExpressionList(data.expressions);
+    }
+
+    // model get_motionsの応答
+    if (data.motions) {
+      this.updateMotionList(data.motions);
+    }
+
+    // model get_parametersの応答
+    if (data.parameters) {
+      this.updateParameterList(data.parameters);
+    }
+
+    // client get_modelの応答
+    if (data.model) {
+      this.selectedModel = data.model;
+      const select = document.getElementById('select-model') as HTMLSelectElement;
+      if (select) {
+        select.value = data.model;
+      }
+      this.showMessage(`クライアントのモデル: ${data.model}`);
     }
   }
 
   /**
-   * モデル情報を表示
+   * クライアントリストを更新
    */
-  private displayModelInfo(data: any): void {
-    const element = document.getElementById('model-info');
-    if (!element) return;
+  private updateClientList(clients: string[]): void {
+    this.clients = clients;
+    const select = document.getElementById('select-client') as HTMLSelectElement;
+    if (!select) return;
 
-    element.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+    select.innerHTML = '<option value="">クライアントを選択...</option>';
+    clients.forEach((clientId: string) => {
+      const option = document.createElement('option');
+      option.value = clientId;
+      option.textContent = clientId;
+      select.appendChild(option);
+    });
+
+    // 自動選択
+    if (clients.length > 0 && !this.selectedClientId) {
+      this.selectedClientId = clients[0];
+      select.value = clients[0];
+      this.showMessage(`クライアント自動選択: ${clients[0]}`);
+    }
   }
 
   /**
-   * 詳細なモデル情報を表示
+   * モデルリストを更新
    */
-  private displayDetailedModelInfo(data: any): void {
-    const element = document.getElementById('model-info');
-    if (!element) return;
+  private updateModelList(models: string[]): void {
+    this.models = models;
+    const select = document.getElementById('select-model') as HTMLSelectElement;
+    if (!select) return;
 
-    element.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+    select.innerHTML = '<option value="">モデルを選択...</option>';
+    models.forEach((model: string) => {
+      const option = document.createElement('option');
+      option.value = model;
+      option.textContent = model;
+      select.appendChild(option);
+    });
+
+    const element = document.getElementById('model-info');
+    if (element) {
+      element.innerHTML = `<div>モデル数: ${models.length}</div>`;
+    }
   }
 
   /**
-   * モーショングループ一覧を表示
+   * 表情リストを更新
    */
-  private displayMotionGroups(data: any): void {
-    const element = document.getElementById('motion-groups');
-    const select = document.getElementById('select-motion-group') as HTMLSelectElement;
+  private updateExpressionList(expressions: string[]): void {
+    this.expressions = expressions;
+    const select = document.getElementById('select-expression') as HTMLSelectElement;
+    if (!select) return;
 
-    if (!element) return;
+    select.innerHTML = '<option value="">表情を選択...</option>';
+    expressions.forEach((expr: string) => {
+      const option = document.createElement('option');
+      option.value = expr;
+      option.textContent = expr;
+      select.appendChild(option);
+    });
 
-    element.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+    const element = document.getElementById('model-info');
+    if (element) {
+      element.innerHTML = `<div>表情リスト: ${expressions.join(', ')}</div>`;
+    }
+  }
 
-    // セレクトボックスを更新
-    if (select && Array.isArray(data)) {
-      select.innerHTML = '<option value="">モーショングループを選択...</option>';
-      data.forEach((group: string) => {
+  /**
+   * モーションリストを更新
+   */
+  private updateMotionList(motions: { [key: string]: number }): void {
+    this.motions = motions;
+    const groupSelect = document.getElementById('select-motion-group') as HTMLSelectElement;
+    const noSelect = document.getElementById('select-motion-no') as HTMLSelectElement;
+
+    if (groupSelect) {
+      groupSelect.innerHTML = '<option value="">グループを選択...</option>';
+      Object.keys(motions).forEach((group: string) => {
         const option = document.createElement('option');
         option.value = group;
-        option.textContent = group;
-        select.appendChild(option);
+        option.textContent = `${group} (${motions[group]}件)`;
+        groupSelect.appendChild(option);
       });
+
+      // グループ選択時に番号を更新
+      groupSelect.addEventListener('change', (e) => {
+        const target = e.target as HTMLSelectElement;
+        if (noSelect && target.value && motions[target.value]) {
+          noSelect.innerHTML = '<option value="">番号...</option>';
+          const count = motions[target.value];
+          for (let i = 0; i < count; i++) {
+            const option = document.createElement('option');
+            option.value = i.toString();
+            option.textContent = i.toString();
+            noSelect.appendChild(option);
+          }
+        }
+      });
+    }
+
+    if (noSelect) {
+      noSelect.innerHTML = '<option value="">番号...</option>';
+      // 最初のグループがあれば、その数だけ番号を生成
+      const firstGroup = Object.keys(motions)[0];
+      if (firstGroup) {
+        const count = motions[firstGroup];
+        for (let i = 0; i < count; i++) {
+          const option = document.createElement('option');
+          option.value = i.toString();
+          option.textContent = i.toString();
+          noSelect.appendChild(option);
+        }
+      }
+    }
+
+    const element = document.getElementById('model-info');
+    if (element) {
+      element.innerHTML = `<div>モーショングループ: ${Object.keys(motions).join(', ')}</div>`;
     }
   }
 
   /**
-   * 現在のモーショングループを表示
+   * パラメータリストを更新
    */
-  private displayCurrentMotionGroup(data: any): void {
-    this.showMessage(`現在のモーショングループ: ${data}`);
-  }
-
-  /**
-   * モーション一覧を表示
-   */
-  private displayMotions(data: any): void {
-    const element = document.getElementById('motion-list');
-    const select = document.getElementById('select-motion') as HTMLSelectElement;
-
+  private updateParameterList(parameters: Array<{ id: string; value: number }>): void {
+    this.parameters = parameters;
+    const element = document.getElementById('parameter-list');
     if (!element) return;
 
-    element.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-
-    // セレクトボックスを更新
-    if (select && data.motions && Array.isArray(data.motions)) {
-      select.innerHTML = '<option value="">モーションを選択...</option>';
-      data.motions.forEach((motion: any, index: number) => {
-        const option = document.createElement('option');
-        option.value = index.toString();
-        option.textContent = typeof motion === 'string' ? motion : `Motion ${index}`;
-        select.appendChild(option);
-      });
-    }
-  }
-
-  /**
-   * 現在のモーションを表示
-   */
-  private displayCurrentMotion(data: any): void {
-    this.showMessage(`現在のモーション: ${JSON.stringify(data)}`);
+    let html = '<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px;">';
+    parameters.forEach((param, index) => {
+      html += `
+        <div style="display: flex; align-items: center; gap: 5px;">
+          <label style="font-size: 12px; min-width: 120px;">${param.id}:</label>
+          <input type="number" id="param-value-${index}"
+                 value="${param.value}"
+                 step="0.1"
+                 style="width: 80px; padding: 2px;" />
+        </div>
+      `;
+    });
+    html += '</div>';
+    element.innerHTML = html;
   }
 
   /**
    * 初期データを読み込み
    */
   private loadInitialData(): void {
-    // モーショングループ一覧を取得
-    this.sendModelCommand('get_motion_groups', '');
+    // クライアント一覧を取得
+    this.sendCommand('list');
 
-    // モデル情報を取得
-    this.sendModelCommand('get_model', '');
+    // モデル一覧を取得
+    this.sendCommand('model list');
   }
 
   /**
