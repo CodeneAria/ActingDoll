@@ -342,7 +342,7 @@ export class WebSocketClient {
         timestamp: new Date().toISOString()
       });
       this.websocket.send(messageJson);
-      CubismLogInfo('送信: {0}', message);
+      CubismLogInfo('送信: {0}', messageJson);
     } else {
       CubismLogError('WebSocket接続が開いていません');
     }
@@ -605,11 +605,31 @@ export class WebSocketClient {
   }
 
   /**
+   * パラメータ設定結果を送信
+   * @param successful 成功したパラメータ数
+   * @param failed 失敗したパラメータ数
+   */
+  public sendParameterStatus(successful: number, failed: number): void {
+    this.sendClientResponse('response_parameter', { successful, failed });
+  }
+  /**
    * 現在のモデル情報を送信
    * @param modelName モデル名
    * @param modelData モデル情報
    */
   public sendModelInfo(modelName: string, modelData?: any): void {
     this.sendClientResponse('response_model', { model_name: modelName, ...modelData });
+  }
+  /**
+   * ダイレクトメッセージ送信完了通知
+   */
+  public sendResponseSend(): void {
+    this.sendClientResponse('response_send', {  });
+  }
+  /**
+   * 通知メッセージ送信完了通知
+   */
+  public sendResponseNotify(): void {
+    this.sendClientResponse('response_notify', {  });
   }
 }

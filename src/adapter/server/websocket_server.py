@@ -112,8 +112,6 @@ async def handle_client(websocket: ServerConnection):
     Args:
         websocket: WebSocket接続
     """
-    logger.info(f"クライアント接続要求を受信")
-
     # クライアントIDを生成
     client_id = get_client_id(websocket)
     logger.info(f"新しいクライアント接続: {client_id}")
@@ -831,11 +829,6 @@ async def process_command(user_input: str, client_id: str) -> dict:
             "message": message,
             "timestamp": datetime.now().isoformat()
         })
-
-        if success:
-            logger.info(f"メッセージ送信完了 -> {target_client_id}: {message}")
-        else:
-            logger.error(f"メッセージ送信失敗 -> {target_client_id}")
         return {
             "type": "command_response",
             "command": command,
@@ -941,7 +934,6 @@ async def server_console():
                     "message": message,
                     "timestamp": datetime.now().isoformat()
                 })
-
                 if success:
                     logger.info(f"メッセージ送信完了 -> {target_client_id}: {message}")
                 else:

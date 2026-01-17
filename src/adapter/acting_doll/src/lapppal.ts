@@ -53,6 +53,7 @@ export class LAppPal {
   }
 
   static lastUpdate = Date.now();
+
   static currentFrame = 0.0;
   static lastFrame = 0.0;
   static deltaTime = 0.0;

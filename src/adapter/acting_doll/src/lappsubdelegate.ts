@@ -9,6 +9,7 @@ import * as LAppDefine from './lappdefine';
 import { LAppGlManager } from './lappglmanager';
 import { LAppLive2DManager } from './lapplive2dmanager';
 import { LAppTextureManager } from './lapptexturemanager';
+import { LAppUI } from './lappui';
 import { LAppView } from './lappview';
 import { CubismLogInfo } from '@framework/utils/cubismdebug';
 
@@ -24,6 +25,7 @@ export class LAppSubdelegate {
     this._glManager = new LAppGlManager();
     this._textureManager = new LAppTextureManager();
     this._live2dManager = new LAppLive2DManager();
+    this._ui = new LAppUI();
     this._view = new LAppView();
     this._frameBuffer = null;
     this._captured = false;
@@ -39,6 +41,9 @@ export class LAppSubdelegate {
 
     this._live2dManager.release();
     this._live2dManager = null;
+
+    this._ui.release();
+    this._ui = null;
 
     this._view.release();
     this._view = null;
@@ -84,6 +89,8 @@ export class LAppSubdelegate {
     this._view.initializeSprite();
 
     this._live2dManager.initialize(this);
+
+    this._ui.initialize();
 
     this._resizeObserver = new ResizeObserver(
       (entries: ResizeObserverEntry[], observer: ResizeObserver) =>
@@ -232,6 +239,10 @@ export class LAppSubdelegate {
     return this._live2dManager;
   }
 
+  public getUI(): LAppUI {
+    return this._ui;
+  }
+
   /**
    * Resize the canvas to fill the screen.
    */
@@ -326,6 +337,7 @@ export class LAppSubdelegate {
   private _frameBuffer: WebGLFramebuffer;
   private _glManager: LAppGlManager;
   private _live2dManager: LAppLive2DManager;
+  private _ui: LAppUI;
 
   /**
    * ResizeObserver

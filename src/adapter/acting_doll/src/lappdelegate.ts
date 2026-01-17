@@ -16,7 +16,6 @@ import {
   CubismLogInfo
 } from '@framework/utils/cubismdebug';
 import { WebSocketClient } from './websocketclient';
-import { LAppUI } from './lappui';
 
 export let s_instance: LAppDelegate = null;
 
@@ -305,109 +304,127 @@ export class LAppDelegate {
       // ダイレクトメッセージ受信ハンドラー
       this._websocketClient.onMessage('send', (data: any) => {
         LAppPal.printMessage(`[send] ${data.message}`);
+        this._websocketClient.sendResponseSend();
       });
       // 通知メッセージ受信ハンドラー
       this._websocketClient.onMessage('notify', (data: any) => {
         LAppPal.printMessage(`[notify] ${data.message}`);
+        this._websocketClient.sendResponseNotify();
       });
 
       // 各リクエストに対するハンドラーを登録して状態を返す
-      this._websocketClient.onMessage('request_eye_blink', () => {
+      this._websocketClient.onMessage('request_eye_blink', (data: any) => {
         const subdelegate = this.getSubdelegate(0);
         if (subdelegate) {
           const live2DManager = subdelegate.getLive2DManager();
-          const model = live2DManager.getModel(0);
-          if (model) {
-            const enabled = model.getEyeBlinkEnabled();
-            this._websocketClient.sendEyeBlinkStatus(enabled);
-          }
-        }
-      });
-
-      this._websocketClient.onMessage('request_breath', () => {
-        const subdelegate = this.getSubdelegate(0);
-        if (subdelegate) {
-          const live2DManager = subdelegate.getLive2DManager();
-          const model = live2DManager.getModel(0);
-          if (model) {
-            const enabled = model.getBreathEnabled();
-            this._websocketClient.sendBreathStatus(enabled);
-          }
-        }
-      });
-
-      this._websocketClient.onMessage('request_idle_motion', () => {
-        const subdelegate = this.getSubdelegate(0);
-        if (subdelegate) {
-          const live2DManager = subdelegate.getLive2DManager();
-          const model = live2DManager.getModel(0);
-          if (model) {
-            const enabled = model.getIdleMotionEnabled();
-            this._websocketClient.sendIdleMotionStatus(enabled);
-          }
-        }
-      });
-
-      this._websocketClient.onMessage('request_drag_follow', () => {
-        const subdelegate = this.getSubdelegate(0);
-        if (subdelegate) {
-          const live2DManager = subdelegate.getLive2DManager();
-          const model = live2DManager.getModel(0);
-          if (model) {
-            const enabled = model.getDragFollowEnabled();
-            this._websocketClient.sendDragFollowStatus(enabled);
-          }
-        }
-      });
-
-      this._websocketClient.onMessage('request_physics', () => {
-        const subdelegate = this.getSubdelegate(0);
-        if (subdelegate) {
-          const live2DManager = subdelegate.getLive2DManager();
-          const model = live2DManager.getModel(0);
-          if (model) {
-            const enabled = model.getPhysicsEnabled();
-            this._websocketClient.sendPhysicsStatus(enabled);
-          }
-        }
-      });
-
-      this._websocketClient.onMessage('request_expression', () => {
-        const subdelegate = this.getSubdelegate(0);
-        if (subdelegate) {
-          const live2DManager = subdelegate.getLive2DManager();
-          const model = live2DManager.getModel(0);
-          if (model) {
-            const expression = model.getCurrentExpression();
-            this._websocketClient.sendExpressionStatus(expression || '');
-          }
-        }
-      });
-
-      this._websocketClient.onMessage('request_motion', () => {
-        const subdelegate = this.getSubdelegate(0);
-        if (subdelegate) {
-          const live2DManager = subdelegate.getLive2DManager();
-          const model = live2DManager.getModel(0);
-          if (model) {
-            const motionInfo = model.getCurrentMotion();
-            if (motionInfo) {
-              this._websocketClient.sendMotionStatus(motionInfo.group, motionInfo.no);
-            } else {
-              this._websocketClient.sendMotionStatus('', 0);
+          if (live2DManager) {
+            const model = live2DManager.getModel(0);
+            if (model) {
+              const enabled = model.getEyeBlinkEnabled();
+              this._websocketClient.sendEyeBlinkStatus(enabled);
             }
           }
         }
       });
 
-      this._websocketClient.onMessage('request_model_info', () => {
+      this._websocketClient.onMessage('request_breath', (data: any) => {
         const subdelegate = this.getSubdelegate(0);
         if (subdelegate) {
           const live2DManager = subdelegate.getLive2DManager();
-          const model = live2DManager.getModel(0);
-          if (model) {
-            const modelName = model.getModelName();
-            this._websocketClient.sendModelInfo(modelName);
+          if (live2DManager) {
+            const model = live2DManager.getModel(0);
+            if (model) {
+              const enabled = model.getBreathEnabled();
+              this._websocketClient.sendBreathStatus(enabled);
+            }
+          }
+        }
+      });
+
+      this._websocketClient.onMessage('request_idle_motion', (data: any) => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const live2DManager = subdelegate.getLive2DManager();
+          if (live2DManager) {
+            const model = live2DManager.getModel(0);
+            if (model) {
+              const enabled = model.getIdleMotionEnabled();
+              this._websocketClient.sendIdleMotionStatus(enabled);
+            }
+          }
+        }
+      });
+
+      this._websocketClient.onMessage('request_drag_follow', (data: any) => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const live2DManager = subdelegate.getLive2DManager();
+          if (live2DManager) {
+            const model = live2DManager.getModel(0);
+            if (model) {
+              const enabled = model.getDragFollowEnabled();
+              this._websocketClient.sendDragFollowStatus(enabled);
+            }
+          }
+        }
+      });
+
+      this._websocketClient.onMessage('request_physics', (data: any) => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const live2DManager = subdelegate.getLive2DManager();
+          if (live2DManager) {
+            const model = live2DManager.getModel(0);
+            if (model) {
+              const enabled = model.getPhysicsEnabled();
+              this._websocketClient.sendPhysicsStatus(enabled);
+            }
+          }
+        }
+      });
+
+      this._websocketClient.onMessage('request_expression', (data: any) => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const live2DManager = subdelegate.getLive2DManager();
+          if (live2DManager) {
+            const model = live2DManager.getModel(0);
+            if (model) {
+              const expression = model.getCurrentExpression();
+              this._websocketClient.sendExpressionStatus(expression || '');
+            }
+          }
+        }
+      });
+
+      this._websocketClient.onMessage('request_motion', (data: any) => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const live2DManager = subdelegate.getLive2DManager();
+          if (live2DManager) {
+            const model = live2DManager.getModel(0);
+            if (model) {
+              const motionInfo = model.getCurrentMotion();
+              if (motionInfo) {
+                this._websocketClient.sendMotionStatus(motionInfo.group, motionInfo.no);
+              } else {
+                this._websocketClient.sendMotionStatus('', 0);
+              }
+            }
+          }
+        }
+      });
+
+      this._websocketClient.onMessage('request_model_info', (data: any) => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const live2DManager = subdelegate.getLive2DManager();
+          if (live2DManager) {
+            const model = live2DManager.getModel(0);
+            if (model) {
+              const modelName = model.getModelName();
+              this._websocketClient.sendModelInfo(modelName);
+            }
           }
         }
       });
@@ -417,15 +434,18 @@ export class LAppDelegate {
         const subdelegate = this.getSubdelegate(0);
         if (subdelegate) {
           const live2DManager = subdelegate.getLive2DManager();
-          const model = live2DManager.getModel(0);
-          if (model) {
-            model.setEyeBlinkEnabled(data.enabled);
-            // Update UI toggle
-            const ui = LAppUI.getInstance();
-            if (ui) {
-              ui.updateEyeBlinkToggle(data.enabled);
+          if (live2DManager) {
+            const model = live2DManager.getModel(0);
+            if (model) {
+              model.setEyeBlinkEnabled(data.enabled);
+              // Update UI toggle
+              const ui = subdelegate.getUI();
+              if (ui) {
+                ui.updateEyeBlinkToggle(data.enabled);
+              }
+              this._websocketClient.sendEyeBlinkStatus(data.enabled);
+              CubismLogInfo('[WebSocket] 自動目パチを設定しました: {0}', data.enabled);
             }
-            CubismLogInfo('[WebSocket] 自動目パチを設定しました: {0}', data.enabled);
           }
         }
       });
@@ -434,15 +454,18 @@ export class LAppDelegate {
         const subdelegate = this.getSubdelegate(0);
         if (subdelegate) {
           const live2DManager = subdelegate.getLive2DManager();
-          const model = live2DManager.getModel(0);
-          if (model) {
-            model.setBreathEnabled(data.enabled);
-            // Update UI toggle
-            const ui = LAppUI.getInstance();
-            if (ui) {
-              ui.updateBreathToggle(data.enabled);
+          if (live2DManager) {
+            const model = live2DManager.getModel(0);
+            if (model) {
+              model.setBreathEnabled(data.enabled);
+              // Update UI toggle
+              const ui = subdelegate.getUI();
+              if (ui) {
+                ui.updateBreathToggle(data.enabled);
+              }
+              this._websocketClient.sendBreathStatus(data.enabled);
+              CubismLogInfo('[WebSocket] 呼吸を設定しました: {0}', data.enabled);
             }
-            CubismLogInfo('[WebSocket] 呼吸を設定しました: {0}', data.enabled);
           }
         }
       });
@@ -451,15 +474,18 @@ export class LAppDelegate {
         const subdelegate = this.getSubdelegate(0);
         if (subdelegate) {
           const live2DManager = subdelegate.getLive2DManager();
-          const model = live2DManager.getModel(0);
-          if (model) {
-            model.setIdleMotionEnabled(data.enabled);
-            // Update UI toggle
-            const ui = LAppUI.getInstance();
-            if (ui) {
-              ui.updateIdleMotionToggle(data.enabled);
+          if (live2DManager) {
+            const model = live2DManager.getModel(0);
+            if (model) {
+              model.setIdleMotionEnabled(data.enabled);
+              // Update UI toggle
+              const ui = subdelegate.getUI();
+              if (ui) {
+                ui.updateIdleMotionToggle(data.enabled);
+              }
+              this._websocketClient.sendIdleMotionStatus(data.enabled);
+              CubismLogInfo('[WebSocket] アイドリングモーションを設定しました: {0}', data.enabled);
             }
-            CubismLogInfo('[WebSocket] アイドリングモーションを設定しました: {0}', data.enabled);
           }
         }
       });
@@ -468,15 +494,18 @@ export class LAppDelegate {
         const subdelegate = this.getSubdelegate(0);
         if (subdelegate) {
           const live2DManager = subdelegate.getLive2DManager();
-          const model = live2DManager.getModel(0);
-          if (model) {
-            model.setDragFollowEnabled(data.enabled);
-            // Update UI toggle
-            const ui = LAppUI.getInstance();
-            if (ui) {
-              ui.updateDragFollowToggle(data.enabled);
+          if (live2DManager) {
+            const model = live2DManager.getModel(0);
+            if (model) {
+              model.setDragFollowEnabled(data.enabled);
+              // Update UI toggle
+              const ui = subdelegate.getUI();
+              if (ui) {
+                ui.updateDragFollowToggle(data.enabled);
+              }
+              this._websocketClient.sendDragFollowStatus(data.enabled);
+              CubismLogInfo('[WebSocket] ドラッグ追従を設定しました: {0}', data.enabled);
             }
-            CubismLogInfo('[WebSocket] ドラッグ追従を設定しました: {0}', data.enabled);
           }
         }
       });
@@ -485,15 +514,18 @@ export class LAppDelegate {
         const subdelegate = this.getSubdelegate(0);
         if (subdelegate) {
           const live2DManager = subdelegate.getLive2DManager();
-          const model = live2DManager.getModel(0);
-          if (model) {
-            model.setPhysicsEnabled(data.enabled);
-            // Update UI toggle
-            const ui = LAppUI.getInstance();
-            if (ui) {
-              ui.updatePhysicsToggle(data.enabled);
+          if (live2DManager) {
+            const model = live2DManager.getModel(0);
+            if (model) {
+              model.setPhysicsEnabled(data.enabled);
+              // Update UI toggle
+              const ui = subdelegate.getUI();
+              if (ui) {
+                ui.updatePhysicsToggle(data.enabled);
+              }
+              this._websocketClient.sendPhysicsStatus(data.enabled);
+              CubismLogInfo('[WebSocket] 物理演算を設定しました: {0}', data.enabled);
             }
-            CubismLogInfo('[WebSocket] 物理演算を設定しました: {0}', data.enabled);
           }
         }
       });
@@ -502,15 +534,18 @@ export class LAppDelegate {
         const subdelegate = this.getSubdelegate(0);
         if (subdelegate) {
           const live2DManager = subdelegate.getLive2DManager();
-          const model = live2DManager.getModel(0);
-          if (model && data.expression) {
-            model.setExpression(data.expression);
-            // Update UI select
-            const ui = LAppUI.getInstance();
-            if (ui) {
-              ui.updateExpressionSelect(data.expression);
+          if (live2DManager) {
+            const model = live2DManager.getModel(0);
+            if (model && data.expression) {
+              model.setExpression(data.expression);
+              // Update UI select
+              const ui = subdelegate.getUI();
+              if (ui) {
+                ui.updateExpressionSelect(data.expression);
+              }
+              this._websocketClient.sendExpressionStatus(data.expression);
+              CubismLogInfo('[WebSocket] 表情を設定しました: {0}', data.expression);
             }
-            CubismLogInfo('[WebSocket] 表情を設定しました: {0}', data.expression);
           }
         }
       });
@@ -519,16 +554,19 @@ export class LAppDelegate {
         const subdelegate = this.getSubdelegate(0);
         if (subdelegate) {
           const live2DManager = subdelegate.getLive2DManager();
-          const model = live2DManager.getModel(0);
-          if (model && data.group !== undefined) {
-            const index = data.index !== undefined ? data.index : 0;
-            model.startMotion(data.group, index, LAppDefine.PriorityNormal);
-            // Update UI select
-            const ui = LAppUI.getInstance();
-            if (ui) {
-              ui.updateMotionSelect(data.group, index);
+          if (live2DManager) {
+            const model = live2DManager.getModel(0);
+            if (model && data.group !== undefined) {
+              const index = data.index !== undefined ? data.index : 0;
+              model.startMotion(data.group, index, LAppDefine.PriorityNormal);
+              // Update UI select
+              const ui = subdelegate.getUI();
+              if (ui) {
+                ui.updateMotionSelect(data.group, index);
+              }
+              this._websocketClient.sendMotionStatus(data.group, index);
+              CubismLogInfo('[WebSocket] モーションを設定しました: {0} {1}', data.group, index);
             }
-            CubismLogInfo('[WebSocket] モーションを設定しました: {0} {1}', data.group, index);
           }
         }
       });
@@ -537,33 +575,35 @@ export class LAppDelegate {
         const subdelegate = this.getSubdelegate(0);
         if (subdelegate) {
           const live2DManager = subdelegate.getLive2DManager();
-          const model = live2DManager.getModel(0);
-          if (model && data.parameters) {
-            // 一括設定モード: {"parameters": {"ParamAngleX": 30, "ParamAngleY": -15, ...}}
-            let setCount = 0;
-            let notFoundCount = 0;
-            const ui = LAppUI.getInstance();
+          if (live2DManager) {
+            const model = live2DManager.getModel(0);
+            if (model && data.parameters) {
+              // 一括設定モード: {"parameters": {"ParamAngleX": 30, "ParamAngleY": -15, ...}}
+              let setCount = 0;
+              let notFoundCount = 0;
 
-            for (const paramName in data.parameters) {
-              const paramValue = data.parameters[paramName];
-              const paramIndex = model.getParameterIndex(paramName);
-              if (paramIndex >= 0) {
-                model.setParameterValueByIndex(paramIndex, paramValue);
-                // Update UI slider
-                if (ui) {
-                  ui.updateParameterSlider(paramName, paramValue);
+              for (const paramName in data.parameters) {
+                const paramValue = data.parameters[paramName];
+                const paramIndex = model.getParameterIndex(paramName);
+                if (paramIndex >= 0) {
+                  model.setParameterValueByIndex(paramIndex, paramValue);
+                  // Update UI slider
+                  const ui = subdelegate.getUI();
+                  if (ui) {
+                    ui.updateParameterSlider(paramName, paramValue);
+                  }
+                  setCount++;
+                } else {
+                  CubismLogDebug('[WebSocket] パラメータが見つかりません: {0}', paramName);
+                  notFoundCount++;
                 }
-                setCount++;
-              } else {
-                CubismLogDebug('[WebSocket] パラメータが見つかりません: {0}', paramName);
-                notFoundCount++;
               }
+              this._websocketClient.sendParameterStatus(setCount, notFoundCount);
+              CubismLogInfo(`[WebSocket] パラメータを一括設定しました: ${setCount}個成功, ${notFoundCount}個失敗`);
             }
-            CubismLogInfo(`[WebSocket] パラメータを一括設定しました: ${setCount}個成功, ${notFoundCount}個失敗`);
           }
         }
       });
-
 
       CubismLogInfo('[WebSocket] WebSocketクライアントを初期化しました');
     }

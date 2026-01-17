@@ -45,7 +45,6 @@ import { LAppWavFileHandler } from './lappwavfilehandler';
 import { CubismMoc } from '@framework/model/cubismmoc';
 import { LAppDelegate } from './lappdelegate';
 import { LAppSubdelegate } from './lappsubdelegate';
-import { LAppUI } from './lappui';
 
 enum LoadStep {
   LoadAssets,
@@ -867,12 +866,6 @@ export class LAppModel extends CubismUserModel {
     this._currentMotionGroup = group;
     this._currentMotionNo = no;
 
-    // Update UI select
-    const ui = LAppUI.getInstance();
-    if (ui) {
-      ui.updateMotionSelect(group, no);
-    }
-
     return this._motionManager.startMotionPriority(
       motion,
       autoDelete,
@@ -925,12 +918,6 @@ export class LAppModel extends CubismUserModel {
     if (motion != null) {
       this._expressionManager.startMotion(motion, false);
       this._currentExpressionId = expressionId;
-
-      // Update UI select
-      const ui = LAppUI.getInstance();
-      if (ui) {
-        ui.updateExpressionSelect(expressionId);
-      }
     } else {
       if (this._debugMode) {
         CubismLogInfo(`[APP] expression[${expressionId}] is null`);

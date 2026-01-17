@@ -12,775 +12,761 @@ import { CubismLogError, CubismLogInfo } from '@framework/utils/cubismdebug';
  * UI Controller for Live2D model manipulation
  */
 export class LAppUI {
-  private _expressionSelect!: HTMLSelectElement;
-  private _motionSelect!: HTMLSelectElement;
-  private _parametersContainer!: HTMLDivElement;
-  private _controlPanel!: HTMLDivElement;
-  private _toggleButton!: HTMLButtonElement;
-  private _eyeBlinkToggle!: HTMLInputElement;
-  private _breathToggle!: HTMLInputElement;
-  private _idleMotionToggle!: HTMLInputElement;
-  private _dragFollowToggle!: HTMLInputElement;
-  private _physicsToggle!: HTMLInputElement;
-  private _parameterSliders: Map<string, HTMLInputElement> = new Map();
-  private _parameterValues: Map<string, HTMLSpanElement> = new Map();
-  private _manualControlParams: Set<number> = new Set();
-  private _manualControlTimers: Map<number, number> = new Map();
-  private _updateInterval: number | null = null;
-  private _wsStatusText!: HTMLSpanElement;
-  private _wsStatusIndicator!: HTMLSpanElement;
-  private _wsCheckInterval: number | null = null;
+    private _expressionSelect!: HTMLSelectElement;
+    private _motionSelect!: HTMLSelectElement;
+    private _parametersContainer!: HTMLDivElement;
+    private _controlPanel!: HTMLDivElement;
+    private _toggleButton!: HTMLButtonElement;
+    private _eyeBlinkToggle!: HTMLInputElement;
+    private _breathToggle!: HTMLInputElement;
+    private _idleMotionToggle!: HTMLInputElement;
+    private _dragFollowToggle!: HTMLInputElement;
+    private _physicsToggle!: HTMLInputElement;
+    private _parameterSliders: Map<string, HTMLInputElement> = new Map();
+    private _parameterValues: Map<string, HTMLSpanElement> = new Map();
+    private _manualControlParams: Set<number> = new Set();
+    private _manualControlTimers: Map<number, number> = new Map();
+    private _updateInterval: number | null = null;
+    private _wsStatusText!: HTMLSpanElement;
+    private _wsStatusIndicator!: HTMLSpanElement;
+    private _wsCheckInterval: number | null = null;
 
-  /**
-   * Initialize UI
-   */
-  public initialize(): void {
-    // Get DOM elements
-    this._controlPanel = document.getElementById('controlPanel') as HTMLDivElement;
-    this._toggleButton = document.getElementById('togglePanel') as HTMLButtonElement;
-    this._eyeBlinkToggle = document.getElementById('eyeBlinkToggle') as HTMLInputElement;
-    this._breathToggle = document.getElementById('breathToggle') as HTMLInputElement;
-    this._idleMotionToggle = document.getElementById('idleMotionToggle') as HTMLInputElement;
-    this._dragFollowToggle = document.getElementById('dragFollowToggle') as HTMLInputElement;
-    this._physicsToggle = document.getElementById('physicsToggle') as HTMLInputElement;
-    this._expressionSelect = document.getElementById('expressionSelect') as HTMLSelectElement;
-    this._motionSelect = document.getElementById('motionSelect') as HTMLSelectElement;
-    this._parametersContainer = document.getElementById('parametersContainer') as HTMLDivElement;
-    this._wsStatusText = document.getElementById('wsStatusText') as HTMLSpanElement;
-    this._wsStatusIndicator = document.getElementById('wsStatusIndicator') as HTMLSpanElement;
+    /**
+     * Initialize UI
+     */
+    public initialize(): void {
+        // Get DOM elements
+        this._controlPanel = document.getElementById('controlPanel') as HTMLDivElement;
+        this._toggleButton = document.getElementById('togglePanel') as HTMLButtonElement;
+        this._eyeBlinkToggle = document.getElementById('eyeBlinkToggle') as HTMLInputElement;
+        this._breathToggle = document.getElementById('breathToggle') as HTMLInputElement;
+        this._idleMotionToggle = document.getElementById('idleMotionToggle') as HTMLInputElement;
+        this._dragFollowToggle = document.getElementById('dragFollowToggle') as HTMLInputElement;
+        this._physicsToggle = document.getElementById('physicsToggle') as HTMLInputElement;
+        this._expressionSelect = document.getElementById('expressionSelect') as HTMLSelectElement;
+        this._motionSelect = document.getElementById('motionSelect') as HTMLSelectElement;
+        this._parametersContainer = document.getElementById('parametersContainer') as HTMLDivElement;
+        this._wsStatusText = document.getElementById('wsStatusText') as HTMLSpanElement;
+        this._wsStatusIndicator = document.getElementById('wsStatusIndicator') as HTMLSpanElement;
 
-    if (!this._controlPanel || !this._toggleButton) {
-      CubismLogError('[LAppUI] Required UI elements not found');
-      return;
-    }
-
-    // Setup toggle button
-    this._toggleButton.addEventListener('click', () => {
-      this._controlPanel.classList.toggle('hidden');
-      this._toggleButton.textContent = this._controlPanel.classList.contains('hidden')
-        ? 'Controls'
-        : 'Hide';
-    });
-
-    // Setup expression select
-    this._expressionSelect.addEventListener('change', (e) => {
-      const target = e.target as HTMLSelectElement;
-      if (target.value) {
-        this.setExpression(target.value);
-      }
-    });
-
-    // Setup motion select
-    this._motionSelect.addEventListener('change', (e) => {
-      const target = e.target as HTMLSelectElement;
-      if (target.value) {
-        const [group, index] = target.value.split('_');
-        this.startMotion(group, parseInt(index));
-      }
-    });
-
-    // Setup eye blink toggle
-    this._eyeBlinkToggle.addEventListener('change', (e) => {
-      const target = e.target as HTMLInputElement;
-      this.setEyeBlinkEnabled(target.checked);
-    });
-
-    // Setup breath toggle
-    this._breathToggle.addEventListener('change', (e) => {
-      const target = e.target as HTMLInputElement;
-      this.setBreathEnabled(target.checked);
-    });
-
-    // Setup idle motion toggle
-    this._idleMotionToggle.addEventListener('change', (e) => {
-      const target = e.target as HTMLInputElement;
-      this.setIdleMotionEnabled(target.checked);
-    });
-
-    // Setup drag follow toggle
-    this._dragFollowToggle.addEventListener('change', (e) => {
-      const target = e.target as HTMLInputElement;
-      this.setDragFollowEnabled(target.checked);
-    });
-
-    // Setup physics toggle
-    this._physicsToggle.addEventListener('change', (e) => {
-      const target = e.target as HTMLInputElement;
-      this.setPhysicsEnabled(target.checked);
-    });
-
-    // Listen for model loaded events
-    window.addEventListener('modelLoaded', () => {
-      CubismLogInfo('[LAppUI] Model loaded, updating UI');
-      this.updateUI();
-    });
-
-    // Start parameter update loop
-    this._updateInterval = window.setInterval(() => {
-      this.updateParameterValues();
-    }, 100);
-
-    // Start WebSocket status check loop
-    this._wsCheckInterval = window.setInterval(() => {
-      this.updateWebSocketStatus();
-    }, 500);
-
-    // Initial WebSocket status check
-    this.updateWebSocketStatus();
-  }
-
-  /**
-   * Enable or disable eye blink animation
-   */
-  public setEyeBlinkEnabled(enabled: boolean): void {
-    const delegate = LAppDelegate.getInstance();
-    const subdelegate = delegate.getSubdelegate(0);
-
-    if (!subdelegate) {
-      return;
-    }
-
-    const manager = subdelegate.getLive2DManager();
-    const model = manager.getModel(0);
-
-    if (model) {
-      model.setEyeBlinkEnabled(enabled);
-      CubismLogInfo(`[LAppUI] Eye blink ${enabled ? 'enabled' : 'disabled'}`);
-    }
-
-    // Enable or disable eye blink parameter sliders
-    this.updateSliderStates();
-  }
-
-  /**
-   * Enable or disable breath animation
-   */
-  public setBreathEnabled(enabled: boolean): void {
-    const delegate = LAppDelegate.getInstance();
-    const subdelegate = delegate.getSubdelegate(0);
-
-    if (!subdelegate) {
-      return;
-    }
-
-    const manager = subdelegate.getLive2DManager();
-    const model = manager.getModel(0);
-
-    if (model) {
-      model.setBreathEnabled(enabled);
-      CubismLogInfo(`[LAppUI] Breath ${enabled ? 'enabled' : 'disabled'}`);
-    }
-
-    // Enable or disable breath parameter sliders
-    this.updateSliderStates();
-  }
-
-  /**
-   * Enable or disable idle motion
-   */
-  public setIdleMotionEnabled(enabled: boolean): void {
-    const delegate = LAppDelegate.getInstance();
-    const subdelegate = delegate.getSubdelegate(0);
-
-    if (!subdelegate) {
-      return;
-    }
-
-    const manager = subdelegate.getLive2DManager();
-    const model = manager.getModel(0);
-
-    if (model) {
-      model.setIdleMotionEnabled(enabled);
-      CubismLogInfo(`[LAppUI] Idle motion ${enabled ? 'enabled' : 'disabled'}`);
-    }
-  }
-  /**
-   * Enable or disable idle motion
-   */
-  public setDragFollowEnabled(enabled: boolean): void {
-    const delegate = LAppDelegate.getInstance();
-    const subdelegate = delegate.getSubdelegate(0);
-
-    if (!subdelegate) {
-      return;
-    }
-
-    const manager = subdelegate.getLive2DManager();
-    const model = manager.getModel(0);
-
-    if (model) {
-      model.setDragFollowEnabled(enabled);
-      CubismLogInfo(`[LAppUI] Drag follow ${enabled ? 'enabled' : 'disabled'}`);
-    }
-  }
-
-  /**
-   * Enable or disable physics
-   */
-  public setPhysicsEnabled(enabled: boolean): void {
-    const delegate = LAppDelegate.getInstance();
-    const subdelegate = delegate.getSubdelegate(0);
-
-    if (!subdelegate) {
-      return;
-    }
-
-    const manager = subdelegate.getLive2DManager();
-    const model = manager.getModel(0);
-
-    if (model) {
-      model.setPhysicsEnabled(enabled);
-      CubismLogInfo(`[LAppUI] Physics ${enabled ? 'enabled' : 'disabled'}`);
-    }
-
-    // Enable or disable physics parameter sliders
-    this.updateSliderStates();
-  }
-
-  /**
-   * Update UI with current model data
-   */
-  public updateUI(): void {
-    const delegate = LAppDelegate.getInstance();
-    const subdelegate = delegate.getSubdelegate(0);
-
-    if (!subdelegate) {
-      return;
-    }
-
-    const manager = subdelegate.getLive2DManager();
-    const model = manager.getModel(0);
-
-    if (!model || !model._modelSetting) {
-      return;
-    }
-
-    this.updateExpressions(model);
-    this.updateMotions(model);
-    this.updateParameters(model);
-
-    // Apply current checkbox settings to the new model
-    this.applyCheckboxSettings();
-
-    // Update slider states based on current toggle states
-    this.updateSliderStates();
-  }
-
-  /**
-   * Apply current checkbox settings to the model
-   */
-  private applyCheckboxSettings(): void {
-    // Apply eye blink setting
-    if (this._eyeBlinkToggle) {
-      this.setEyeBlinkEnabled(this._eyeBlinkToggle.checked);
-    }
-
-    // Apply breath setting
-    if (this._breathToggle) {
-      this.setBreathEnabled(this._breathToggle.checked);
-    }
-
-    // Apply idle motion setting
-    if (this._idleMotionToggle) {
-      this.setIdleMotionEnabled(this._idleMotionToggle.checked);
-    }
-
-    // Apply drag follow setting
-    if (this._dragFollowToggle) {
-      this.setDragFollowEnabled(this._dragFollowToggle.checked);
-    }
-  }
-
-  /**
-   * Update expression options
-   */
-  private updateExpressions(model: LAppModel): void {
-    this._expressionSelect.innerHTML = '<option value="">Select Expression...</option>';
-
-    const expressionCount = model._modelSetting.getExpressionCount();
-
-    if (expressionCount > 0) {
-      for (let i = 0; i < expressionCount; i++) {
-        const name = model._modelSetting.getExpressionName(i);
-        const option = document.createElement('option');
-        option.value = name;
-        option.textContent = name;
-        this._expressionSelect.appendChild(option);
-      }
-    } else {
-      const option = document.createElement('option');
-      option.value = '';
-      option.textContent = 'No expressions available';
-      option.disabled = true;
-      this._expressionSelect.appendChild(option);
-    }
-  }
-
-  /**
-   * Update motion options
-   */
-  private updateMotions(model: LAppModel): void {
-    this._motionSelect.innerHTML = '<option value="">Select Motion...</option>';
-
-    const motionGroupCount = model._modelSetting.getMotionGroupCount();
-
-    if (motionGroupCount > 0) {
-      for (let i = 0; i < motionGroupCount; i++) {
-        const groupName = model._modelSetting.getMotionGroupName(i);
-        const motionCount = model._modelSetting.getMotionCount(groupName);
-
-        // Create optgroup for each motion group
-        const optgroup = document.createElement('optgroup');
-        optgroup.label = groupName;
-
-        for (let j = 0; j < motionCount; j++) {
-          const option = document.createElement('option');
-          option.value = `${groupName}_${j}`;
-          option.textContent = `${groupName} ${j}`;
-          optgroup.appendChild(option);
+        if (!this._controlPanel || !this._toggleButton) {
+            CubismLogError('[LAppUI] Required UI elements not found');
+            return;
         }
 
-        this._motionSelect.appendChild(optgroup);
-      }
-    } else {
-      const option = document.createElement('option');
-      option.value = '';
-      option.textContent = 'No motions available';
-      option.disabled = true;
-      this._motionSelect.appendChild(option);
+        // Setup toggle button
+        this._toggleButton.addEventListener('click', () => {
+            this._controlPanel.classList.toggle('hidden');
+            this._toggleButton.textContent = this._controlPanel.classList.contains('hidden')
+                ? 'Controls'
+                : 'Hide';
+        });
+
+        // Setup expression select
+        this._expressionSelect.addEventListener('change', (e) => {
+            const target = e.target as HTMLSelectElement;
+            if (target.value) {
+                this.setExpression(target.value);
+            }
+        });
+
+        // Setup motion select
+        this._motionSelect.addEventListener('change', (e) => {
+            const target = e.target as HTMLSelectElement;
+            if (target.value) {
+                const [group, index] = target.value.split('_');
+                this.startMotion(group, parseInt(index));
+            }
+        });
+
+        // Setup eye blink toggle
+        this._eyeBlinkToggle.addEventListener('change', (e) => {
+            const target = e.target as HTMLInputElement;
+            this.setEyeBlinkEnabled(target.checked);
+        });
+
+        // Setup breath toggle
+        this._breathToggle.addEventListener('change', (e) => {
+            const target = e.target as HTMLInputElement;
+            this.setBreathEnabled(target.checked);
+        });
+
+        // Setup idle motion toggle
+        this._idleMotionToggle.addEventListener('change', (e) => {
+            const target = e.target as HTMLInputElement;
+            this.setIdleMotionEnabled(target.checked);
+        });
+
+        // Setup drag follow toggle
+        this._dragFollowToggle.addEventListener('change', (e) => {
+            const target = e.target as HTMLInputElement;
+            this.setDragFollowEnabled(target.checked);
+        });
+
+        // Setup physics toggle
+        this._physicsToggle.addEventListener('change', (e) => {
+            const target = e.target as HTMLInputElement;
+            this.setPhysicsEnabled(target.checked);
+        });
+
+        // Listen for model loaded events
+        window.addEventListener('modelLoaded', () => {
+            CubismLogInfo('[LAppUI] Model loaded, updating UI');
+            this.updateUI();
+        });
+
+        // Start parameter update loop
+        this._updateInterval = window.setInterval(() => {
+            this.updateParameterValues();
+        }, 100);
+
+        // Start WebSocket status check loop
+        this._wsCheckInterval = window.setInterval(() => {
+            this.updateWebSocketStatus();
+        }, 500);
+
+        // Initial WebSocket status check
+        this.updateWebSocketStatus();
     }
-  }
 
-  /**
-   * Update parameter sliders
-   */
-  private updateParameters(model: LAppModel): void {
-    this._parametersContainer.innerHTML = '';
-    this._parameterSliders.clear();
-    this._parameterValues.clear();
+    /**
+     * Enable or disable eye blink animation
+     */
+    public setEyeBlinkEnabled(enabled: boolean): void {
+        const delegate = LAppDelegate.getInstance();
+        const subdelegate = delegate.getSubdelegate(0);
 
-    const cubismModel = model.getModel();
-    if (!cubismModel) {
-      this._parametersContainer.innerHTML = '<div class="empty-message">Model not loaded</div>';
-      return;
-    }
+        if (!subdelegate) { return; }
 
-    const parameterCount = cubismModel.getParameterCount();
+        const manager = subdelegate.getLive2DManager();
+        const model = manager.getModel(0);
 
-    if (parameterCount === 0) {
-      this._parametersContainer.innerHTML = '<div class="empty-message">No parameters available</div>';
-      return;
-    }
-
-    // Get physics parameter names
-    const physicsParams = model.getPhysicsParameterNames();
-    const breathParams = model.getBreathParameterNames();
-    const eyeBlinkParams = model.getEyeBlinkParameterNames();
-
-    // Create sliders for each parameter
-    for (let i = 0; i < parameterCount; i++) {
-      const parameterId = cubismModel.getParameterId(i);
-      const parameterName = parameterId.getString().s;
-      const minValue = cubismModel.getParameterMinimumValue(i);
-      const maxValue = cubismModel.getParameterMaximumValue(i);
-      const defaultValue = cubismModel.getParameterDefaultValue(i);
-      const currentValue = cubismModel.getParameterValueByIndex(i);
-
-      // Create parameter item container
-      const paramItem = document.createElement('div');
-      paramItem.className = 'parameter-item';
-
-      // Create label with name and value
-      const labelDiv = document.createElement('div');
-      labelDiv.className = 'parameter-label';
-
-      const nameSpan = document.createElement('span');
-      nameSpan.className = 'param-name';
-      nameSpan.textContent = parameterName;
-
-      const valueSpan = document.createElement('span');
-      valueSpan.className = 'param-value';
-      valueSpan.textContent = currentValue.toFixed(2);
-      this._parameterValues.set(parameterName, valueSpan);
-
-      labelDiv.appendChild(nameSpan);
-      labelDiv.appendChild(valueSpan);
-
-      // Create slider
-      const slider = document.createElement('input');
-      slider.type = 'range';
-      slider.min = minValue.toString();
-      slider.max = maxValue.toString();
-      slider.step = '0.01';
-      slider.value = currentValue.toString();
-      slider.dataset.paramIndex = i.toString();
-
-      // Add classes based on which features affect this parameter
-      if (physicsParams.has(parameterName)) {
-        slider.classList.add('physics-param');
-      }
-      if (breathParams.has(parameterName)) {
-        slider.classList.add('breath-param');
-      }
-      if (eyeBlinkParams.has(parameterName)) {
-        slider.classList.add('eyeblink-param');
-      }
-
-      slider.addEventListener('input', (e) => {
-        const target = e.target as HTMLInputElement;
-        const value = parseFloat(target.value);
-        const index = parseInt(target.dataset.paramIndex!);
-
-        // Mark this parameter as manually controlled
-        this._manualControlParams.add(index);
-
-        // Clear existing timer for this parameter
-        const existingTimer = this._manualControlTimers.get(index);
-        if (existingTimer) {
-          clearTimeout(existingTimer);
+        if (model) {
+            model.setEyeBlinkEnabled(enabled);
+            CubismLogInfo(`[LAppUI] Eye blink ${enabled ? 'enabled' : 'disabled'}`);
         }
 
-        // Set timer to release manual control after 3 seconds
-        const timer = window.setTimeout(() => {
-          this._manualControlParams.delete(index);
-          this._manualControlTimers.delete(index);
-        }, 3000);
-        this._manualControlTimers.set(index, timer);
+        // Enable or disable eye blink parameter sliders
+        this.updateSliderStates();
+    }
 
-        this.setParameter(index, value);
+    /**
+     * Enable or disable breath animation
+     */
+    public setBreathEnabled(enabled: boolean): void {
+        const delegate = LAppDelegate.getInstance();
+        const subdelegate = delegate.getSubdelegate(0);
 
-        // Update value display
-        const valueDisplay = this._parameterValues.get(parameterName);
-        if (valueDisplay) {
-          valueDisplay.textContent = value.toFixed(2);
+        if (!subdelegate) { return; }
+
+        const manager = subdelegate.getLive2DManager();
+        const model = manager.getModel(0);
+
+        if (model) {
+            model.setBreathEnabled(enabled);
+            CubismLogInfo(`[LAppUI] Breath ${enabled ? 'enabled' : 'disabled'}`);
         }
-      });
 
-      this._parameterSliders.set(parameterName, slider);
-
-      paramItem.appendChild(labelDiv);
-      paramItem.appendChild(slider);
-      this._parametersContainer.appendChild(paramItem);
-    }
-  }
-
-  /**
-   * Update parameter value displays
-   */
-  private updateParameterValues(): void {
-    const delegate = LAppDelegate.getInstance();
-    const subdelegate = delegate.getSubdelegate(0);
-
-    if (!subdelegate) return;
-
-    const manager = subdelegate.getLive2DManager();
-    const model = manager.getModel(0);
-
-    if (!model) return;
-
-    const cubismModel = model.getModel();
-    if (!cubismModel) return;
-
-    const parameterCount = cubismModel.getParameterCount();
-
-    for (let i = 0; i < parameterCount; i++) {
-      const parameterId = cubismModel.getParameterId(i);
-      const parameterName = parameterId.getString().s;
-      const currentValue = cubismModel.getParameterValueByIndex(i);
-
-      const valueSpan = this._parameterValues.get(parameterName);
-      const slider = this._parameterSliders.get(parameterName);
-
-      if (valueSpan) {
-        valueSpan.textContent = currentValue.toFixed(2);
-      }
-
-      // Update slider position if not being dragged
-      if (slider && document.activeElement !== slider) {
-        slider.value = currentValue.toString();
-      }
-    }
-  }
-
-  /**
-   * Set expression
-   */
-  private setExpression(expressionId: string): void {
-    const delegate = LAppDelegate.getInstance();
-    const subdelegate = delegate.getSubdelegate(0);
-
-    if (!subdelegate) return;
-
-    const manager = subdelegate.getLive2DManager();
-    const model = manager.getModel(0);
-
-    if (model) {
-      model.setExpression(expressionId);
-    }
-  }
-
-  /**
-   * Start motion
-   */
-  private startMotion(group: string, index: number): void {
-    const delegate = LAppDelegate.getInstance();
-    const subdelegate = delegate.getSubdelegate(0);
-
-    if (!subdelegate) return;
-
-    const manager = subdelegate.getLive2DManager();
-    const model = manager.getModel(0);
-
-    if (model) {
-      model.startMotion(
-        group,
-        index,
-        LAppDefine.PriorityNormal
-      );
-    }
-  }
-
-  /**
-   * Set parameter value
-   */
-  private setParameter(index: number, value: number): void {
-    const delegate = LAppDelegate.getInstance();
-    const subdelegate = delegate.getSubdelegate(0);
-
-    if (!subdelegate) return;
-
-    const manager = subdelegate.getLive2DManager();
-    const model = manager.getModel(0);
-
-    if (model) {
-      const cubismModel = model.getModel();
-      if (cubismModel) {
-        // パラメータ値を設定
-        cubismModel.setParameterValueByIndex(index, value);
-
-        // 保存された状態も更新（loadParameters()で上書きされないように）
-        cubismModel.saveParameters();
-
-        // モデルに手動制御フラグを設定
-        model.setParameterManualControl(index);
-      }
-    }
-  }
-
-  /**
-   * Get manual control parameter indices
-   */
-  public getManualControlParams(): Set<number> {
-    return this._manualControlParams;
-  }
-
-  /**Update WebSocket connection status display
-   */
-  private updateWebSocketStatus(): void {
-    const delegate = LAppDelegate.getInstance();
-    const wsClient = delegate.getWebSocketClient();
-
-    if (!this._wsStatusText || !this._wsStatusIndicator) {
-      return;
+        // Enable or disable breath parameter sliders
+        this.updateSliderStates();
     }
 
-    if (wsClient && wsClient.isConnected()) {
-      this._wsStatusText.textContent = '接続済み';
-      this._wsStatusIndicator.style.background = '#4CAF50'; // Green
-    } else if (wsClient && wsClient.isRunning()) {
-      this._wsStatusText.textContent = '再接続中...';
-      this._wsStatusIndicator.style.background = '#FFC107'; // Yellow
-    } else {
-      this._wsStatusText.textContent = '未接続';
-      this._wsStatusIndicator.style.background = '#999'; // Gray
-    }
-  }
+    /**
+     * Enable or disable idle motion
+     */
+    public setIdleMotionEnabled(enabled: boolean): void {
+        const delegate = LAppDelegate.getInstance();
+        const subdelegate = delegate.getSubdelegate(0);
 
-  /**
-   * Update eye blink toggle checkbox
-   */
-  public updateEyeBlinkToggle(enabled: boolean): void {
-    if (this._eyeBlinkToggle) {
-      this._eyeBlinkToggle.checked = enabled;
-    }
-    this.updateSliderStates();
-  }
+        if (!subdelegate) { return; }
 
-  /**
-   * Update breath toggle checkbox
-   */
-  public updateBreathToggle(enabled: boolean): void {
-    if (this._breathToggle) {
-      this._breathToggle.checked = enabled;
-    }
-    this.updateSliderStates();
-  }
+        const manager = subdelegate.getLive2DManager();
+        const model = manager.getModel(0);
 
-  /**
-   * Update idle motion toggle checkbox
-   */
-  public updateIdleMotionToggle(enabled: boolean): void {
-    if (this._idleMotionToggle) {
-      this._idleMotionToggle.checked = enabled;
-    }
-  }
-
-  /**
-   * Update drag follow toggle checkbox
-   */
-  public updateDragFollowToggle(enabled: boolean): void {
-    if (this._dragFollowToggle) {
-      this._dragFollowToggle.checked = enabled;
-    }
-  }
-
-  /**
-   * Update physics toggle checkbox
-   */
-  public updatePhysicsToggle(enabled: boolean): void {
-    if (this._physicsToggle) {
-      this._physicsToggle.checked = enabled;
-    }
-    this.updateSliderStates();
-  }
-
-  /**
-   * Update slider states based on enabled features
-   */
-  private updateSliderStates(): void {
-    const eyeBlinkEnabled = this._eyeBlinkToggle?.checked ?? false;
-    const breathEnabled = this._breathToggle?.checked ?? false;
-    const physicsEnabled = this._physicsToggle?.checked ?? false;
-
-    // Update all sliders
-    this._parameterSliders.forEach((slider, paramName) => {
-      const isEyeBlink = slider.classList.contains('eyeblink-param');
-      const isBreath = slider.classList.contains('breath-param');
-      const isPhysics = slider.classList.contains('physics-param');
-
-      // Disable slider if any of its controlling features are enabled
-      const shouldDisable =
-        (isEyeBlink && eyeBlinkEnabled) ||
-        (isBreath && breathEnabled) ||
-        (isPhysics && physicsEnabled);
-
-      slider.disabled = shouldDisable;
-
-      // Add visual indication
-      if (shouldDisable) {
-        slider.style.opacity = '0.5';
-        //slider.style.cursor = 'not-allowed';
-      } else {
-        slider.style.opacity = '1';
-        //slider.style.cursor = 'pointer';
-      }
-    });
-  }
-
-  /**
-   * Update expression select value
-   */
-  public updateExpressionSelect(expression: string): void {
-    if (this._expressionSelect) {
-      this._expressionSelect.value = expression;
-    }
-  }
-
-  /**
-   * Update motion select value
-   */
-  public updateMotionSelect(group: string, index: number): void {
-    if (this._motionSelect) {
-      this._motionSelect.value = `${group}_${index}`;
-    }
-  }
-
-  /**
-   * Update parameter slider value
-   * @param paramName パラメータ名
-   * @param value パラメータ値
-   */
-  public updateParameterSlider(paramName: string, value: number): void {
-    const slider = this._parameterSliders.get(paramName);
-    const valueSpan = this._parameterValues.get(paramName);
-
-    if (slider) {
-      slider.value = value.toString();
-    }
-    if (valueSpan) {
-      valueSpan.textContent = value.toFixed(2);
-    }
-
-    // モデルの保持値も更新して手動制御フラグを設定
-    const delegate = LAppDelegate.getInstance();
-    const subdelegate = delegate.getSubdelegate(0);
-
-    if (!subdelegate) return;
-
-    const manager = subdelegate.getLive2DManager();
-    const model = manager.getModel(0);
-
-    if (model) {
-      const cubismModel = model.getModel();
-      if (cubismModel) {
-        const paramIndex = model.getParameterIndex(paramName);
-        if (paramIndex >= 0) {
-          // パラメータ値を設定
-          cubismModel.setParameterValueByIndex(paramIndex, value);
-
-          // 保存された状態も更新（loadParameters()で上書きされないように）
-          cubismModel.saveParameters();
-
-          // モデルに手動制御フラグを設定
-          model.setParameterManualControl(paramIndex);
+        if (model) {
+            model.setIdleMotionEnabled(enabled);
+            CubismLogInfo(`[LAppUI] Idle motion ${enabled ? 'enabled' : 'disabled'}`);
         }
-      }
     }
-  }
+    /**
+     * Enable or disable idle motion
+     */
+    public setDragFollowEnabled(enabled: boolean): void {
+        const delegate = LAppDelegate.getInstance();
+        const subdelegate = delegate.getSubdelegate(0);
 
-  /**
-   * Release resources
-   */
-  public release(): void {
-    if (this._updateInterval !== null) {
-      clearInterval(this._updateInterval);
-      this._updateInterval = null;
-    }
-    if (this._wsCheckInterval !== null) {
-      clearInterval(this._wsCheckInterval);
-      this._wsCheckInterval = null;
-    }
+        if (!subdelegate) { return; }
 
-    // Clear all manual control timers
-    this._manualControlTimers.forEach(timer => clearTimeout(timer));
-    this._manualControlTimers.clear();
-    this._manualControlParams.clear();
+        const manager = subdelegate.getLive2DManager();
+        const model = manager.getModel(0);
 
-    this._parameterSliders.clear();
-    this._parameterValues.clear();
-  }
-
-  /**
-   * Get instance
-   */
-  public static getInstance(): LAppUI {
-    if (this.s_instance == null) {
-      this.s_instance = new LAppUI();
+        if (model) {
+            model.setDragFollowEnabled(enabled);
+            CubismLogInfo(`[LAppUI] Drag follow ${enabled ? 'enabled' : 'disabled'}`);
+        }
     }
 
-    return this.s_instance;
-  }
+    /**
+     * Enable or disable physics
+     */
+    public setPhysicsEnabled(enabled: boolean): void {
+        const delegate = LAppDelegate.getInstance();
+        const subdelegate = delegate.getSubdelegate(0);
 
-  /**
-   * Release instance
-   */
-  public static releaseInstance(): void {
-    if (this.s_instance != null) {
-      this.s_instance.release();
+        if (!subdelegate) { return; }
+
+        const manager = subdelegate.getLive2DManager();
+        const model = manager.getModel(0);
+
+        if (model) {
+            model.setPhysicsEnabled(enabled);
+            CubismLogInfo(`[LAppUI] Physics ${enabled ? 'enabled' : 'disabled'}`);
+        }
+
+        // Enable or disable physics parameter sliders
+        this.updateSliderStates();
     }
 
-    this.s_instance = null;
-  }
+    /**
+     * Update UI with current model data
+     */
+    public updateUI(): void {
+        const delegate = LAppDelegate.getInstance();
+        const subdelegate = delegate.getSubdelegate(0);
 
-  private static s_instance: LAppUI | null = null;
+        if (!subdelegate) { return; }
+
+        const manager = subdelegate.getLive2DManager();
+        const model = manager.getModel(0);
+
+        if (!model || !model._modelSetting) {
+            return;
+        }
+
+        this.updateExpressions(model);
+        this.updateMotions(model);
+        this.updateParameters(model);
+
+        // Apply current checkbox settings to the new model
+        this.applyCheckboxSettings();
+
+        // Update slider states based on current toggle states
+        this.updateSliderStates();
+    }
+
+    /**
+     * Apply current checkbox settings to the model
+     */
+    private applyCheckboxSettings(): void {
+        // Apply eye blink setting
+        if (this._eyeBlinkToggle) {
+            this.setEyeBlinkEnabled(this._eyeBlinkToggle.checked);
+        }
+
+        // Apply breath setting
+        if (this._breathToggle) {
+            this.setBreathEnabled(this._breathToggle.checked);
+        }
+
+        // Apply idle motion setting
+        if (this._idleMotionToggle) {
+            this.setIdleMotionEnabled(this._idleMotionToggle.checked);
+        }
+
+        // Apply drag follow setting
+        if (this._dragFollowToggle) {
+            this.setDragFollowEnabled(this._dragFollowToggle.checked);
+        }
+    }
+
+    /**
+     * Update expression options
+     */
+    private updateExpressions(model: LAppModel): void {
+        this._expressionSelect.innerHTML = '<option value="">Select Expression...</option>';
+
+        const expressionCount = model._modelSetting.getExpressionCount();
+
+        if (expressionCount > 0) {
+            for (let i = 0; i < expressionCount; i++) {
+                const name = model._modelSetting.getExpressionName(i);
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                this._expressionSelect.appendChild(option);
+            }
+        } else {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'No expressions available';
+            option.disabled = true;
+            this._expressionSelect.appendChild(option);
+        }
+    }
+
+    /**
+     * Update motion options
+     */
+    private updateMotions(model: LAppModel): void {
+        this._motionSelect.innerHTML = '<option value="">Select Motion...</option>';
+
+        const motionGroupCount = model._modelSetting.getMotionGroupCount();
+
+        if (motionGroupCount > 0) {
+            for (let i = 0; i < motionGroupCount; i++) {
+                const groupName = model._modelSetting.getMotionGroupName(i);
+                const motionCount = model._modelSetting.getMotionCount(groupName);
+
+                // Create optgroup for each motion group
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = groupName;
+
+                for (let j = 0; j < motionCount; j++) {
+                    const option = document.createElement('option');
+                    option.value = `${groupName}_${j}`;
+                    option.textContent = `${groupName} ${j}`;
+                    optgroup.appendChild(option);
+                }
+
+                this._motionSelect.appendChild(optgroup);
+            }
+        } else {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'No motions available';
+            option.disabled = true;
+            this._motionSelect.appendChild(option);
+        }
+    }
+
+    /**
+     * Update parameter sliders
+     */
+    private updateParameters(model: LAppModel): void {
+        this._parametersContainer.innerHTML = '';
+        this._parameterSliders.clear();
+        this._parameterValues.clear();
+
+        const cubismModel = model.getModel();
+        if (!cubismModel) {
+            this._parametersContainer.innerHTML = '<div class="empty-message">Model not loaded</div>';
+            return;
+        }
+
+        const parameterCount = cubismModel.getParameterCount();
+
+        if (parameterCount === 0) {
+            this._parametersContainer.innerHTML = '<div class="empty-message">No parameters available</div>';
+            return;
+        }
+
+        // Get physics parameter names
+        const physicsParams = model.getPhysicsParameterNames();
+        const breathParams = model.getBreathParameterNames();
+        const eyeBlinkParams = model.getEyeBlinkParameterNames();
+
+        // Create sliders for each parameter
+        for (let i = 0; i < parameterCount; i++) {
+            const parameterId = cubismModel.getParameterId(i);
+            const parameterName = parameterId.getString().s;
+            const minValue = cubismModel.getParameterMinimumValue(i);
+            const maxValue = cubismModel.getParameterMaximumValue(i);
+            const defaultValue = cubismModel.getParameterDefaultValue(i);
+            const currentValue = cubismModel.getParameterValueByIndex(i);
+
+            // Create parameter item container
+            const paramItem = document.createElement('div');
+            paramItem.className = 'parameter-item';
+
+            // Create label with name and value
+            const labelDiv = document.createElement('div');
+            labelDiv.className = 'parameter-label';
+
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'param-name';
+            nameSpan.textContent = parameterName;
+
+            const valueSpan = document.createElement('span');
+            valueSpan.className = 'param-value';
+            valueSpan.textContent = currentValue.toFixed(2);
+            this._parameterValues.set(parameterName, valueSpan);
+
+            labelDiv.appendChild(nameSpan);
+            labelDiv.appendChild(valueSpan);
+
+            // Create slider
+            const slider = document.createElement('input');
+            slider.type = 'range';
+            slider.min = minValue.toString();
+            slider.max = maxValue.toString();
+            slider.step = '0.01';
+            slider.value = currentValue.toString();
+            slider.dataset.paramIndex = i.toString();
+
+            // Add classes based on which features affect this parameter
+            if (physicsParams.has(parameterName)) {
+                slider.classList.add('physics-param');
+            }
+            if (breathParams.has(parameterName)) {
+                slider.classList.add('breath-param');
+            }
+            if (eyeBlinkParams.has(parameterName)) {
+                slider.classList.add('eyeblink-param');
+            }
+
+            slider.addEventListener('input', (e) => {
+                const target = e.target as HTMLInputElement;
+                const value = parseFloat(target.value);
+                const index = parseInt(target.dataset.paramIndex!);
+
+                // Mark this parameter as manually controlled
+                this._manualControlParams.add(index);
+
+                // Clear existing timer for this parameter
+                const existingTimer = this._manualControlTimers.get(index);
+                if (existingTimer) {
+                    clearTimeout(existingTimer);
+                }
+
+                // Set timer to release manual control after 3 seconds
+                const timer = window.setTimeout(() => {
+                    this._manualControlParams.delete(index);
+                    this._manualControlTimers.delete(index);
+                }, 3000);
+                this._manualControlTimers.set(index, timer);
+
+                this.setParameter(index, value);
+
+                // Update value display
+                const valueDisplay = this._parameterValues.get(parameterName);
+                if (valueDisplay) {
+                    valueDisplay.textContent = value.toFixed(2);
+                }
+            });
+
+            this._parameterSliders.set(parameterName, slider);
+
+            paramItem.appendChild(labelDiv);
+            paramItem.appendChild(slider);
+            this._parametersContainer.appendChild(paramItem);
+        }
+    }
+
+    /**
+     * Update parameter value displays
+     */
+    private updateParameterValues(): void {
+        const delegate = LAppDelegate.getInstance();
+        const subdelegate = delegate.getSubdelegate(0);
+
+        if (!subdelegate) return;
+
+        const manager = subdelegate.getLive2DManager();
+        const model = manager.getModel(0);
+
+        if (!model) return;
+
+        const cubismModel = model.getModel();
+        if (!cubismModel) return;
+
+        const parameterCount = cubismModel.getParameterCount();
+
+        for (let i = 0; i < parameterCount; i++) {
+            const parameterId = cubismModel.getParameterId(i);
+            const parameterName = parameterId.getString().s;
+            const currentValue = cubismModel.getParameterValueByIndex(i);
+
+            const valueSpan = this._parameterValues.get(parameterName);
+            const slider = this._parameterSliders.get(parameterName);
+
+            if (valueSpan) {
+                valueSpan.textContent = currentValue.toFixed(2);
+            }
+
+            // Update slider position if not being dragged
+            if (slider && document.activeElement !== slider) {
+                slider.value = currentValue.toString();
+            }
+        }
+    }
+
+    /**
+     * Set expression
+     */
+    private setExpression(expressionId: string): void {
+        const delegate = LAppDelegate.getInstance();
+        const subdelegate = delegate.getSubdelegate(0);
+
+        if (!subdelegate) return;
+
+        const manager = subdelegate.getLive2DManager();
+        const model = manager.getModel(0);
+
+        if (model) {
+            model.setExpression(expressionId);
+            this.updateExpressionSelect(expressionId);
+        }
+    }
+
+    /**
+     * Start motion
+     */
+    private startMotion(group: string, no: number): void {
+        const delegate = LAppDelegate.getInstance();
+        const subdelegate = delegate.getSubdelegate(0);
+
+        if (!subdelegate) return;
+
+        const manager = subdelegate.getLive2DManager();
+        const model = manager.getModel(0);
+
+        if (model) {
+            model.startMotion(group, no, LAppDefine.PriorityNormal);
+            this.updateMotionSelect(group, no);
+        }
+    }
+
+    /**
+     * Set parameter value
+     */
+    private setParameter(index: number, value: number): void {
+        const delegate = LAppDelegate.getInstance();
+        const subdelegate = delegate.getSubdelegate(0);
+
+        if (!subdelegate) return;
+
+        const manager = subdelegate.getLive2DManager();
+        const model = manager.getModel(0);
+
+        if (model) {
+            const cubismModel = model.getModel();
+            if (cubismModel) {
+                // パラメータ値を設定
+                cubismModel.setParameterValueByIndex(index, value);
+
+                // 保存された状態も更新（loadParameters()で上書きされないように）
+                cubismModel.saveParameters();
+
+                // モデルに手動制御フラグを設定
+                model.setParameterManualControl(index);
+            }
+        }
+    }
+
+    /**
+     * Get manual control parameter indices
+     */
+    public getManualControlParams(): Set<number> {
+        return this._manualControlParams;
+    }
+
+    /**Update WebSocket connection status display
+     */
+    private updateWebSocketStatus(): void {
+        const delegate = LAppDelegate.getInstance();
+        const wsClient = delegate.getWebSocketClient();
+
+        if (!this._wsStatusText || !this._wsStatusIndicator) {
+            return;
+        }
+
+        if (wsClient && wsClient.isConnected()) {
+            this._wsStatusText.textContent = '接続済み';
+            this._wsStatusIndicator.style.background = '#4CAF50'; // Green
+        } else if (wsClient && wsClient.isRunning()) {
+            this._wsStatusText.textContent = '再接続中...';
+            this._wsStatusIndicator.style.background = '#FFC107'; // Yellow
+        } else {
+            this._wsStatusText.textContent = '未接続';
+            this._wsStatusIndicator.style.background = '#999'; // Gray
+        }
+    }
+
+    /**
+     * Update eye blink toggle checkbox
+     */
+    public updateEyeBlinkToggle(enabled: boolean): void {
+        if (this._eyeBlinkToggle) {
+            this._eyeBlinkToggle.checked = enabled;
+        }
+        this.updateSliderStates();
+    }
+
+    /**
+     * Update breath toggle checkbox
+     */
+    public updateBreathToggle(enabled: boolean): void {
+        if (this._breathToggle) {
+            this._breathToggle.checked = enabled;
+        }
+        this.updateSliderStates();
+    }
+
+    /**
+     * Update idle motion toggle checkbox
+     */
+    public updateIdleMotionToggle(enabled: boolean): void {
+        if (this._idleMotionToggle) {
+            this._idleMotionToggle.checked = enabled;
+        }
+    }
+
+    /**
+     * Update drag follow toggle checkbox
+     */
+    public updateDragFollowToggle(enabled: boolean): void {
+        if (this._dragFollowToggle) {
+            this._dragFollowToggle.checked = enabled;
+        }
+    }
+
+    /**
+     * Update physics toggle checkbox
+     */
+    public updatePhysicsToggle(enabled: boolean): void {
+        if (this._physicsToggle) {
+            this._physicsToggle.checked = enabled;
+        }
+        this.updateSliderStates();
+    }
+
+    /**
+     * Update slider states based on enabled features
+     */
+    private updateSliderStates(): void {
+        const eyeBlinkEnabled = this._eyeBlinkToggle?.checked ?? false;
+        const breathEnabled = this._breathToggle?.checked ?? false;
+        const physicsEnabled = this._physicsToggle?.checked ?? false;
+
+        // Update all sliders
+        this._parameterSliders.forEach((slider, paramName) => {
+            const isEyeBlink = slider.classList.contains('eyeblink-param');
+            const isBreath = slider.classList.contains('breath-param');
+            const isPhysics = slider.classList.contains('physics-param');
+
+            // Disable slider if any of its controlling features are enabled
+            const shouldDisable =
+                (isEyeBlink && eyeBlinkEnabled) ||
+                (isBreath && breathEnabled) ||
+                (isPhysics && physicsEnabled);
+
+            slider.disabled = shouldDisable;
+
+            // Add visual indication
+            if (shouldDisable) {
+                slider.style.opacity = '0.5';
+                //slider.style.cursor = 'not-allowed';
+            } else {
+                slider.style.opacity = '1';
+                //slider.style.cursor = 'pointer';
+            }
+        });
+    }
+
+    /**
+     * Update expression select value
+     */
+    public updateExpressionSelect(expression: string): void {
+        if (this._expressionSelect) {
+            this._expressionSelect.value = expression;
+        }
+    }
+
+    /**
+     * Update motion select value
+     */
+    public updateMotionSelect(group: string, index: number): void {
+        if (this._motionSelect) {
+            this._motionSelect.value = `${group}_${index}`;
+        }
+    }
+
+    /**
+     * Update parameter slider value
+     * @param paramName パラメータ名
+     * @param value パラメータ値
+     */
+    public updateParameterSlider(paramName: string, value: number): void {
+        const slider = this._parameterSliders.get(paramName);
+        const valueSpan = this._parameterValues.get(paramName);
+
+        if (slider) {
+            slider.value = value.toString();
+        }
+        if (valueSpan) {
+            valueSpan.textContent = value.toFixed(2);
+        }
+
+        // モデルの保持値も更新して手動制御フラグを設定
+        const delegate = LAppDelegate.getInstance();
+        const subdelegate = delegate.getSubdelegate(0);
+
+        if (!subdelegate) return;
+
+        const manager = subdelegate.getLive2DManager();
+        const model = manager.getModel(0);
+
+        if (model) {
+            const cubismModel = model.getModel();
+            if (cubismModel) {
+                const paramIndex = model.getParameterIndex(paramName);
+                if (paramIndex >= 0) {
+                    // パラメータ値を設定
+                    cubismModel.setParameterValueByIndex(paramIndex, value);
+
+                    // 保存された状態も更新（loadParameters()で上書きされないように）
+                    cubismModel.saveParameters();
+
+                    // モデルに手動制御フラグを設定
+                    model.setParameterManualControl(paramIndex);
+                }
+            }
+        }
+    }
+
+    /**
+     * Release resources
+     */
+    public release(): void {
+        if (this._updateInterval !== null) {
+            clearInterval(this._updateInterval);
+            this._updateInterval = null;
+        }
+        if (this._wsCheckInterval !== null) {
+            clearInterval(this._wsCheckInterval);
+            this._wsCheckInterval = null;
+        }
+
+        // Clear all manual control timers
+        this._manualControlTimers.forEach(timer => clearTimeout(timer));
+        this._manualControlTimers.clear();
+        this._manualControlParams.clear();
+
+        this._parameterSliders.clear();
+        this._parameterValues.clear();
+    }
+
+    /**
+     * Get instance
+     */
+    public static getInstance(): LAppUI {
+        if (this.s_instance == null) {
+            this.s_instance = new LAppUI();
+        }
+
+        return this.s_instance;
+    }
+
+    /**
+     * Release instance
+     */
+    public static releaseInstance(): void {
+        if (this.s_instance != null) {
+            this.s_instance.release();
+        }
+
+        this.s_instance = null;
+    }
+
+    private static s_instance: LAppUI | null = null;
 }

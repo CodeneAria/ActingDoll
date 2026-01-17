@@ -20,31 +20,6 @@ import { CubismLogInfo } from '@framework/utils/cubismdebug';
  */
 export class LAppLive2DManager {
   /**
-   * クラスのインスタンス（シングルトン）を返す。
-   * インスタンスが生成されていない場合は内部でインスタンスを生成する。
-   *
-   * @return クラスのインスタンス
-   */
-  public static getInstance(): LAppLive2DManager {
-    if (this.s_instance == null) {
-      this.s_instance = new LAppLive2DManager();
-    }
-
-    return this.s_instance;
-  }
-
-  /**
-   * クラスのインスタンス（シングルトン）を解放する。
-   */
-  public static releaseInstance(): void {
-    if (this.s_instance != null) {
-      this.s_instance.release();
-    }
-
-    this.s_instance = null;
-  }
-
-  /**
    * 現在のシーンで保持しているすべてのモデルを解放する
    */
   private releaseAllModel(): void {
@@ -72,9 +47,7 @@ export class LAppLive2DManager {
    */
   public onTap(x: number, y: number): void {
     if (LAppDefine.DebugLogEnable) {
-      CubismLogInfo(
-        `[APP] tap point: {x: ${x.toFixed(2)} y: ${y.toFixed(2)}}`
-      );
+      CubismLogInfo(`[APP] tap point: {x: ${x.toFixed(2)} y: ${y.toFixed(2)}}`);
     }
 
     const model: LAppModel = this._models.at(0);
@@ -223,14 +196,10 @@ export class LAppLive2DManager {
 
   // モーション再生開始のコールバック関数
   beganMotion = (self: ACubismMotion): void => {
-    CubismLogInfo('Motion Began:');
-    //CubismLogInfo(self);
+    CubismLogInfo('Motion Began: {0}', self.toString());
   };
   // モーション再生終了のコールバック関数
   finishedMotion = (self: ACubismMotion): void => {
-    CubismLogInfo('Motion Finished:');
-    //CubismLogInfo(self);
+    CubismLogInfo('Motion Finished: {0}', self.toString());
   };
-
-  private static s_instance: LAppLive2DManager = null;
 }
