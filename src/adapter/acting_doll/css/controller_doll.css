@@ -37,8 +37,13 @@ h2 {
 .status-section,
 .message-section,
 .model-section,
+.basic-commands-section,
 .motion-group-section,
 .motion-section,
+.client-selection-section,
+.client-commands-section,
+.expression-section,
+.parameter-section,
 .custom-command-section {
     margin-bottom: 20px;
     padding: 15px;

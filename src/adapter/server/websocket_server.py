@@ -343,7 +343,8 @@ async def model_command(command: str, args: str) -> dict:
         }
 
 
-async def client_command(command: str, args: dict, client_id: str) -> dict:
+async def client_command(command: str, args: dict,
+                         client_id: str, source_client_id: str = "") -> dict:
     """
     クライアント状態管理コマンドを処理
 
@@ -351,7 +352,7 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
         command: コマンド文字列
         args: コマンド引数（辞書形式）
         client_id: クライアントID
-
+        source_client_id: 送信元クライアントID
     Returns:
         レスポンス辞書
     """
@@ -359,6 +360,7 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
         return {
             "type": "client",
             "command": command,
+            "source": source_client_id,
             "error": f"クライアント '{client_id}' が見つかりません"
         }
 
@@ -368,6 +370,7 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
             "command": command,
             "success": True,
             "client_id": client_id,
+            "source": source_client_id,
             "data": args,
             "message": "クライアントからレスポンスを受信しました"
         }
@@ -386,6 +389,7 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
             await send_to_client(client_id, {
                 "type": "set_eye_blink",
                 "client_id": client_id,
+                "source": source_client_id,
                 "enabled": enabled,
                 "timestamp": datetime.now().isoformat()
             })
@@ -411,6 +415,7 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
             await send_to_client(client_id, {
                 "type": "set_breath",
                 "client_id": client_id,
+                "source": source_client_id,
                 "enabled": enabled,
                 "timestamp": datetime.now().isoformat()
             })
@@ -436,6 +441,7 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
             await send_to_client(client_id, {
                 "type": "set_idle_motion",
                 "client_id": client_id,
+                "source": source_client_id,
                 "enabled": enabled,
                 "timestamp": datetime.now().isoformat()
             })
@@ -461,6 +467,7 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
             await send_to_client(client_id, {
                 "type": "set_drag_follow",
                 "client_id": client_id,
+                "source": source_client_id,
                 "enabled": enabled,
                 "timestamp": datetime.now().isoformat()
             })
@@ -486,6 +493,7 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
             await send_to_client(client_id, {
                 "type": "set_physics",
                 "client_id": client_id,
+                "source": source_client_id,
                 "enabled": enabled,
                 "timestamp": datetime.now().isoformat()
             })
@@ -509,6 +517,7 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
             await send_to_client(client_id, {
                 "type": "set_expression",
                 "client_id": client_id,
+                "source": source_client_id,
                 "expression": expression,
                 "timestamp": datetime.now().isoformat()
             })
@@ -539,6 +548,7 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
             await send_to_client(client_id, {
                 "type": "set_motion",
                 "client_id": client_id,
+                "source": source_client_id,
                 "group": group,
                 "index": index,
                 "timestamp": datetime.now().isoformat()
@@ -610,6 +620,7 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
             success = await send_to_client(client_id, {
                 "type": "set_parameter",
                 "client_id": client_id,
+                "source": source_client_id,
                 "parameters": parameters,
                 "timestamp": datetime.now().isoformat()
             })
@@ -634,6 +645,7 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
         if command == "get_eye_blink":  # アニメーション設定 - 自動目パチ
             await send_to_client(client_id, {
                 "type": "request_eye_blink",
+                "source": source_client_id,
                 "timestamp": datetime.now().isoformat()
             })
             return {
@@ -646,6 +658,7 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
         elif command == "get_breath":  # アニメーション設定 - 呼吸
             await send_to_client(client_id, {
                 "type": "request_breath",
+                "source": source_client_id,
                 "timestamp": datetime.now().isoformat()
             })
             return {
@@ -658,6 +671,7 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
         elif command == "get_idle_motion":  # アニメーション設定 - アイドリングモーション
             await send_to_client(client_id, {
                 "type": "request_idle_motion",
+                "source": source_client_id,
                 "timestamp": datetime.now().isoformat()
             })
             return {
@@ -670,6 +684,7 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
         elif command == "get_drag_follow":  # アニメーション設定 - ドラッグ追従
             await send_to_client(client_id, {
                 "type": "request_drag_follow",
+                "source": source_client_id,
                 "timestamp": datetime.now().isoformat()
             })
             return {
@@ -682,6 +697,7 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
         elif command == "get_physics":  # アニメーション設定 - 物理演算
             await send_to_client(client_id, {
                 "type": "request_physics",
+                "source": source_client_id,
                 "timestamp": datetime.now().isoformat()
             })
             return {
@@ -694,6 +710,7 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
         elif command == "get_expression":  # Expressions
             await send_to_client(client_id, {
                 "type": "request_expression",
+                "source": source_client_id,
                 "timestamp": datetime.now().isoformat()
             })
             return {
@@ -706,6 +723,7 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
         elif command == "get_motion":  # Motions
             await send_to_client(client_id, {
                 "type": "request_motion",
+                "source": source_client_id,
                 "timestamp": datetime.now().isoformat()
             })
             return {
@@ -718,6 +736,7 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
         elif command == "get_model":  # クライアントにモデル情報要求を送信
             await send_to_client(client_id, {
                 "type": "request_model_info",
+                "source": source_client_id,
                 "timestamp": datetime.now().isoformat()
             })
             return {
@@ -734,7 +753,7 @@ async def client_command(command: str, args: dict, client_id: str) -> dict:
     }
 
 
-async def process_command(command: str, client_id: str) -> dict:
+async def process_command(user_input: str, client_id: str) -> dict:
     """
     コマンドを処理
 
@@ -745,6 +764,8 @@ async def process_command(command: str, client_id: str) -> dict:
     Returns:
         レスポンス辞書
     """
+    parts = user_input.strip().split(maxsplit=1)
+    command = parts[0].lower()
     if command == "status":
         return {
             "type": "command_response",
@@ -764,7 +785,8 @@ async def process_command(command: str, client_id: str) -> dict:
         json_data = {}
         if client_id_map:
             # コマンド送信者自身を除外したクライアントリストを作成
-            other_clients = [cid for cid in client_id_map.keys() if cid != client_id]
+            other_clients = [
+                cid for cid in client_id_map.keys() if cid != client_id]
             json_data = {
                 "clients": other_clients,
                 "count": len(other_clients)
@@ -778,6 +800,58 @@ async def process_command(command: str, client_id: str) -> dict:
             "type": "command_response",
             "command": command,
             "data": json_data
+        }
+    elif command == "notify":
+        message = parts[1]
+        await broadcast_message({
+            "type": "notify",
+            "message": message,
+            "timestamp": datetime.now().isoformat()
+        })
+        return {
+            "type": "command_response",
+            "command": command,
+            "message": message
+        }
+    elif command == "send":
+        args = parts[1].strip().split(maxsplit=2)
+        # 形式: send <client_id> <message>
+        if len(args) < 2:
+            return {
+                "type": "command_response",
+                "command": command,
+                "error": "使い方: send <client_id> <message>"
+            }
+
+        target_client_id = args[0]
+        message = args[1]
+
+        success = await send_to_client(target_client_id, {
+            "type": "send",
+            "message": message,
+            "timestamp": datetime.now().isoformat()
+        })
+
+        if success:
+            logger.info(f"メッセージ送信完了 -> {target_client_id}: {message}")
+        else:
+            logger.error(f"メッセージ送信失敗 -> {target_client_id}")
+        return {
+            "type": "command_response",
+            "command": command,
+            "success": True if success else False
+        }
+    elif command == "model":
+        return {
+            "type": "command_response",
+            "command": command,
+            "message": "通知コマンドはサーバーコンソールから実行してください"
+        }
+    elif command == "client":
+        return {
+            "type": "command_response",
+            "command": command,
+            "message": "通知コマンドはサーバーコンソールから実行してください"
         }
     else:
         return {
@@ -855,7 +929,7 @@ async def server_console():
 
             elif command == "send" and len(parts) > 1:
                 # 形式: send <client_id> <message>
-                if len(parts)<3:
+                if len(parts) < 3:
                     logger.warning("使い方: send <client_id> <message>")
                     continue
 
@@ -863,7 +937,7 @@ async def server_console():
                 message = parts[2]
 
                 success = await send_to_client(target_client_id, {
-                    "type": "server_direct_message",
+                    "type": "send",
                     "message": message,
                     "timestamp": datetime.now().isoformat()
                 })
@@ -876,7 +950,7 @@ async def server_console():
             elif command == "notify" and len(parts) > 1:
                 message = parts[1]
                 await broadcast_message({
-                    "type": "server_notification",
+                    "type": "notify",
                     "message": message,
                     "timestamp": datetime.now().isoformat()
                 })
@@ -890,7 +964,7 @@ async def server_console():
                 else:
                     logger.info("接続中のクライアントはありません")
 
-            #elif command == "count":
+            # elif command == "count":
             #    logger.info(f"接続数: {len(connected_clients)}")
 
             elif command == "model" and len(parts) > 1:

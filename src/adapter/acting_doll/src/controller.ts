@@ -54,7 +54,7 @@ class Live2DController {
       // 初期データを取得
       this.loadInitialData();
     } catch (error) {
-      CubismLogError('WebSocket接続に失敗しました:', error.toString());
+      CubismLogError('WebSocket接続に失敗しました: {0}', error.toString());
       this.showError('WebSocketサーバーに接続できませんでした。');
     }
   }
@@ -66,7 +66,7 @@ class Live2DController {
     // コマンドレスポンスハンドラ
     this.wsClient.onMessage('command_response', (data) => {
       const response = data as CommandResponse;
-      CubismLogInfo('コマンド応答:', response);
+      CubismLogInfo('コマンド応答: {0}', response);
 
       // コマンドに応じた処理
       this.handleCommandResponse(response);
@@ -74,13 +74,13 @@ class Live2DController {
 
     // エラーハンドラ
     this.wsClient.onMessage('error', (data) => {
-      CubismLogError('サーバーエラー:', data);
+      CubismLogError('サーバーエラー: {0}', data);
       this.showError(`サーバーエラー: ${data.message}`);
     });
 
     // ウェルカムメッセージハンドラ
     this.wsClient.onMessage('welcome', (data) => {
-      CubismLogInfo('ウェルカムメッセージ:', data);
+      CubismLogInfo('ウェルカムメッセージ: {0}', data);
       this.showMessage('サーバーに接続されました');
     });
   }
@@ -104,14 +104,18 @@ class Live2DController {
           <div id="message-display"></div>
         </div>
 
+        <h2>基本コマンド</h2>
         <div class="basic-commands-section">
-          <h2>基本コマンド</h2>
           <div style="margin-top: 10px;">
             <input type="text" id="input-notify" placeholder="通知メッセージ" style="width: 300px;" />
             <button id="btn-notify">通知送信 (notify)</button>
           </div>
+          <div>
+          <button id="btn-model-list">モデル一覧取得 (model list)</button>
+          </div>
         </div>
 
+        <h2>クライアント制御</h2>
         <div class="client-selection-section">
           <h2>クライアント選択</h2>
           <select id="select-client" style="width: 300px;">
@@ -126,7 +130,7 @@ class Live2DController {
             <button id="btn-send">メッセージ送信 (send)</button>
           </div>
           <h2>モデル操作</h2>
-          <button id="btn-model-list">モデル一覧取得 (model list)</button>
+          <button id="btn-client-get-model">モデル取得 (get_model)</button>
           <select id="select-model" style="width: 300px; margin-left: 10px;">
             <option value="">モデルを選択...</option>
           </select>
@@ -139,8 +143,6 @@ class Live2DController {
         </div>
 
         <div class="client-commands-section">
-          <h2>クライアント制御</h2>
-          <button id="btn-client-get-model">モデル取得 (get_model)</button>
 
           <h3 style="margin-top: 15px;">アニメーション設定</h3>
           <div style="margin-top: 8px;">

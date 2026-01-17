@@ -78,6 +78,7 @@ enum LoadStep {
  * モデル生成、機能コンポーネント生成、更新処理とレンダリングの呼び出しを行う。
  */
 export class LAppModel extends CubismUserModel {
+  protected _headIdle: CubismBreath; // 頭部アイドルモーション
   /**
    * model3.jsonが置かれたディレクトリとファイルパスからモデルを生成する
    * @param dir
@@ -127,9 +128,7 @@ export class LAppModel extends CubismUserModel {
           if (response.ok) {
             return response.arrayBuffer();
           } else if (response.status >= 400) {
-            CubismLogError(
-              `Failed to load file ${this._modelHomeDir}${modelFileName}`
-            );
+            CubismLogError(`Failed to load file ${this._modelHomeDir}${modelFileName}`);
             return new ArrayBuffer(0);
           }
         })
@@ -161,9 +160,7 @@ export class LAppModel extends CubismUserModel {
               if (response.ok) {
                 return response.arrayBuffer();
               } else if (response.status >= 400) {
-                CubismLogError(
-                  `Failed to load file ${this._modelHomeDir}${expressionFileName}`
-                );
+                CubismLogError(`Failed to load file ${this._modelHomeDir}${expressionFileName}`);
                 // ファイルが存在しなくてもresponseはnullを返却しないため、空のArrayBufferで対応する
                 return new ArrayBuffer(0);
               }
@@ -213,9 +210,7 @@ export class LAppModel extends CubismUserModel {
             if (response.ok) {
               return response.arrayBuffer();
             } else if (response.status >= 400) {
-              CubismLogError(
-                `Failed to load file ${this._modelHomeDir}${physicsFileName}`
-              );
+              CubismLogError(`Failed to load file ${this._modelHomeDir}${physicsFileName}`);
               return new ArrayBuffer(0);
             }
           })
@@ -246,9 +241,7 @@ export class LAppModel extends CubismUserModel {
             if (response.ok) {
               return response.arrayBuffer();
             } else if (response.status >= 400) {
-              CubismLogError(
-                `Failed to load file ${this._modelHomeDir}${poseFileName}`
-              );
+              CubismLogError(`Failed to load file ${this._modelHomeDir}${poseFileName}`);
               return new ArrayBuffer(0);
             }
           })
@@ -286,18 +279,6 @@ export class LAppModel extends CubismUserModel {
 
       const breathParameters: csmVector<BreathParameterData> = new csmVector();
       breathParameters.pushBack(
-        new BreathParameterData(this._idParamAngleX, 0.0, 15.0, 6.5345, 0.5)
-      );
-      breathParameters.pushBack(
-        new BreathParameterData(this._idParamAngleY, 0.0, 8.0, 3.5345, 0.5)
-      );
-      breathParameters.pushBack(
-        new BreathParameterData(this._idParamAngleZ, 0.0, 10.0, 5.5345, 0.5)
-      );
-      breathParameters.pushBack(
-        new BreathParameterData(this._idParamBodyAngleX, 0.0, 4.0, 15.5345, 0.5)
-      );
-      breathParameters.pushBack(
         new BreathParameterData(
           CubismFramework.getIdManager().getId(
             CubismDefaultParameterId.ParamBreath
@@ -310,6 +291,30 @@ export class LAppModel extends CubismUserModel {
       );
 
       this._breath.setParameters(breathParameters);
+
+      // callback
+      setupHeadIdle();
+    };
+
+    // HeadIdle (アイドリングモーション時の頭の動き)
+    const setupHeadIdle = (): void => {
+      this._headIdle = CubismBreath.create();
+
+      const headIdleParameters: csmVector<BreathParameterData> = new csmVector();
+      headIdleParameters.pushBack(
+        new BreathParameterData(this._idParamAngleX, 0.0, 15.0, 6.5345, 0.5)
+      );
+      headIdleParameters.pushBack(
+        new BreathParameterData(this._idParamAngleY, 0.0, 8.0, 3.5345, 0.5)
+      );
+      headIdleParameters.pushBack(
+        new BreathParameterData(this._idParamAngleZ, 0.0, 10.0, 5.5345, 0.5)
+      );
+      headIdleParameters.pushBack(
+        new BreathParameterData(this._idParamBodyAngleX, 0.0, 4.0, 15.5345, 0.5)
+      );
+
+      this._headIdle.setParameters(headIdleParameters);
       this._state = LoadStep.LoadUserData;
 
       // callback
@@ -326,9 +331,7 @@ export class LAppModel extends CubismUserModel {
             if (response.ok) {
               return response.arrayBuffer();
             } else if (response.status >= 400) {
-              CubismLogError(
-                `Failed to load file ${this._modelHomeDir}${userDataFile}`
-              );
+              CubismLogError(`Failed to load file ${this._modelHomeDir}${userDataFile}`);
               return new ArrayBuffer(0);
             }
           })
@@ -568,6 +571,11 @@ export class LAppModel extends CubismUserModel {
     // 呼吸など
     if (this._breath != null && this._breathEnabled) {
       this._breath.updateParameters(this._model, deltaTimeSeconds);
+    }
+
+    // HeadIdle (アイドリングモーションがOnの時のみ)
+    if (this._headIdle != null && this._idleMotionEnabled) {
+      this._headIdle.updateParameters(this._model, deltaTimeSeconds);
     }
 
     // 物理演算の設定
@@ -811,9 +819,7 @@ export class LAppModel extends CubismUserModel {
           if (response.ok) {
             return response.arrayBuffer();
           } else if (response.status >= 400) {
-            CubismLogError(
-              `Failed to load file ${this._modelHomeDir}${motionFileName}`
-            );
+            CubismLogError(`Failed to load file ${this._modelHomeDir}${motionFileName}`);
             return new ArrayBuffer(0);
           }
         })
@@ -1074,9 +1080,7 @@ export class LAppModel extends CubismUserModel {
       // ex) idle_0
       const name = `${group}_${i}`;
       if (this._debugMode) {
-        CubismLogInfo(
-          `[APP] load motion: ${motionFileName} => [${name}]`
-        );
+        CubismLogInfo(`[APP] load motion: ${motionFileName} => [${name}]`);
       }
 
       fetch(`${this._modelHomeDir}${motionFileName}`)
@@ -1084,9 +1088,7 @@ export class LAppModel extends CubismUserModel {
           if (response.ok) {
             return response.arrayBuffer();
           } else if (response.status >= 400) {
-            CubismLogError(
-              `Failed to load file ${this._modelHomeDir}${motionFileName}`
-            );
+            CubismLogError(`Failed to load file ${this._modelHomeDir}${motionFileName}`);
             return new ArrayBuffer(0);
           }
         })

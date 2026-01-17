@@ -279,23 +279,23 @@ export class WebSocketClient {
       };
 
       this.websocket.onclose = (event) => {
-        CubismLogInfo('WebSocket接続が閉じられました', event);
+        CubismLogInfo('WebSocket接続が閉じられました {0}', event);
         this.running = false;
         this.handleReconnect();
       };
 
       this.websocket.onerror = (error) => {
-        CubismLogError('WebSocketエラー:', error.toString());
+        CubismLogError('WebSocketエラー: {0}', error.toString());
         reject(error);
       };
 
       this.websocket.onmessage = (event) => {
         try {
           const data: WebSocketMessage = JSON.parse(event.data);
-          CubismLogVerbose('受信:', data);
+          CubismLogVerbose(`受信: {0}`, JSON.stringify(data));
           this.handleMessage(data);
         } catch (error) {
-          CubismLogError('不正なJSON形式:', event.data, error.toString());
+          CubismLogError('不正なJSON形式: {0} {1}', event.data, error.toString());
         }
       };
     });
@@ -319,13 +319,11 @@ export class WebSocketClient {
   private handleReconnect(): void {
     if ((this.reconnectAttempts < this.maxReconnectAttempts) || (0 === this.maxReconnectAttempts)) {
       this.reconnectAttempts++;
-      CubismLogInfo(
-        `再接続を試みます... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`
-      );
+      CubismLogInfo(`再接続を試みます... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
 
       setTimeout(() => {
         this.connect().catch((error) => {
-          CubismLogError('再接続に失敗しました:', error.toString());
+          CubismLogError('再接続に失敗しました: {0}', error.toString());
         });
       }, this.reconnectDelay);
     } else {
@@ -344,55 +342,10 @@ export class WebSocketClient {
         timestamp: new Date().toISOString()
       });
       this.websocket.send(messageJson);
-      CubismLogInfo('送信:', message);
+      CubismLogInfo('送信: {0}', message);
     } else {
       CubismLogError('WebSocket接続が開いていません');
     }
-  }
-
-  /**
-   * エコーメッセージを送信
-   * @param text エコーするテキスト
-   */
-  public sendEcho(text: string): void {
-    this.sendMessage({
-      type: 'echo',
-      text: text
-    });
-  }
-
-  /**
-   * ブロードキャストメッセージを送信
-   * @param content ブロードキャストする内容
-   */
-  public sendBroadcast(content: string): void {
-    this.sendMessage({
-      type: 'broadcast',
-      content: content
-    });
-  }
-
-  /**
-   * コマンドを送信
-   * @param command コマンド文字列
-   */
-  public sendCommand(command: string): void {
-    this.sendMessage({
-      type: 'command',
-      command: command
-    });
-  }
-
-  /**
-   * カスタムメッセージを送信
-   * @param type メッセージタイプ
-   * @param data メッセージデータ
-   */
-  public sendCustomMessage(type: string, data: any): void {
-    this.sendMessage({
-      type: type,
-      ...data
-    });
   }
 
   /**
@@ -430,7 +383,7 @@ export class WebSocketClient {
         CubismLogInfo(`ウェルカムメッセージ: ${(data as WelcomeResponse).message}`);
         break;
       case 'echo_response':
-        CubismLogInfo(`エコー応答:`, (data as EchoResponse).original);
+        CubismLogInfo(`エコー応答: {0}`, (data as EchoResponse).original);
         break;
       case 'broadcast_message':
         const broadcast = data as BroadcastResponse;
@@ -438,18 +391,14 @@ export class WebSocketClient {
         break;
       case 'client_connected':
         const connected = data as ClientConnectedMessage;
-        CubismLogInfo(
-          `新しいクライアントが接続しました (合計: ${connected.total_clients})`
-        );
+        CubismLogInfo(`新しいクライアントが接続しました (合計: ${connected.total_clients})`);
         break;
       case 'client_disconnected':
         const disconnected = data as ClientDisconnectedMessage;
-        CubismLogInfo(
-          `クライアントが切断しました (合計: ${disconnected.total_clients})`
-        );
+        CubismLogInfo(`クライアントが切断しました (合計: ${disconnected.total_clients})`);
         break;
       case 'command_response':
-        CubismLogInfo(`コマンド応答:`, data);
+        CubismLogInfo(`コマンド応答: {0}`, data);
         break;
       case 'error':
         CubismLogError(`エラー: ${(data as ErrorMessage).message}`);
@@ -510,7 +459,7 @@ export class WebSocketClient {
         CubismLogInfo(`モーション情報リクエストを受信`);
         break;
       default:
-        CubismLogInfo(`未処理のメッセージタイプ: ${msgType}`, data);
+        CubismLogInfo(`未処理のメッセージタイプ: ${msgType} {0}`, data);
     }
   }
 
@@ -555,17 +504,47 @@ export class WebSocketClient {
     return this.running;
   }
 
+
+  /**
+   * エコーメッセージを送信
+   * @param text エコーするテキスト
+   */
+  public sendEcho(text: string): void {
+    this.sendMessage({ type: 'echo', text: text });
+  }
+
+  /**
+   * ブロードキャストメッセージを送信
+   * @param content ブロードキャストする内容
+   */
+  public sendBroadcast(content: string): void {
+    this.sendMessage({ type: 'broadcast', content: content });
+  }
+
+  /**
+   * コマンドを送信
+   * @param command コマンド文字列
+   */
+  public sendCommand(command: string): void {
+    this.sendMessage({ type: 'command', command: command });
+  }
+
+  /**
+   * カスタムメッセージを送信
+   * @param type メッセージタイプ
+   * @param data メッセージデータ
+   */
+  public sendCustomMessage(type: string, data: any): void {
+    this.sendMessage({ type: type, ...data });
+  }
+
   /**
    * クライアントレスポンスをサーバーに送信
    * @param command コマンド名
    * @param args レスポンスデータ
    */
   public sendClientResponse(command: string, args: any): void {
-    this.sendMessage({
-      type: 'client',
-      command: command,
-      args: args
-    });
+    this.sendMessage({ type: 'client', command: command, args: args });
   }
 
   /**

@@ -224,7 +224,7 @@ export class LAppDelegate {
     LAppPal.updateTime();
 
     // setup cubism
-    //this._cubismOption.logFunction = LAppPal.printMessage;
+    this._cubismOption.logFunction = LAppPal.printMessage;
     this._cubismOption.loggingLevel = LAppDefine.CubismLoggingLevel;
     CubismFramework.startUp(this._cubismOption);
 
@@ -267,9 +267,7 @@ export class LAppDelegate {
 
     for (let i = 0; i < LAppDefine.CanvasNum; i++) {
       if (this._subdelegates.at(i).isContextLost()) {
-        CubismLogError(
-          `The context for Canvas at index ${i} was lost, possibly because the acquisition limit for WebGLRenderingContext was reached.`
-        );
+        CubismLogError(`The context for Canvas at index ${i} was lost, possibly because the acquisition limit for WebGLRenderingContext was reached.`);
       }
     }
   }
@@ -297,12 +295,20 @@ export class LAppDelegate {
       });
 
       this._websocketClient.onMessage('broadcast_message', (data) => {
-        CubismLogInfo('[WebSocket] ブロードキャストメッセージを受信:', data);
+        CubismLogInfo('[WebSocket] ブロードキャストメッセージを受信: {0}', data);
       });
 
       // 接続を試みる
       this._websocketClient.connect().catch((error) => {
-        CubismLogError('[WebSocket] 接続に失敗しました:', error.toString());
+        CubismLogError('[WebSocket] 接続に失敗しました: {0}', error.toString());
+      });
+      // ダイレクトメッセージ受信ハンドラー
+      this._websocketClient.onMessage('send', (data: any) => {
+        LAppPal.printMessage(`[send] ${data.message}`);
+      });
+      // 通知メッセージ受信ハンドラー
+      this._websocketClient.onMessage('notify', (data: any) => {
+        LAppPal.printMessage(`[notify] ${data.message}`);
       });
 
       // 各リクエストに対するハンドラーを登録して状態を返す
@@ -419,7 +425,7 @@ export class LAppDelegate {
             if (ui) {
               ui.updateEyeBlinkToggle(data.enabled);
             }
-            CubismLogInfo('[WebSocket] 自動目パチを設定しました:', data.enabled);
+            CubismLogInfo('[WebSocket] 自動目パチを設定しました: {0}', data.enabled);
           }
         }
       });
@@ -436,7 +442,7 @@ export class LAppDelegate {
             if (ui) {
               ui.updateBreathToggle(data.enabled);
             }
-            CubismLogInfo('[WebSocket] 呼吸を設定しました:', data.enabled);
+            CubismLogInfo('[WebSocket] 呼吸を設定しました: {0}', data.enabled);
           }
         }
       });
@@ -453,7 +459,7 @@ export class LAppDelegate {
             if (ui) {
               ui.updateIdleMotionToggle(data.enabled);
             }
-            CubismLogInfo('[WebSocket] アイドリングモーションを設定しました:', data.enabled);
+            CubismLogInfo('[WebSocket] アイドリングモーションを設定しました: {0}', data.enabled);
           }
         }
       });
@@ -470,7 +476,7 @@ export class LAppDelegate {
             if (ui) {
               ui.updateDragFollowToggle(data.enabled);
             }
-            CubismLogInfo('[WebSocket] ドラッグ追従を設定しました:', data.enabled);
+            CubismLogInfo('[WebSocket] ドラッグ追従を設定しました: {0}', data.enabled);
           }
         }
       });
@@ -487,7 +493,7 @@ export class LAppDelegate {
             if (ui) {
               ui.updatePhysicsToggle(data.enabled);
             }
-            CubismLogInfo('[WebSocket] 物理演算を設定しました:', data.enabled);
+            CubismLogInfo('[WebSocket] 物理演算を設定しました: {0}', data.enabled);
           }
         }
       });
@@ -504,7 +510,7 @@ export class LAppDelegate {
             if (ui) {
               ui.updateExpressionSelect(data.expression);
             }
-            CubismLogInfo('[WebSocket] 表情を設定しました:', data.expression);
+            CubismLogInfo('[WebSocket] 表情を設定しました: {0}', data.expression);
           }
         }
       });
@@ -522,7 +528,7 @@ export class LAppDelegate {
             if (ui) {
               ui.updateMotionSelect(data.group, index);
             }
-            CubismLogInfo('[WebSocket] モーションを設定しました:', data.group, index);
+            CubismLogInfo('[WebSocket] モーションを設定しました: {0} {1}', data.group, index);
           }
         }
       });
@@ -549,7 +555,7 @@ export class LAppDelegate {
                 }
                 setCount++;
               } else {
-                CubismLogDebug('[WebSocket] パラメータが見つかりません:', paramName);
+                CubismLogDebug('[WebSocket] パラメータが見つかりません: {0}', paramName);
                 notFoundCount++;
               }
             }
