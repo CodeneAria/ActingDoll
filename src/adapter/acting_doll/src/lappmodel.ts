@@ -34,6 +34,7 @@ import { csmString } from '@framework/type/csmstring';
 import { csmVector } from '@framework/type/csmvector';
 import {
   CSM_ASSERT,
+  CubismLogDebug,
   CubismLogError,
   CubismLogInfo
 } from '@framework/utils/cubismdebug';
@@ -815,6 +816,7 @@ export class LAppModel extends CubismUserModel {
     let motion: CubismMotion = this._motions.getValue(name) as CubismMotion;
     let autoDelete = false;
 
+    CubismLogDebug(LAppMultilingual.getMessage(MessageKey.START_MOTION, group, `${no}`));
     if (motion == null) {
       fetch(`${this._modelHomeDir}${motionFileName}`)
         .then(response => {
@@ -869,6 +871,14 @@ export class LAppModel extends CubismUserModel {
     this._currentMotionGroup = group;
     this._currentMotionNo = no;
 
+    // Update UI select
+    if (this._subdelegate) {
+      const ui = this._subdelegate.getUI();
+      if (ui) {
+        ui.updateMotionSelect(group, no);
+      }
+    }
+
     return this._motionManager.startMotionPriority(
       motion,
       autoDelete,
@@ -921,6 +931,14 @@ export class LAppModel extends CubismUserModel {
     if (motion != null) {
       this._expressionManager.startMotion(motion, false);
       this._currentExpressionId = expressionId;
+
+      // Update UI select
+      if (this._subdelegate) {
+        const ui = this._subdelegate.getUI();
+        if (ui) {
+          ui.updateExpressionSelect(expressionId);
+        }
+      }
     } else {
       if (this._debugMode) {
         CubismLogInfo(LAppMultilingual.getMessage(MessageKey.EXPRESSION_IS_NULL, expressionId));

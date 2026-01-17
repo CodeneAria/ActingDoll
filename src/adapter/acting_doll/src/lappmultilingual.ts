@@ -108,12 +108,12 @@ const messages: MessageMap = {
         en: '[APP] model index: {0}'
     },
     MOTION_BEGAN: {
-        ja: 'モーション開始: {0}',
-        en: 'Motion Began: {0}'
+        ja: 'モーション開始',
+        en: 'Motion Began'
     },
     MOTION_FINISHED: {
-        ja: 'モーション終了: {0}',
-        en: 'Motion Finished: {0}'
+        ja: 'モーション終了',
+        en: 'Motion Finished'
     },
 
     // LAppDelegate関連（WebSocket）

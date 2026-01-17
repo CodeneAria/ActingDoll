@@ -12,7 +12,7 @@ import { csmVector } from '@framework/type/csmvector';
 import * as LAppDefine from './lappdefine';
 import { LAppModel } from './lappmodel';
 import { LAppSubdelegate } from './lappsubdelegate';
-import { CubismLogInfo } from '@framework/utils/cubismdebug';
+import { CubismLogDebug, CubismLogInfo } from '@framework/utils/cubismdebug';
 import { LAppMultilingual, MessageKey } from './lappmultilingual';
 
 /**
@@ -197,10 +197,10 @@ export class LAppLive2DManager {
 
   // モーション再生開始のコールバック関数
   beganMotion = (self: ACubismMotion): void => {
-    CubismLogInfo(LAppMultilingual.getMessage(MessageKey.MOTION_BEGAN, self.toString()));
+    CubismLogDebug(LAppMultilingual.getMessage(MessageKey.MOTION_BEGAN));
   };
   // モーション再生終了のコールバック関数
   finishedMotion = (self: ACubismMotion): void => {
-    CubismLogInfo(LAppMultilingual.getMessage(MessageKey.MOTION_FINISHED, self.toString()));
+    CubismLogDebug(LAppMultilingual.getMessage(MessageKey.MOTION_FINISHED));
   };
 }

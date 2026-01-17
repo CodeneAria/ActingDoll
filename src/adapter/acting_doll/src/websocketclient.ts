@@ -6,7 +6,8 @@
 import {
   CubismLogVerbose,
   CubismLogError,
-  CubismLogInfo
+  CubismLogInfo,
+  CubismLogDebug
 } from '@framework/utils/cubismdebug';
 import { LAppMultilingual, MessageKey } from './lappmultilingual';
 
@@ -343,7 +344,7 @@ export class WebSocketClient {
         timestamp: new Date().toISOString()
       });
       this.websocket.send(messageJson);
-      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_SENDING, messageJson));
+      CubismLogDebug(LAppMultilingual.getMessage(MessageKey.WS_SENDING, messageJson));
     } else {
       CubismLogError(LAppMultilingual.getMessage(MessageKey.WS_NOT_CONNECTED));
     }
