@@ -8,6 +8,7 @@ import {
   CubismLogError,
   CubismLogInfo
 } from '@framework/utils/cubismdebug';
+import { LAppMultilingual, MessageKey } from './lappmultilingual';
 
 /**
  * WebSocketメッセージの基本型
@@ -267,35 +268,35 @@ export class WebSocketClient {
    */
   public connect(): Promise<void> {
     return new Promise((resolve, reject) => {
-      CubismLogInfo(`サーバーに接続中: ${this.uri}`);
+      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_CONNECTING, this.uri));
 
       this.websocket = new WebSocket(this.uri);
 
       this.websocket.onopen = () => {
-        CubismLogInfo('WebSocketサーバーに接続しました');
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_CONNECTED));
         this.running = true;
         this.reconnectAttempts = 0;
         resolve();
       };
 
       this.websocket.onclose = (event) => {
-        CubismLogInfo('WebSocket接続が閉じられました {0}', event);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_CLOSED, event));
         this.running = false;
         this.handleReconnect();
       };
 
       this.websocket.onerror = (error) => {
-        CubismLogError('WebSocketエラー: {0}', error.toString());
+        CubismLogError(LAppMultilingual.getMessage(MessageKey.WS_ERROR, error.toString()));
         reject(error);
       };
 
       this.websocket.onmessage = (event) => {
         try {
           const data: WebSocketMessage = JSON.parse(event.data);
-          CubismLogVerbose(`受信: {0}`, JSON.stringify(data));
+          CubismLogVerbose(LAppMultilingual.getMessage(MessageKey.WS_RECEIVED, JSON.stringify(data)));
           this.handleMessage(data);
         } catch (error) {
-          CubismLogError('不正なJSON形式: {0} {1}', event.data, error.toString());
+          CubismLogError(LAppMultilingual.getMessage(MessageKey.WS_INVALID_JSON, event.data, error.toString()));
         }
       };
     });
@@ -309,7 +310,7 @@ export class WebSocketClient {
       this.running = false;
       this.websocket.close();
       this.websocket = null;
-      CubismLogInfo('WebSocketサーバーから切断しました');
+      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_DISCONNECTED));
     }
   }
 
@@ -319,15 +320,15 @@ export class WebSocketClient {
   private handleReconnect(): void {
     if ((this.reconnectAttempts < this.maxReconnectAttempts) || (0 === this.maxReconnectAttempts)) {
       this.reconnectAttempts++;
-      CubismLogInfo(`再接続を試みます... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_RECONNECTING, this.reconnectAttempts.toString(), this.maxReconnectAttempts.toString()));
 
       setTimeout(() => {
         this.connect().catch((error) => {
-          CubismLogError('再接続に失敗しました: {0}', error.toString());
+          CubismLogError(LAppMultilingual.getMessage(MessageKey.WS_RECONNECT_FAILED, error.toString()));
         });
       }, this.reconnectDelay);
     } else {
-      CubismLogError('最大再接続試行回数に達しました');
+      CubismLogError(LAppMultilingual.getMessage(MessageKey.WS_MAX_RECONNECT_REACHED));
     }
   }
 
@@ -342,9 +343,9 @@ export class WebSocketClient {
         timestamp: new Date().toISOString()
       });
       this.websocket.send(messageJson);
-      CubismLogInfo('送信: {0}', messageJson);
+      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_SENDING, messageJson));
     } else {
-      CubismLogError('WebSocket接続が開いていません');
+      CubismLogError(LAppMultilingual.getMessage(MessageKey.WS_NOT_CONNECTED));
     }
   }
 
@@ -380,86 +381,92 @@ export class WebSocketClient {
 
     switch (msgType) {
       case 'welcome':
-        CubismLogInfo(`ウェルカムメッセージ: ${(data as WelcomeResponse).message}`);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_WELCOME_MESSAGE, (data as WelcomeResponse).message));
         break;
       case 'echo_response':
-        CubismLogInfo(`エコー応答: {0}`, (data as EchoResponse).original);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_ECHO_RESPONSE, (data as EchoResponse).original));
         break;
       case 'broadcast_message':
         const broadcast = data as BroadcastResponse;
-        CubismLogInfo(`ブロードキャスト from ${broadcast.from}: ${broadcast.content}`);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_BROADCAST_FROM, broadcast.from, broadcast.content));
         break;
       case 'client_connected':
         const connected = data as ClientConnectedMessage;
-        CubismLogInfo(`新しいクライアントが接続しました (合計: ${connected.total_clients})`);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_CLIENT_CONNECTED, connected.total_clients.toString()));
         break;
       case 'client_disconnected':
         const disconnected = data as ClientDisconnectedMessage;
-        CubismLogInfo(`クライアントが切断しました (合計: ${disconnected.total_clients})`);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_CLIENT_DISCONNECTED, disconnected.total_clients.toString()));
         break;
       case 'command_response':
-        CubismLogInfo(`コマンド応答: {0}`, data);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_COMMAND_RESPONSE, data));
         break;
       case 'error':
-        CubismLogError(`エラー: ${(data as ErrorMessage).message}`);
+        CubismLogError(LAppMultilingual.getMessage(MessageKey.WS_ERROR_MESSAGE, (data as ErrorMessage).message));
         break;
       case 'set_eye_blink':
         const eyeBlink = data as SetEyeBlinkMessage;
-        CubismLogInfo(`目パチ設定: ${eyeBlink.enabled ? '有効' : '無効'}`);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_EYE_BLINK_SETTING,
+          eyeBlink.enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
         break;
       case 'set_breath':
         const breath = data as SetBreathMessage;
-        CubismLogInfo(`呼吸設定: ${breath.enabled ? '有効' : '無効'}`);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_BREATH_SETTING,
+          breath.enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
         break;
       case 'set_idle_motion':
         const idleMotion = data as SetIdleMotionMessage;
-        CubismLogInfo(`アイドリングモーション設定: ${idleMotion.enabled ? '有効' : '無効'}`);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_IDLE_MOTION_SETTING,
+          idleMotion.enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
         break;
       case 'set_drag_follow':
         const dragFollow = data as SetDragFollowMessage;
-        CubismLogInfo(`ドラッグ追従設定: ${dragFollow.enabled ? '有効' : '無効'}`);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_DRAG_FOLLOW_SETTING,
+          dragFollow.enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
         break;
       case 'set_physics':
         const physics = data as SetPhysicsMessage;
-        CubismLogInfo(`物理演算設定: ${physics.enabled ? '有効' : '無効'}`);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_PHYSICS_SETTING,
+          physics.enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
         break;
       case 'set_expression':
         const expression = data as SetExpressionMessage;
-        CubismLogInfo(`表情設定: ${expression.expression}`);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_EXPRESSION_SETTING, expression.expression));
         break;
       case 'set_motion':
         const motion = data as SetMotionMessage;
-        CubismLogInfo(`モーション設定: グループ=${motion.group}, インデックス=${motion.index ?? 'ランダム'}`);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_MOTION_SETTING, motion.group,
+          (motion.index ?? LAppMultilingual.getMessage(MessageKey.RANDOM)).toString()));
         break;
       case 'set_parameter':
-        CubismLogInfo(`パラメータ設定を受信`);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_PARAM_RECEIVED));
         break;
       case 'request_model_info':
-        CubismLogInfo(`モデル情報リクエストを受信`);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_MODEL_INFO_REQUEST));
         break;
       case 'request_eye_blink':
-        CubismLogInfo(`目パチ情報リクエストを受信`);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_EYE_BLINK_REQUEST));
         break;
       case 'request_breath':
-        CubismLogInfo(`呼吸情報リクエストを受信`);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_BREATH_REQUEST));
         break;
       case 'request_idle_motion':
-        CubismLogInfo(`アイドリングモーション情報リクエストを受信`);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_IDLE_MOTION_REQUEST));
         break;
       case 'request_drag_follow':
-        CubismLogInfo(`ドラッグ追従情報リクエストを受信`);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_DRAG_FOLLOW_REQUEST));
         break;
       case 'request_physics':
-        CubismLogInfo(`物理演算情報リクエストを受信`);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_PHYSICS_REQUEST));
         break;
       case 'request_expression':
-        CubismLogInfo(`表情情報リクエストを受信`);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_EXPRESSION_REQUEST));
         break;
       case 'request_motion':
-        CubismLogInfo(`モーション情報リクエストを受信`);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_MOTION_REQUEST));
         break;
       default:
-        CubismLogInfo(`未処理のメッセージタイプ: ${msgType} {0}`, data);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_UNHANDLED_MESSAGE, msgType, data));
     }
   }
 
@@ -624,12 +631,12 @@ export class WebSocketClient {
    * ダイレクトメッセージ送信完了通知
    */
   public sendResponseSend(): void {
-    this.sendClientResponse('response_send', {  });
+    this.sendClientResponse('response_send', {});
   }
   /**
    * 通知メッセージ送信完了通知
    */
   public sendResponseNotify(): void {
-    this.sendClientResponse('response_notify', {  });
+    this.sendClientResponse('response_notify', {});
   }
 }

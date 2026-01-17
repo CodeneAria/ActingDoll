@@ -132,7 +132,7 @@ async def handle_client(websocket: ServerConnection):
         # ウェルカムメッセージを送信
         await websocket.send(json.dumps({
             "type": "welcome",
-            "message": "WebSocketサーバーに接続しました",
+            "message": "Welcome to the WebSocket server!",
             "client_id": client_id,
             "timestamp": datetime.now().isoformat()
         }, ensure_ascii=False))

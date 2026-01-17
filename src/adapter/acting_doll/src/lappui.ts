@@ -7,6 +7,7 @@ import { LAppDelegate } from './lappdelegate';
 import { LAppModel } from './lappmodel';
 import * as LAppDefine from './lappdefine';
 import { CubismLogError, CubismLogInfo } from '@framework/utils/cubismdebug';
+import { LAppMultilingual, MessageKey } from './lappmultilingual';
 
 /**
  * UI Controller for Live2D model manipulation
@@ -50,7 +51,7 @@ export class LAppUI {
         this._wsStatusIndicator = document.getElementById('wsStatusIndicator') as HTMLSpanElement;
 
         if (!this._controlPanel || !this._toggleButton) {
-            CubismLogError('[LAppUI] Required UI elements not found');
+            CubismLogError(LAppMultilingual.getMessage(MessageKey.UI_ELEMENTS_NOT_FOUND));
             return;
         }
 
@@ -111,7 +112,9 @@ export class LAppUI {
 
         // Listen for model loaded events
         window.addEventListener('modelLoaded', () => {
-            CubismLogInfo('[LAppUI] Model loaded, updating UI');
+            if (LAppDefine.DebugUILogEnable) {
+                CubismLogInfo(LAppMultilingual.getMessage(MessageKey.UI_MODEL_LOADED));
+            }
             this.updateUI();
         });
 
@@ -143,7 +146,9 @@ export class LAppUI {
 
         if (model) {
             model.setEyeBlinkEnabled(enabled);
-            CubismLogInfo(`[LAppUI] Eye blink ${enabled ? 'enabled' : 'disabled'}`);
+            if (LAppDefine.DebugUILogEnable) {
+                CubismLogInfo(LAppMultilingual.getMessage(MessageKey.UI_EYE_BLINK_TOGGLED, enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
+            }
         }
 
         // Enable or disable eye blink parameter sliders
@@ -164,7 +169,9 @@ export class LAppUI {
 
         if (model) {
             model.setBreathEnabled(enabled);
-            CubismLogInfo(`[LAppUI] Breath ${enabled ? 'enabled' : 'disabled'}`);
+            if (LAppDefine.DebugUILogEnable) {
+                CubismLogInfo(LAppMultilingual.getMessage(MessageKey.UI_BREATH_TOGGLED, enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
+            }
         }
 
         // Enable or disable breath parameter sliders
@@ -185,7 +192,9 @@ export class LAppUI {
 
         if (model) {
             model.setIdleMotionEnabled(enabled);
-            CubismLogInfo(`[LAppUI] Idle motion ${enabled ? 'enabled' : 'disabled'}`);
+            if (LAppDefine.DebugUILogEnable) {
+                CubismLogInfo(LAppMultilingual.getMessage(MessageKey.UI_IDLE_MOTION_TOGGLED, enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
+            }
         }
     }
     /**
@@ -202,7 +211,9 @@ export class LAppUI {
 
         if (model) {
             model.setDragFollowEnabled(enabled);
-            CubismLogInfo(`[LAppUI] Drag follow ${enabled ? 'enabled' : 'disabled'}`);
+            if (LAppDefine.DebugUILogEnable) {
+                CubismLogInfo(LAppMultilingual.getMessage(MessageKey.UI_DRAG_FOLLOW_TOGGLED, enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
+            }
         }
     }
 
@@ -220,7 +231,9 @@ export class LAppUI {
 
         if (model) {
             model.setPhysicsEnabled(enabled);
-            CubismLogInfo(`[LAppUI] Physics ${enabled ? 'enabled' : 'disabled'}`);
+            if (LAppDefine.DebugUILogEnable) {
+                CubismLogInfo(LAppMultilingual.getMessage(MessageKey.UI_PHYSICS_TOGGLED, enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
+            }
         }
 
         // Enable or disable physics parameter sliders

@@ -13,6 +13,7 @@ import * as LAppDefine from './lappdefine';
 import { LAppModel } from './lappmodel';
 import { LAppSubdelegate } from './lappsubdelegate';
 import { CubismLogInfo } from '@framework/utils/cubismdebug';
+import { LAppMultilingual, MessageKey } from './lappmultilingual';
 
 /**
  * サンプルアプリケーションにおいてCubismModelを管理するクラス
@@ -47,19 +48,19 @@ export class LAppLive2DManager {
    */
   public onTap(x: number, y: number): void {
     if (LAppDefine.DebugLogEnable) {
-      CubismLogInfo(`[APP] tap point: {x: ${x.toFixed(2)} y: ${y.toFixed(2)}}`);
+      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.TAP_POINT, x.toFixed(2), y.toFixed(2)));
     }
 
     const model: LAppModel = this._models.at(0);
 
     if (model.hitTest(LAppDefine.HitAreaNameHead, x, y)) {
       if (LAppDefine.DebugLogEnable) {
-        CubismLogInfo(`[APP] hit area: [${LAppDefine.HitAreaNameHead}]`);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.HIT_AREA, LAppDefine.HitAreaNameHead));
       }
       model.setRandomExpression();
     } else if (model.hitTest(LAppDefine.HitAreaNameBody, x, y)) {
       if (LAppDefine.DebugLogEnable) {
-        CubismLogInfo(`[APP] hit area: [${LAppDefine.HitAreaNameBody}]`);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.HIT_AREA, LAppDefine.HitAreaNameBody));
       }
       model.startRandomMotion(
         LAppDefine.MotionGroupTapBody,
@@ -117,7 +118,7 @@ export class LAppLive2DManager {
     this._sceneIndex = index;
 
     if (LAppDefine.DebugLogEnable) {
-      CubismLogInfo(`[APP] model index: ${this._sceneIndex}`);
+      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.MODEL_INDEX, this._sceneIndex));
     }
 
     // ModelDir[]に保持したディレクトリ名から
@@ -196,10 +197,10 @@ export class LAppLive2DManager {
 
   // モーション再生開始のコールバック関数
   beganMotion = (self: ACubismMotion): void => {
-    CubismLogInfo('Motion Began: {0}', self.toString());
+    CubismLogInfo(LAppMultilingual.getMessage(MessageKey.MOTION_BEGAN, self.toString()));
   };
   // モーション再生終了のコールバック関数
   finishedMotion = (self: ACubismMotion): void => {
-    CubismLogInfo('Motion Finished: {0}', self.toString());
+    CubismLogInfo(LAppMultilingual.getMessage(MessageKey.MOTION_FINISHED, self.toString()));
   };
 }

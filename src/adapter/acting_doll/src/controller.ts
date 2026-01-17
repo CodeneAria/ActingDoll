@@ -9,6 +9,7 @@ import {
   CubismLogError,
   CubismLogInfo
 } from '@framework/utils/cubismdebug';
+import { LAppMultilingual, MessageKey } from './lappmultilingual';
 
 /**
  * Live2Dコントローラークラス
@@ -39,14 +40,14 @@ class Live2DController {
     // コントロールパネルを取得
     this.controlPanel = document.getElementById('article_controlPanel');
     if (!this.controlPanel) {
-      CubismLogError('コントロールパネルが見つかりません');
+      CubismLogError(LAppMultilingual.getMessage(MessageKey.CTRL_PANEL_NOT_FOUND));
       return;
     }
 
     // WebSocket接続
     try {
       await this.wsClient.connect();
-      CubismLogInfo('WebSocketサーバーに接続しました');
+      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.CTRL_WS_CONNECTED));
 
       // UIを構築
       this.buildUI();
@@ -54,8 +55,8 @@ class Live2DController {
       // 初期データを取得
       this.loadInitialData();
     } catch (error) {
-      CubismLogError('WebSocket接続に失敗しました: {0}', error.toString());
-      this.showError('WebSocketサーバーに接続できませんでした。');
+      CubismLogError(LAppMultilingual.getMessage(MessageKey.CTRL_WS_FAILED, error.toString()));
+      this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_WS_FAILED_SHOW, error.toString()));
     }
   }
 
@@ -66,7 +67,7 @@ class Live2DController {
     // コマンドレスポンスハンドラ
     this.wsClient.onMessage('command_response', (data) => {
       const response = data as CommandResponse;
-      CubismLogInfo('コマンド応答: {0}', response);
+      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.CTRL_CMD_RESPONSE, response));
 
       // コマンドに応じた処理
       this.handleCommandResponse(response);
@@ -74,14 +75,14 @@ class Live2DController {
 
     // エラーハンドラ
     this.wsClient.onMessage('error', (data) => {
-      CubismLogError('サーバーエラー: {0}', data);
-      this.showError(`サーバーエラー: ${data.message}`);
+      CubismLogError(LAppMultilingual.getMessage(MessageKey.CTRL_SERVER_ERROR, data));
+      this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_SERVER_ERROR, `${ data.message }`));
     });
 
     // ウェルカムメッセージハンドラ
     this.wsClient.onMessage('welcome', (data) => {
-      CubismLogInfo('ウェルカムメッセージ: {0}', data);
-      this.showMessage('サーバーに接続されました');
+      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.CTRL_WELCOME_MSG, data));
+      this.showMessage(LAppMultilingual.getMessage(MessageKey.CTRL_SERVER_CONNECTED));
     });
   }
 
@@ -238,7 +239,7 @@ class Live2DController {
       if (input && input.value && this.selectedClientId) {
         this.sendCommand(`send ${this.selectedClientId} ${input.value}`);
       } else {
-        this.showError('クライアントとメッセージを入力してください');
+        this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_SELECT_CLIENT_AND_MESSAGE));
       }
     });
 
@@ -264,7 +265,7 @@ class Live2DController {
       if (this.selectedModel) {
         this.sendCommand(`model get_expressions ${this.selectedModel}`);
       } else {
-        this.showError('モデルを選択してください');
+        this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_SELECT_MODEL));
       }
     });
 
@@ -272,7 +273,7 @@ class Live2DController {
       if (this.selectedModel) {
         this.sendCommand(`model get_motions ${this.selectedModel}`);
       } else {
-        this.showError('モデルを選択してください');
+        this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_SELECT_MODEL));
       }
     });
 
@@ -280,7 +281,7 @@ class Live2DController {
       if (this.selectedModel) {
         this.sendCommand(`model get_parameters ${this.selectedModel}`);
       } else {
-        this.showError('モデルを選択してください');
+        this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_SELECT_MODEL));
       }
     });
 
@@ -289,7 +290,7 @@ class Live2DController {
       if (this.selectedClientId) {
         this.sendCommand(`client ${this.selectedClientId} get_model`);
       } else {
-        this.showError('クライアントを選択してください');
+        this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_SELECT_CLIENT));
       }
     });
 
@@ -301,7 +302,7 @@ class Live2DController {
       if (this.selectedClientId) {
         this.sendCommand(`client ${this.selectedClientId} get_expression`);
       } else {
-        this.showError('クライアントを選択してください');
+        this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_SELECT_CLIENT));
       }
     });
 
@@ -310,7 +311,7 @@ class Live2DController {
       if (this.selectedClientId && select && select.value) {
         this.sendCommand(`client ${this.selectedClientId} set_expression ${select.value}`);
       } else {
-        this.showError('クライアントと表情を選択してください');
+        this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_SELECT_CLIENT_AND_EXPRESSION));
       }
     });
 
@@ -319,7 +320,7 @@ class Live2DController {
       if (this.selectedClientId) {
         this.sendCommand(`client ${this.selectedClientId} get_motion`);
       } else {
-        this.showError('クライアントを選択してください');
+        this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_SELECT_CLIENT));
       }
     });
 
@@ -329,14 +330,14 @@ class Live2DController {
       if (this.selectedClientId && groupSelect && groupSelect.value && noSelect && noSelect.value) {
         this.sendCommand(`client ${this.selectedClientId} set_motion ${groupSelect.value} ${noSelect.value}`);
       } else {
-        this.showError('クライアント、グループ、番号を選択してください');
+        this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_SELECT_CLIENT_GROUP_NUMBER));
       }
     });
 
     // パラメータ設定
     document.getElementById('btn-set-parameters')?.addEventListener('click', () => {
       if (!this.selectedClientId) {
-        this.showError('クライアントを選択してください');
+        this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_SELECT_CLIENT));
         return;
       }
 
@@ -351,7 +352,7 @@ class Live2DController {
       if (params.length > 0) {
         this.sendCommand(`client ${this.selectedClientId} set_parameter ${params.join(' ')}`);
       } else {
-        this.showError('パラメータ値を入力してください');
+        this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_ENTER_PARAMETER_VALUES));
       }
     });
 
@@ -381,7 +382,7 @@ class Live2DController {
         if (this.selectedClientId) {
           this.sendCommand(`client ${this.selectedClientId} get_${cmd.name}`);
         } else {
-          this.showError('クライアントを選択してください');
+          this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_SELECT_CLIENT));
         }
       });
 
@@ -389,7 +390,7 @@ class Live2DController {
         if (this.selectedClientId) {
           this.sendCommand(`client ${this.selectedClientId} set_${cmd.name} enabled`);
         } else {
-          this.showError('クライアントを選択してください');
+          this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_SELECT_CLIENT));
         }
       });
 
@@ -397,7 +398,7 @@ class Live2DController {
         if (this.selectedClientId) {
           this.sendCommand(`client ${this.selectedClientId} set_${cmd.name} disabled`);
         } else {
-          this.showError('クライアントを選択してください');
+          this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_SELECT_CLIENT));
         }
       });
     });
@@ -416,7 +417,7 @@ class Live2DController {
    */
   private handleCommandResponse(response: CommandResponse): void {
     if (response.error) {
-      this.showError(`エラー: ${response.error}`);
+      this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_ERROR, response.error));
       return;
     }
 

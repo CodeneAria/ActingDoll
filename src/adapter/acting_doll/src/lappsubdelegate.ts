@@ -12,6 +12,7 @@ import { LAppTextureManager } from './lapptexturemanager';
 import { LAppUI } from './lappui';
 import { LAppView } from './lappview';
 import { CubismLogInfo } from '@framework/utils/cubismdebug';
+import { LAppMultilingual, MessageKey } from './lappmultilingual';
 
 /**
  * Canvasに関連する操作を取りまとめるクラス
@@ -166,7 +167,7 @@ export class LAppSubdelegate {
     const vertexShaderId = gl.createShader(gl.VERTEX_SHADER);
 
     if (vertexShaderId == null) {
-      CubismLogInfo('Failed to create vertexShader');
+      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.SUBDELEGATE_VERTEX_SHADER_FAILED));
       return null;
     }
 
@@ -188,7 +189,7 @@ export class LAppSubdelegate {
     const fragmentShaderId = gl.createShader(gl.FRAGMENT_SHADER);
 
     if (fragmentShaderId == null) {
-      CubismLogInfo('Failed to create fragmentShader');
+      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.SUBDELEGATE_FRAGMENT_SHADER_FAILED));
       return null;
     }
 
@@ -260,7 +261,7 @@ export class LAppSubdelegate {
    */
   public onPointBegan(pageX: number, pageY: number): void {
     if (!this._view) {
-      CubismLogInfo('view notfound');
+      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.SUBDELEGATE_VIEW_NOT_FOUND));
       return;
     }
     this._captured = true;
@@ -292,7 +293,7 @@ export class LAppSubdelegate {
     this._captured = false;
 
     if (!this._view) {
-      CubismLogInfo('view notfound');
+      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.SUBDELEGATE_VIEW_NOT_FOUND));
       return;
     }
 
@@ -309,7 +310,7 @@ export class LAppSubdelegate {
     this._captured = false;
 
     if (!this._view) {
-      CubismLogInfo('view notfound');
+      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.SUBDELEGATE_VIEW_NOT_FOUND));
       return;
     }
 

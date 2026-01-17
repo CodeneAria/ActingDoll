@@ -15,6 +15,7 @@ import { TextureInfo } from './lapptexturemanager';
 import { TouchManager } from './touchmanager';
 import { LAppSubdelegate } from './lappsubdelegate';
 import { CubismLogInfo } from '@framework/utils/cubismdebug';
+import { LAppMultilingual, MessageKey } from './lappmultilingual';
 
 /**
  * 描画クラス。
@@ -225,7 +226,7 @@ export class LAppView {
     const y: number = this.transformViewY(posY);
 
     if (LAppDefine.DebugTouchLogEnable) {
-      CubismLogInfo(`[APP] touchesEnded x: ${x} y: ${y}`);
+      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.VIEW_TOUCHES_ENDED, x.toString(), y.toString()));
     }
     lapplive2dmanager.onTap(x, y);
 

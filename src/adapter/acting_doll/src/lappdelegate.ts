@@ -16,6 +16,7 @@ import {
   CubismLogInfo
 } from '@framework/utils/cubismdebug';
 import { WebSocketClient } from './websocketclient';
+import { LAppMultilingual, MessageKey } from './lappmultilingual';
 
 export let s_instance: LAppDelegate = null;
 
@@ -266,7 +267,7 @@ export class LAppDelegate {
 
     for (let i = 0; i < LAppDefine.CanvasNum; i++) {
       if (this._subdelegates.at(i).isContextLost()) {
-        CubismLogError(`The context for Canvas at index ${i} was lost, possibly because the acquisition limit for WebGLRenderingContext was reached.`);
+        CubismLogError(LAppMultilingual.getMessage(MessageKey.CANVAS_CONTEXT_LOST, i.toString()));
       }
     }
   }
@@ -290,16 +291,16 @@ export class LAppDelegate {
 
       // メッセージハンドラを登録
       this._websocketClient.onMessage('welcome', (data) => {
-        CubismLogInfo('[WebSocket] ウェルカムメッセージを受信しました');
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_WELCOME_RECEIVED));
       });
 
       this._websocketClient.onMessage('broadcast_message', (data) => {
-        CubismLogInfo('[WebSocket] ブロードキャストメッセージを受信: {0}', data);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_BROADCAST_RECEIVED, data));
       });
 
       // 接続を試みる
       this._websocketClient.connect().catch((error) => {
-        CubismLogError('[WebSocket] 接続に失敗しました: {0}', error.toString());
+        CubismLogError(LAppMultilingual.getMessage(MessageKey.WS_CONNECTION_FAILED, error.toString()));
       });
       // ダイレクトメッセージ受信ハンドラー
       this._websocketClient.onMessage('send', (data: any) => {
@@ -444,7 +445,7 @@ export class LAppDelegate {
                 ui.updateEyeBlinkToggle(data.enabled);
               }
               this._websocketClient.sendEyeBlinkStatus(data.enabled);
-              CubismLogInfo('[WebSocket] 自動目パチを設定しました: {0}', data.enabled);
+              CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_EYE_BLINK_SET, data.enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
             }
           }
         }
@@ -464,7 +465,7 @@ export class LAppDelegate {
                 ui.updateBreathToggle(data.enabled);
               }
               this._websocketClient.sendBreathStatus(data.enabled);
-              CubismLogInfo('[WebSocket] 呼吸を設定しました: {0}', data.enabled);
+              CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_BREATH_SET, data.enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
             }
           }
         }
@@ -484,7 +485,7 @@ export class LAppDelegate {
                 ui.updateIdleMotionToggle(data.enabled);
               }
               this._websocketClient.sendIdleMotionStatus(data.enabled);
-              CubismLogInfo('[WebSocket] アイドリングモーションを設定しました: {0}', data.enabled);
+              CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_IDLE_MOTION_SET, data.enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
             }
           }
         }
@@ -504,7 +505,7 @@ export class LAppDelegate {
                 ui.updateDragFollowToggle(data.enabled);
               }
               this._websocketClient.sendDragFollowStatus(data.enabled);
-              CubismLogInfo('[WebSocket] ドラッグ追従を設定しました: {0}', data.enabled);
+              CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_DRAG_FOLLOW_SET, data.enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
             }
           }
         }
@@ -524,7 +525,7 @@ export class LAppDelegate {
                 ui.updatePhysicsToggle(data.enabled);
               }
               this._websocketClient.sendPhysicsStatus(data.enabled);
-              CubismLogInfo('[WebSocket] 物理演算を設定しました: {0}', data.enabled);
+              CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_PHYSICS_SET, data.enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
             }
           }
         }
@@ -544,7 +545,7 @@ export class LAppDelegate {
                 ui.updateExpressionSelect(data.expression);
               }
               this._websocketClient.sendExpressionStatus(data.expression);
-              CubismLogInfo('[WebSocket] 表情を設定しました: {0}', data.expression);
+              CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_EXPRESSION_SET, data.expression));
             }
           }
         }
@@ -565,7 +566,7 @@ export class LAppDelegate {
                 ui.updateMotionSelect(data.group, index);
               }
               this._websocketClient.sendMotionStatus(data.group, index);
-              CubismLogInfo('[WebSocket] モーションを設定しました: {0} {1}', data.group, index);
+              CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_MOTION_SET, data.group, index.toString()));
             }
           }
         }
@@ -594,18 +595,18 @@ export class LAppDelegate {
                   }
                   setCount++;
                 } else {
-                  CubismLogDebug('[WebSocket] パラメータが見つかりません: {0}', paramName);
+                  CubismLogDebug(LAppMultilingual.getMessage(MessageKey.WS_PARAM_NOT_FOUND, paramName));
                   notFoundCount++;
                 }
               }
               this._websocketClient.sendParameterStatus(setCount, notFoundCount);
-              CubismLogInfo(`[WebSocket] パラメータを一括設定しました: ${setCount}個成功, ${notFoundCount}個失敗`);
+              CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_PARAMS_SET, setCount.toString(), notFoundCount.toString()));
             }
           }
         }
       });
 
-      CubismLogInfo('[WebSocket] WebSocketクライアントを初期化しました');
+      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_CLIENT_INITIALIZED));
     }
   }
 
@@ -616,7 +617,7 @@ export class LAppDelegate {
     if (this._websocketClient) {
       this._websocketClient.disconnect();
       this._websocketClient = null;
-      CubismLogInfo('[WebSocket] WebSocketクライアントを解放しました');
+      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_CLIENT_RELEASED));
     }
   }
 

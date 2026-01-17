@@ -6,6 +6,7 @@
  */
 
 import { CubismLogError } from '@framework/utils/cubismdebug';
+import { LAppMultilingual, MessageKey } from './lappmultilingual';
 
 /** @deprecated この変数は getInstance() が非推奨になったことに伴い、非推奨となりました。 */
 export let s_instance: LAppWavFileHandler = null;
@@ -231,7 +232,7 @@ export class LAppWavFileHandler {
 
           resolveValue(ret);
         } catch (e) {
-          CubismLogError(e.toString());
+          CubismLogError(LAppMultilingual.getMessage(MessageKey.WAV_ERROR, e.toString()));
         }
       })().then(() => {
         resolveValue(ret);

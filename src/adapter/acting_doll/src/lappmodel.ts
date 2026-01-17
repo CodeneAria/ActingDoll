@@ -45,6 +45,7 @@ import { LAppWavFileHandler } from './lappwavfilehandler';
 import { CubismMoc } from '@framework/model/cubismmoc';
 import { LAppDelegate } from './lappdelegate';
 import { LAppSubdelegate } from './lappsubdelegate';
+import { LAppMultilingual, MessageKey } from './lappmultilingual';
 
 enum LoadStep {
   LoadAssets,
@@ -102,7 +103,8 @@ export class LAppModel extends CubismUserModel {
       })
       .catch(error => {
         // model3.json読み込みでエラーが発生した時点で描画は不可能なので、setupせずエラーをcatchして何もしない
-        CubismLogError(`Failed to load file ${this._modelHomeDir}${fileName}`);
+        CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_LOAD_FILE,
+`${this._modelHomeDir}${fileName}`));
       });
   }
 
@@ -127,7 +129,8 @@ export class LAppModel extends CubismUserModel {
           if (response.ok) {
             return response.arrayBuffer();
           } else if (response.status >= 400) {
-            CubismLogError(`Failed to load file ${this._modelHomeDir}${modelFileName}`);
+            CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_LOAD_FILE,
+              `${this._modelHomeDir}${modelFileName}`));
             return new ArrayBuffer(0);
           }
         })
@@ -141,7 +144,7 @@ export class LAppModel extends CubismUserModel {
 
       this._state = LoadStep.WaitLoadModel;
     } else {
-      CubismLogInfo('Model data does not exist.');
+      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.MODEL_DATA_NOT_EXIST));
     }
 
     // Expression
@@ -159,7 +162,7 @@ export class LAppModel extends CubismUserModel {
               if (response.ok) {
                 return response.arrayBuffer();
               } else if (response.status >= 400) {
-                CubismLogError(`Failed to load file ${this._modelHomeDir}${expressionFileName}`);
+                CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_LOAD_FILE, `${this._modelHomeDir}${expressionFileName}`));
                 // ファイルが存在しなくてもresponseはnullを返却しないため、空のArrayBufferで対応する
                 return new ArrayBuffer(0);
               }
@@ -209,7 +212,7 @@ export class LAppModel extends CubismUserModel {
             if (response.ok) {
               return response.arrayBuffer();
             } else if (response.status >= 400) {
-              CubismLogError(`Failed to load file ${this._modelHomeDir}${physicsFileName}`);
+              CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_LOAD_FILE, `${this._modelHomeDir}${physicsFileName}`));
               return new ArrayBuffer(0);
             }
           })
@@ -240,7 +243,7 @@ export class LAppModel extends CubismUserModel {
             if (response.ok) {
               return response.arrayBuffer();
             } else if (response.status >= 400) {
-              CubismLogError(`Failed to load file ${this._modelHomeDir}${poseFileName}`);
+              CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_LOAD_FILE, `${this._modelHomeDir}${poseFileName}`));
               return new ArrayBuffer(0);
             }
           })
@@ -330,7 +333,7 @@ export class LAppModel extends CubismUserModel {
             if (response.ok) {
               return response.arrayBuffer();
             } else if (response.status >= 400) {
-              CubismLogError(`Failed to load file ${this._modelHomeDir}${userDataFile}`);
+              CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_LOAD_FILE, `${this._modelHomeDir}${userDataFile}`));
               return new ArrayBuffer(0);
             }
           })
@@ -387,7 +390,7 @@ export class LAppModel extends CubismUserModel {
       const layout: csmMap<string, number> = new csmMap<string, number>();
 
       if (this._modelSetting == null || this._modelMatrix == null) {
-        CubismLogError('Failed to setupLayout().');
+        CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_SETUP_LAYOUT));
         return;
       }
 
@@ -455,7 +458,7 @@ export class LAppModel extends CubismUserModel {
       ) {
         // テクスチャ名が空文字だった場合はロード・バインド処理をスキップ
         if (this._modelSetting.getTextureFileName(modelTextureNumber) == '') {
-          CubismLogInfo('getTextureFileName null');
+          CubismLogInfo(LAppMultilingual.getMessage(MessageKey.TEXTURE_FILENAME_NULL));
           continue;
         }
 
@@ -725,7 +728,7 @@ export class LAppModel extends CubismUserModel {
         }
       }
     } catch (e) {
-      CubismLogError(`Failed to get physics parameter names: ${e}`);
+      CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_GET_PHYSICS_PARAMS, e));
     }
 
     return physicsParams;
@@ -755,7 +758,7 @@ export class LAppModel extends CubismUserModel {
         }
       }
     } catch (e) {
-      CubismLogError(`Failed to get breath parameter names: ${e}`);
+      CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_GET_BREATH_PARAMS, e));
     }
 
     return breathParams;
@@ -800,7 +803,7 @@ export class LAppModel extends CubismUserModel {
       this._motionManager.setReservePriority(priority);
     } else if (!this._motionManager.reserveMotion(priority)) {
       if (this._debugMode) {
-        CubismLogInfo("[APP] can't start motion.");
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.CANT_START_MOTION));
       }
       return InvalidMotionQueueEntryHandleValue;
     }
@@ -818,7 +821,7 @@ export class LAppModel extends CubismUserModel {
           if (response.ok) {
             return response.arrayBuffer();
           } else if (response.status >= 400) {
-            CubismLogError(`Failed to load file ${this._modelHomeDir}${motionFileName}`);
+            CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_LOAD_FILE, `${this._modelHomeDir}${motionFileName}`));
             return new ArrayBuffer(0);
           }
         })
@@ -840,7 +843,7 @@ export class LAppModel extends CubismUserModel {
         motion.setEffectIds(this._eyeBlinkIds, this._lipSyncIds);
         autoDelete = true; // 終了時にメモリから削除
       } else {
-        CubismLogError("Can't start motion {0} .", motionFileName);
+        CubismLogError(LAppMultilingual.getMessage(MessageKey.CANT_START_MOTION_FILE, motionFileName));
         // ロードできなかったモーションのReservePriorityをリセットする
         this._motionManager.setReservePriority(LAppDefine.PriorityNone);
         return InvalidMotionQueueEntryHandleValue;
@@ -859,7 +862,7 @@ export class LAppModel extends CubismUserModel {
     }
 
     if (this._debugMode) {
-      CubismLogInfo(`[APP] start motion: [${group}_${no}]`);
+      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.START_MOTION, group, no));
     }
 
     // 現在のモーション情報を保存
@@ -912,7 +915,7 @@ export class LAppModel extends CubismUserModel {
     const motion: ACubismMotion = this._expressions.getValue(expressionId);
 
     if (this._debugMode) {
-      CubismLogInfo(`[APP] expression: [${expressionId}]`);
+      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.EXPRESSION_SET, expressionId));
     }
 
     if (motion != null) {
@@ -920,7 +923,7 @@ export class LAppModel extends CubismUserModel {
       this._currentExpressionId = expressionId;
     } else {
       if (this._debugMode) {
-        CubismLogInfo(`[APP] expression[${expressionId}] is null`);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.EXPRESSION_IS_NULL, expressionId));
       }
     }
   }
@@ -1009,7 +1012,7 @@ export class LAppModel extends CubismUserModel {
    * イベントの発火を受け取る
    */
   public motionEventFired(eventValue: csmString): void {
-    CubismLogInfo('{0} is fired on LAppModel!!', eventValue.s);
+    CubismLogInfo(LAppMultilingual.getMessage(MessageKey.EVENT_FIRED, eventValue.s));
   }
 
   /**
@@ -1067,7 +1070,7 @@ export class LAppModel extends CubismUserModel {
       // ex) idle_0
       const name = `${group}_${i}`;
       if (this._debugMode) {
-        CubismLogInfo(`[APP] load motion: ${motionFileName} => [${name}]`);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.LOAD_MOTION, motionFileName, name));
       }
 
       fetch(`${this._modelHomeDir}${motionFileName}`)
@@ -1075,7 +1078,7 @@ export class LAppModel extends CubismUserModel {
           if (response.ok) {
             return response.arrayBuffer();
           } else if (response.status >= 400) {
-            CubismLogError(`Failed to load file ${this._modelHomeDir}${motionFileName}`);
+            CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_LOAD_FILE, `${this._modelHomeDir}${motionFileName}`));
             return new ArrayBuffer(0);
           }
         })
@@ -1188,14 +1191,14 @@ export class LAppModel extends CubismUserModel {
       this._consistency = CubismMoc.hasMocConsistency(arrayBuffer);
 
       if (!this._consistency) {
-        CubismLogInfo('Inconsistent MOC3.');
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.INCONSISTENT_MOC3));
       } else {
-        CubismLogInfo('Consistent MOC3.');
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.CONSISTENT_MOC3));
       }
 
       return this._consistency;
     } else {
-      CubismLogInfo('Model data does not exist.');
+      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.MODEL_DATA_NOT_EXIST));
     }
   }
 
