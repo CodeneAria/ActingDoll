@@ -90,8 +90,12 @@ const messages: MessageMap = {
         en: 'Failed to get breath parameter names: {0}'
     },
     CANT_START_MOTION_FILE: {
-        ja: 'モーション {0} を開始できません。',
-        en: "Can't start motion {0} ."
+        ja: 'モーション {0} を開始できません',
+        en: "Can't start motion {0}"
+    },
+    CANT_MOTION_NO_OVERFLOW: {
+        ja: '指定されたモーションは範囲外です: {0}',
+        en: "Overflow motion no: {0}"
     },
 
     // LAppLive2DManager関連
@@ -560,6 +564,7 @@ export const MessageKey = {
     FAILED_TO_GET_PHYSICS_PARAMS: 'FAILED_TO_GET_PHYSICS_PARAMS',
     FAILED_TO_GET_BREATH_PARAMS: 'FAILED_TO_GET_BREATH_PARAMS',
     CANT_START_MOTION_FILE: 'CANT_START_MOTION_FILE',
+    CANT_MOTION_NO_OVERFLOW: 'CANT_MOTION_NO_OVERFLOW',
 
     // LAppLive2DManager関連
     TAP_POINT: 'TAP_POINT',

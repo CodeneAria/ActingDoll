@@ -105,7 +105,7 @@ export class LAppModel extends CubismUserModel {
       .catch(error => {
         // model3.json読み込みでエラーが発生した時点で描画は不可能なので、setupせずエラーをcatchして何もしない
         CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_LOAD_FILE,
-`${this._modelHomeDir}${fileName}`));
+          `${this._modelHomeDir}${fileName}`));
       });
   }
 
@@ -808,82 +808,82 @@ export class LAppModel extends CubismUserModel {
       }
       return InvalidMotionQueueEntryHandleValue;
     }
-
-    const motionFileName = this._modelSetting.getMotionFileName(group, no);
-
-    // ex) idle_0
-    const name = `${group}_${no}`;
-    let motion: CubismMotion = this._motions.getValue(name) as CubismMotion;
-    let autoDelete = false;
-
-    CubismLogDebug(LAppMultilingual.getMessage(MessageKey.START_MOTION, group, `${no}`));
-    if (motion == null) {
-      fetch(`${this._modelHomeDir}${motionFileName}`)
-        .then(response => {
-          if (response.ok) {
-            return response.arrayBuffer();
-          } else if (response.status >= 400) {
-            CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_LOAD_FILE, `${this._modelHomeDir}${motionFileName}`));
-            return new ArrayBuffer(0);
-          }
-        })
-        .then(arrayBuffer => {
-          motion = this.loadMotion(
-            arrayBuffer,
-            arrayBuffer.byteLength,
-            null,
-            onFinishedMotionHandler,
-            onBeganMotionHandler,
-            this._modelSetting,
-            group,
-            no,
-            this._motionConsistency
-          );
-        });
-
-      if (motion) {
-        motion.setEffectIds(this._eyeBlinkIds, this._lipSyncIds);
-        autoDelete = true; // 終了時にメモリから削除
-      } else {
-        CubismLogError(LAppMultilingual.getMessage(MessageKey.CANT_START_MOTION_FILE, motionFileName));
-        // ロードできなかったモーションのReservePriorityをリセットする
-        this._motionManager.setReservePriority(LAppDefine.PriorityNone);
-        return InvalidMotionQueueEntryHandleValue;
-      }
+    if (no < 0 || no >= this._modelSetting.getMotionCount(group)) {
+      CubismLogDebug(LAppMultilingual.getMessage(MessageKey.CANT_MOTION_NO_OVERFLOW, no));
+      return InvalidMotionQueueEntryHandleValue;
     } else {
-      motion.setBeganMotionHandler(onBeganMotionHandler);
-      motion.setFinishedMotionHandler(onFinishedMotionHandler);
-    }
+      const motionFileName = this._modelSetting.getMotionFileName(group, no);
+      const name = `${group}_${no}`;
+      let motion: CubismMotion = this._motions.getValue(name) as CubismMotion;
+      let autoDelete = false;
 
-    //voice
-    const voice = this._modelSetting.getMotionSoundFileName(group, no);
-    if (voice.localeCompare('') != 0) {
-      let path = voice;
-      path = this._modelHomeDir + path;
-      this._wavFileHandler.start(path);
-    }
+      CubismLogDebug(LAppMultilingual.getMessage(MessageKey.START_MOTION, group, `${no}`));
+      if (motion == null) {
+        fetch(`${this._modelHomeDir}${motionFileName}`)
+          .then(response => {
+            if (response.ok) {
+              return response.arrayBuffer();
+            } else if (response.status >= 400) {
+              CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_LOAD_FILE, `${this._modelHomeDir}${motionFileName}`));
+              return new ArrayBuffer(0);
+            }
+          })
+          .then(arrayBuffer => {
+            motion = this.loadMotion(
+              arrayBuffer,
+              arrayBuffer.byteLength,
+              null,
+              onFinishedMotionHandler,
+              onBeganMotionHandler,
+              this._modelSetting,
+              group,
+              no,
+              this._motionConsistency
+            );
+          });
 
-    if (this._debugMode) {
-      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.START_MOTION, group, no));
-    }
-
-    // 現在のモーション情報を保存
-    this._currentMotionGroup = group;
-    this._currentMotionNo = no;
-
-    // Update UI select
-    if (this._subdelegate) {
-      const ui = this._subdelegate.getUI();
-      if (ui) {
-        ui.updateMotionSelect(group, no);
+        if (motion) {
+          motion.setEffectIds(this._eyeBlinkIds, this._lipSyncIds);
+          autoDelete = true; // 終了時にメモリから削除
+        } else {
+          CubismLogError(LAppMultilingual.getMessage(MessageKey.CANT_START_MOTION_FILE, motionFileName));
+          // ロードできなかったモーションのReservePriorityをリセットする
+          this._motionManager.setReservePriority(LAppDefine.PriorityNone);
+          return InvalidMotionQueueEntryHandleValue;
+        }
+      } else {
+        motion.setBeganMotionHandler(onBeganMotionHandler);
+        motion.setFinishedMotionHandler(onFinishedMotionHandler);
       }
-    }
+      // 現在のモーション情報を保存
+      this._currentMotionGroup = group;
+      this._currentMotionNo = no;
 
-    return this._motionManager.startMotionPriority(
-      motion,
-      autoDelete,
-      priority
-    );
+      //voice
+      const voice = this._modelSetting.getMotionSoundFileName(group, no);
+      if (voice.localeCompare('') != 0) {
+        let path = voice;
+        path = this._modelHomeDir + path;
+        this._wavFileHandler.start(path);
+      }
+
+      if (this._debugMode) {
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.START_MOTION, group, no));
+      }
+      // Update UI select
+      if (this._subdelegate) {
+        const ui = this._subdelegate.getUI();
+        if (ui) {
+          ui.updateMotionSelect(group, no);
+        }
+      }
+
+      return this._motionManager.startMotionPriority(
+        motion,
+        autoDelete,
+        priority
+      );
+    }
   }
 
   /**
@@ -921,7 +921,7 @@ export class LAppModel extends CubismUserModel {
    *
    * @param expressionId 表情モーションのID
    */
-  public setExpression(expressionId: string): void {
+  public setExpression(expressionId: string): string {
     const motion: ACubismMotion = this._expressions.getValue(expressionId);
 
     if (this._debugMode) {
@@ -944,6 +944,7 @@ export class LAppModel extends CubismUserModel {
         CubismLogInfo(LAppMultilingual.getMessage(MessageKey.EXPRESSION_IS_NULL, expressionId));
       }
     }
+    return this._currentExpressionId;
   }
 
   /**
@@ -982,6 +983,7 @@ export class LAppModel extends CubismUserModel {
       if (i == no) {
         const name: string = this._expressions._keyValues[i].first;
         this.setExpression(name);
+        CubismLogDebug(LAppMultilingual.getMessage(MessageKey.WS_EXPRESSION_SETTING, name));
         return;
       }
     }
@@ -1011,7 +1013,12 @@ export class LAppModel extends CubismUserModel {
       return -1;
     }
     const paramId = CubismFramework.getIdManager().getId(paramName);
-    return this._model.getParameterIndex(paramId);
+    const index = this._model.getParameterIndex(paramId);
+    // パラメータが存在しない場合は-1を返す
+    if (index < 0 || index >= this._model.getParameterCount()) {
+      return -1;
+    }
+    return index;
   }
 
   /**

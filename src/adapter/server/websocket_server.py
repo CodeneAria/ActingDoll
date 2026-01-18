@@ -530,32 +530,32 @@ async def client_command(command: str, args: dict,
         elif command == "set_motion":  # Motions
             parts = args.strip().split(maxsplit=2) if len(args) > 0 else ""
             group = parts[0] if len(parts) > 1 else ""
-            index = parts[1] if len(parts) > 1 else ""
+            no = parts[1] if len(parts) > 1 else ""
             if not group:
                 return {
                     "type": "client_request",
                     "command": "set_motion",
                     "error": "motion group名が必要です"
                 }
-            if not index:
+            if not no:
                 return {
                     "type": "client_request",
                     "command": "set_motion",
-                    "error": "motion indexが必要です"
+                    "error": "motion noが必要です"
                 }
             await send_to_client(client_id, {
                 "type": "set_motion",
                 "client_id": client_id,
                 "source": source_client_id,
                 "group": group,
-                "index": index,
+                "no": no,
                 "timestamp": datetime.now().isoformat()
             })
             return {
                 "type": "client_request",
                 "command": "set_motion",
                 "success": True,
-                "data": {"group": group, "index": index},
+                "data": {"group": group, "no": no},
                 "message": "クライアントにモーション情報を送信しました"
             }
 

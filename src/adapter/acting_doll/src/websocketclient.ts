@@ -166,7 +166,7 @@ export interface SetExpressionMessage extends WebSocketMessage {
 export interface SetMotionMessage extends WebSocketMessage {
   type: 'set_motion';
   group: string;
-  index?: number;
+  no?: number;
   client_id: string;
 }
 
@@ -437,7 +437,7 @@ export class WebSocketClient {
       case 'set_motion':
         const motion = data as SetMotionMessage;
         CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_MOTION_SETTING, motion.group,
-          (motion.index ?? LAppMultilingual.getMessage(MessageKey.RANDOM)).toString()));
+          (motion.no ?? LAppMultilingual.getMessage(MessageKey.RANDOM)).toString()));
         break;
       case 'set_parameter':
         CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_PARAM_RECEIVED));
@@ -599,17 +599,17 @@ export class WebSocketClient {
    * 現在の表情を送信
    * @param expression 表情名
    */
-  public sendExpressionStatus(expression: string): void {
-    this.sendClientResponse('response_expression', { expression });
+  public sendExpressionStatus(expression: string, result: boolean): void {
+    this.sendClientResponse('response_expression', { expression, result });
   }
 
   /**
    * 現在のモーションを送信
    * @param group モーショングループ
-   * @param index モーションインデックス
+   * @param no モーションインデックス
    */
-  public sendMotionStatus(group: string, index: number): void {
-    this.sendClientResponse('response_motion', { group, index });
+  public sendMotionStatus(group: string, no: number, result: boolean): void {
+    this.sendClientResponse('response_motion', { group, no, result });
   }
 
   /**

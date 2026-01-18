@@ -392,7 +392,7 @@ export class LAppDelegate {
             const model = live2DManager.getModel(0);
             if (model) {
               const expression = model.getCurrentExpression();
-              this._websocketClient.sendExpressionStatus(expression || '');
+              this._websocketClient.sendExpressionStatus(expression || '', true);
             }
           }
         }
@@ -407,9 +407,9 @@ export class LAppDelegate {
             if (model) {
               const motionInfo = model.getCurrentMotion();
               if (motionInfo) {
-                this._websocketClient.sendMotionStatus(motionInfo.group, motionInfo.no);
+                this._websocketClient.sendMotionStatus(motionInfo.group, motionInfo.no, true);
               } else {
-                this._websocketClient.sendMotionStatus('', 0);
+                this._websocketClient.sendMotionStatus('', 0, false);
               }
             }
           }
@@ -538,14 +538,18 @@ export class LAppDelegate {
           if (live2DManager) {
             const model = live2DManager.getModel(0);
             if (model && data.expression) {
-              model.setExpression(data.expression);
-              // Update UI select
-              const ui = subdelegate.getUI();
-              if (ui) {
-                ui.updateExpressionSelect(data.expression);
+              const ret_expression = model.setExpression(data.expression);
+              if (ret_expression === data.expression) {
+                // Update UI select
+                const ui = subdelegate.getUI();
+                if (ui) {
+                  ui.updateExpressionSelect(ret_expression);
+                }
+                this._websocketClient.sendExpressionStatus(ret_expression, true);
+                CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_EXPRESSION_SET, data.expression));
+              } else {
+                this._websocketClient.sendExpressionStatus(ret_expression || '', false);
               }
-              this._websocketClient.sendExpressionStatus(data.expression);
-              CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_EXPRESSION_SET, data.expression));
             }
           }
         }
@@ -558,15 +562,24 @@ export class LAppDelegate {
           if (live2DManager) {
             const model = live2DManager.getModel(0);
             if (model && data.group !== undefined) {
-              const index = data.index !== undefined ? data.index : 0;
-              model.startMotion(data.group, index, LAppDefine.PriorityNormal);
-              // Update UI select
-              const ui = subdelegate.getUI();
-              if (ui) {
-                ui.updateMotionSelect(data.group, index);
+              const no = data.no !== undefined ? data.no : 0;
+              const result = model.startMotion(data.group, no, LAppDefine.PriorityForce);
+              if (result === -1) {
+                const motionInfo = model.getCurrentMotion();
+                if (null === motionInfo) {
+                  this._websocketClient.sendMotionStatus('', -1, false);
+                } else {
+                  this._websocketClient.sendMotionStatus(motionInfo.group, motionInfo.no, false);
+                }
+              } else {
+                // Update UI select
+                const ui = subdelegate.getUI();
+                if (ui) {
+                  ui.updateMotionSelect(data.group, no);
+                }
+                this._websocketClient.sendMotionStatus(data.group, no, true);
+                CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_MOTION_SET, data.group, no.toString()));
               }
-              this._websocketClient.sendMotionStatus(data.group, index);
-              CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_MOTION_SET, data.group, index.toString()));
             }
           }
         }
