@@ -239,6 +239,15 @@ export interface ClientResponseMessage extends WebSocketMessage {
   args: any;
 }
 
+/**
+ * Wavファイル送信メッセージ
+ */
+export interface SetLipSyncMessage extends WebSocketMessage {
+  type: 'set_lipsync';
+  wav_data: string; // base64エンコードされたWavデータ
+  client_id: string;
+}
+
 
 /**
  * メッセージハンドラの型
@@ -640,5 +649,13 @@ export class WebSocketClient {
    */
   public sendResponseNotify(): void {
     this.sendClientResponse('response_notify', {});
+  }
+
+  /**
+   * Wavファイルをリップシンク用に送信
+   * @param wavData base64エンコードされたWavデータ
+   */
+  public sendLipSyncWav(filename: string, result: boolean): void {
+    this.sendClientResponse('response_lipsync', { filename, result });
   }
 }

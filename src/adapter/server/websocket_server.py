@@ -7,6 +7,7 @@ import asyncio
 import json
 import logging
 import os
+import base64
 from datetime import datetime
 from typing import Set
 import moc3manager
@@ -579,6 +580,65 @@ async def client_command(command: str, args: dict,
                 "message": "クライアントにモーション情報を送信しました"
             }
 
+        elif command == "set_lipsync":  # リップシンク用Wavファイル送信
+            parts = args.strip().split(maxsplit=1) if len(args) > 0 else []
+            wav_data = parts[0] if len(parts) > 0 else ""
+
+            if not wav_data:
+                return {
+                    "type": "client_request",
+                    "command": "set_lipsync",
+                    "error": "Wavデータが必要です"
+                }
+
+            await send_to_client(client_id, {
+                "type": "set_lipsync",
+                "client_id": client_id,
+                "source": source_client_id,
+                "wav_data": wav_data,
+                "timestamp": datetime.now().isoformat()
+            })
+            return {
+                "type": "client_request",
+                "command": "set_lipsync",
+                "success": True,
+                "message": "クライアントにWavファイルを送信しました"
+            }
+        elif command == "set_lipsync_from_file":  # リップシンク用Wavファイル送信
+            parts = args.strip().split(maxsplit=1) if len(args) > 0 else []
+            file_name = parts[0] if len(parts) > 0 else ""
+
+            if not file_name:
+                return {
+                    "type": "client_request",
+                    "command": "set_lipsync_from_file",
+                    "error": "Wavファイル名が必要です"
+                }
+            wav_data = ""
+            with open(file_name, 'rb') as f:
+                data = f.read()
+                wav_data = base64.b64encode(data).decode('utf-8')
+            if not wav_data:
+                return {
+                    "type": "client_request",
+                    "command": "set_lipsync_from_file",
+                    "error": f"Wavファイル '{file_name}' の読み込みに失敗しました"
+                }
+
+            await send_to_client(client_id, {
+                "type": "set_lipsync",
+                "client_id": client_id,
+                "source": source_client_id,
+                "wav_data": wav_data,
+                "timestamp": datetime.now().isoformat()
+            })
+            return {
+                "type": "client_request",
+                "command": "set_lipsync",
+                "success": True,
+                "message": "クライアントにWavファイルを送信しました"
+            }
+
         elif command == "set_parameter":  # パラメータ設定（一括）
             # 一括設定モード: args = {"ParamAngleX": 30, "ParamAngleY": -15, ...}
             # または文字列形式: "ParamAngleX=30 ParamAngleY=-15"
@@ -913,6 +973,8 @@ def print_server_console():
     print("  client <client_id> set_motion [group_name] [no] [priority(0-3, default:2)]")
 
     print("  client <client_id> get_model")
+    print("  client <client_id> set_lipsync [base64_wav_data]")
+    print("  client <client_id> set_lipsync_from_file [filename]")
     print("  client <client_id> set_parameter ID01=VALUE01 ID02=VALUE02 ...")
     print("========================\n")
 

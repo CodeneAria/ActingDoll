@@ -586,6 +586,34 @@ export class LAppDelegate {
         }
       });
 
+      this._websocketClient.onMessage('set_lipsync', (data: any) => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const live2DManager = subdelegate.getLive2DManager();
+          if (live2DManager) {
+            const model = live2DManager.getModel(0);
+            if (model && data.wav_data) {
+              // base64デコードしてArrayBufferに変換
+              try {
+                const binaryString = atob(data.wav_data);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                  bytes[i] = binaryString.charCodeAt(i);
+                }
+                const arrayBuffer = bytes.buffer;
+
+                // Wavファイルハンドラーでロード
+                model.loadWavFileFromBuffer(arrayBuffer, binaryString.length);
+                this._websocketClient.sendLipSyncWav( data.filename || '', true);
+                CubismLogInfo(`リップシンク用Wavファイル受信: ${data.filename || 'unknown'}`);
+              } catch (error) {
+                CubismLogError(`Wavファイルのデコードエラー: ${error}`);
+              }
+            }
+          }
+        }
+      });
+
       this._websocketClient.onMessage('set_parameter', (data: any) => {
         const subdelegate = this.getSubdelegate(0);
         if (subdelegate) {

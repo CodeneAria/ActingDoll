@@ -990,6 +990,20 @@ export class LAppModel extends CubismUserModel {
     }
   }
 
+  /**
+   * ArrayBufferからWavファイルを読み込んでリップシンク開始
+   * @param arrayBuffer Wavファイルのバイナリデータ
+   * @param length データ長
+   */
+  public loadWavFileFromBuffer(arrayBuffer: ArrayBuffer, length: number): void {
+    if (!this._wavFileHandler) {
+      CubismLogError('WavFileHandler is not initialized');
+      return;
+    }
+    this._wavFileHandler.run(arrayBuffer, length);
+    //this._lipsync = true;
+  }
+
   public getModelName(): string {
     if (this._modelSetting.getModelFileName() != '') {
       const modelFileName = this._modelSetting.getModelFileName();

@@ -210,6 +210,14 @@ class Live2DController {
           <button id="btn-set-parameters" style="margin-top: 10px;">パラメータ設定</button>
         </div>
 
+        <div class="lipsync-section">
+          <h2>リップシンク</h2>
+          <div style="margin-top: 10px;">
+            <input type="file" id="input-wav-file" accept=".wav" style="width: 300px;" />
+            <button id="btn-send-wav">Wavファイル送信</button>
+          </div>
+        </div>
+
         <div class="custom-command-section">
           <h2>カスタムコマンド</h2>
           <input type="text" id="input-command" placeholder="コマンドを入力..." style="width: 500px;" />
@@ -361,6 +369,35 @@ class Live2DController {
         this.sendCommand(`client ${this.selectedClientId} set_parameter ${params.join(' ')}`);
       } else {
         this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_ENTER_PARAMETER_VALUES));
+      }
+    });
+
+    // Wavファイル送信
+    document.getElementById('btn-send-wav')?.addEventListener('click', async () => {
+      const fileInput = document.getElementById('input-wav-file') as HTMLInputElement;
+      if (!this.selectedClientId) {
+        this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_SELECT_CLIENT));
+        return;
+      }
+      if (fileInput && fileInput.files && fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (e.target && e.target.result) {
+            const arrayBuffer = e.target.result as ArrayBuffer;
+            const bytes = new Uint8Array(arrayBuffer);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i++) {
+              binary += String.fromCharCode(bytes[i]);
+            }
+            const base64 = btoa(binary);
+            this.sendCommand(`client ${this.selectedClientId} set_lipsync ${base64}`);
+            this.showMessage(`Wavファイル送信: ${file.name}`);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        this.showError('Wavファイルを選択してください');
       }
     });
 
