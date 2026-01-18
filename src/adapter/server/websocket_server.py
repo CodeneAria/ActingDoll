@@ -529,8 +529,10 @@ async def client_command(command: str, args: dict,
 
         elif command == "set_motion":  # Motions
             parts = args.strip().split(maxsplit=2) if len(args) > 0 else ""
-            group = parts[0] if len(parts) > 1 else ""
+            group = parts[0] if len(parts) > 0 else ""
             no = parts[1] if len(parts) > 1 else ""
+            priority = parts[2] if len(parts) > 2 else "2"  # デフォルトはPriorityNormal(2)
+
             if not group:
                 return {
                     "type": "client_request",
@@ -543,19 +545,37 @@ async def client_command(command: str, args: dict,
                     "command": "set_motion",
                     "error": "motion noが必要です"
                 }
+
+            # priorityを整数に変換
+            try:
+                priority_int = int(priority)
+                if priority_int < 0 or priority_int > 3:
+                    return {
+                        "type": "client_request",
+                        "command": "set_motion",
+                        "error": "priorityは0(None), 1(Idle), 2(Normal), 3(Force)のいずれかである必要があります"
+                    }
+            except ValueError:
+                return {
+                    "type": "client_request",
+                    "command": "set_motion",
+                    "error": "priorityは整数である必要があります"
+                }
+
             await send_to_client(client_id, {
                 "type": "set_motion",
                 "client_id": client_id,
                 "source": source_client_id,
                 "group": group,
                 "no": no,
+                "priority": priority_int,
                 "timestamp": datetime.now().isoformat()
             })
             return {
                 "type": "client_request",
                 "command": "set_motion",
                 "success": True,
-                "data": {"group": group, "no": no},
+                "data": {"group": group, "no": no, "priority": priority_int},
                 "message": "クライアントにモーション情報を送信しました"
             }
 
@@ -890,7 +910,7 @@ def print_server_console():
     print("  client <client_id> set_expression [expression_name]")
 
     print("  client <client_id> get_motion")
-    print("  client <client_id> set_motion [group_name] [no]")
+    print("  client <client_id> set_motion [group_name] [no] [priority(0-3, default:2)]")
 
     print("  client <client_id> get_model")
     print("  client <client_id> set_parameter ID01=VALUE01 ID02=VALUE02 ...")

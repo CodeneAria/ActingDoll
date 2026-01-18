@@ -194,6 +194,12 @@ class Live2DController {
             <select id="select-motion-no" style="width: 100px;">
               <option value="">番号...</option>
             </select>
+            <select id="select-motion-priority" style="width: 150px;">
+              <option value="0">None(0)</option>
+              <option value="1">Idle(1)</option>
+              <option value="2" selected>Normal(2)</option>
+              <option value="3">Force(3)</option>
+            </select>
             <button id="btn-set-motion">モーション設定</button>
           </div>
         </div>
@@ -327,8 +333,10 @@ class Live2DController {
     document.getElementById('btn-set-motion')?.addEventListener('click', () => {
       const groupSelect = document.getElementById('select-motion-group') as HTMLSelectElement;
       const noSelect = document.getElementById('select-motion-no') as HTMLSelectElement;
+      const prioritySelect = document.getElementById('select-motion-priority') as HTMLSelectElement;
       if (this.selectedClientId && groupSelect && groupSelect.value && noSelect && noSelect.value) {
-        this.sendCommand(`client ${this.selectedClientId} set_motion ${groupSelect.value} ${noSelect.value}`);
+        const priority = prioritySelect && prioritySelect.value ? prioritySelect.value : '2';
+        this.sendCommand(`client ${this.selectedClientId} set_motion ${groupSelect.value} ${noSelect.value} ${priority}`);
       } else {
         this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_SELECT_CLIENT_GROUP_NUMBER));
       }

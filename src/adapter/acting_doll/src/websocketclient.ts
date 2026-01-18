@@ -167,6 +167,7 @@ export interface SetMotionMessage extends WebSocketMessage {
   type: 'set_motion';
   group: string;
   no?: number;
+  priority?: number;
   client_id: string;
 }
 
@@ -608,8 +609,8 @@ export class WebSocketClient {
    * @param group モーショングループ
    * @param no モーションインデックス
    */
-  public sendMotionStatus(group: string, no: number, result: boolean): void {
-    this.sendClientResponse('response_motion', { group, no, result });
+  public sendMotionStatus(group: string, no: number, priority: number, result: boolean): void {
+    this.sendClientResponse('response_motion', { group, no, priority, result });
   }
 
   /**

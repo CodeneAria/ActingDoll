@@ -407,9 +407,9 @@ export class LAppDelegate {
             if (model) {
               const motionInfo = model.getCurrentMotion();
               if (motionInfo) {
-                this._websocketClient.sendMotionStatus(motionInfo.group, motionInfo.no, true);
+                this._websocketClient.sendMotionStatus(motionInfo.group, motionInfo.no, motionInfo.priority, true);
               } else {
-                this._websocketClient.sendMotionStatus('', 0, false);
+                this._websocketClient.sendMotionStatus('', 0, 0, false);
               }
             }
           }
@@ -563,13 +563,14 @@ export class LAppDelegate {
             const model = live2DManager.getModel(0);
             if (model && data.group !== undefined) {
               const no = data.no !== undefined ? data.no : 0;
-              const result = model.startMotion(data.group, no, LAppDefine.PriorityForce);
+              const priority = data.priority !== undefined ? data.priority : LAppDefine.PriorityNormal;
+              const result = model.startMotion(data.group, no, priority);
               if (result === -1) {
                 const motionInfo = model.getCurrentMotion();
                 if (null === motionInfo) {
-                  this._websocketClient.sendMotionStatus('', -1, false);
+                  this._websocketClient.sendMotionStatus('', -1, 0, false);
                 } else {
-                  this._websocketClient.sendMotionStatus(motionInfo.group, motionInfo.no, false);
+                  this._websocketClient.sendMotionStatus(motionInfo.group, motionInfo.no, motionInfo.priority, false);
                 }
               } else {
                 // Update UI select
@@ -577,7 +578,7 @@ export class LAppDelegate {
                 if (ui) {
                   ui.updateMotionSelect(data.group, no);
                 }
-                this._websocketClient.sendMotionStatus(data.group, no, true);
+                this._websocketClient.sendMotionStatus(data.group, no, priority, true);
                 CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_MOTION_SET, data.group, no.toString()));
               }
             }

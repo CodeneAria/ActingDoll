@@ -959,11 +959,12 @@ export class LAppModel extends CubismUserModel {
    * 現在再生中のモーション情報を取得する
    * @returns 現在のモーション情報（グループ名と番号）。再生中でない場合はnull
    */
-  public getCurrentMotion(): { group: string; no: number } | null {
+  public getCurrentMotion(): { group: string; no: number; priority: number } | null {
     if (this._currentMotionGroup !== null && this._currentMotionNo !== null) {
       return {
         group: this._currentMotionGroup,
-        no: this._currentMotionNo
+        no: this._currentMotionNo,
+        priority: this._motionManager.getCurrentPriority()
       };
     }
     return null;
@@ -1322,8 +1323,8 @@ export class LAppModel extends CubismUserModel {
   _currentMotionGroup: string | null; // 現在再生中のモーショングループ名
   _currentMotionNo: number | null; // 現在再生中のモーション番号
 
-  _hitArea: csmVector<csmRect>;
-  _userArea: csmVector<csmRect>;
+  _hitArea: csmVector<csmRect>; // 当たり判定用矩形リスト
+  _userArea: csmVector<csmRect>; // ユーザー定義矩形リスト
 
   _idParamAngleX: CubismIdHandle; // パラメータID: ParamAngleX
   _idParamAngleY: CubismIdHandle; // パラメータID: ParamAngleY
