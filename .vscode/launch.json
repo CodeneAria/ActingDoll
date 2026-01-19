@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/src/adapter/server/websocket_server.py",
             "console": "integratedTerminal",
-            "args": ["--port", "8766"]
+            "args": ["--port", "8767"]
         }
     ]
 }

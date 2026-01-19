@@ -93,137 +93,128 @@ class Live2DController {
     if (!this.controlPanel) return;
 
     const html = `
-      <div class="controller-container">
-        <h1>Live2D WebSocket Controller</h1>
+<div class="controller-container">
+  <h1>Live2D WebSocket Controller</h1>
+  <div class="status-section">
+    <h2>接続状態</h2>
+    <div id="connection-status">接続済み</div>
+  </div>
 
-        <div class="status-section">
-          <h2>接続状態</h2>
-          <div id="connection-status">接続済み</div>
-        </div>
+  <div class="message-section">
+    <div id="message-display"></div>
+  </div>
 
-        <div class="message-section">
-          <div id="message-display"></div>
-        </div>
+  <h2>基本コマンド</h2>
+  <div class="basic-commands-section">
+    <div style="margin-top: 10px;">
+      <input type="text" id="input-notify" placeholder="通知メッセージ" style="width: 300px;" />
+      <button id="btn-notify">通知送信 (notify)</button>
+    </div>
+    <div>
+      <button id="btn-model-list">モデル一覧取得 (model list)</button>
+    </div>
+  </div>
 
-        <h2>基本コマンド</h2>
-        <div class="basic-commands-section">
-          <div style="margin-top: 10px;">
-            <input type="text" id="input-notify" placeholder="通知メッセージ" style="width: 300px;" />
-            <button id="btn-notify">通知送信 (notify)</button>
-          </div>
-          <div>
-          <button id="btn-model-list">モデル一覧取得 (model list)</button>
-          </div>
-        </div>
-
-        <h2>クライアント制御</h2>
-        <div class="client-selection-section">
-          <h2>クライアント選択</h2>
-          <select id="select-client" style="width: 300px;">
-            <option value="">クライアントを選択...</option>
-          </select>
-          <button id="btn-list">クライアント一覧取得 (list)</button>
-        </div>
-
-        <div class="model-section">
-          <div style="margin-top: 10px;">
-            <input type="text" id="input-send-message" placeholder="メッセージ" style="width: 200px;" />
-            <button id="btn-send">メッセージ送信 (send)</button>
-          </div>
-          <h2>モデル操作</h2>
-          <button id="btn-client-get-model">モデル取得 (get_model)</button>
-          <select id="select-model" style="width: 300px; margin-left: 10px;">
-            <option value="">モデルを選択...</option>
-          </select>
-          <div style="margin-top: 10px;">
-            <button id="btn-model-expressions">表情一覧取得</button>
-            <button id="btn-model-motions">モーション一覧取得</button>
-            <button id="btn-model-parameters">パラメータ一覧取得</button>
-          </div>
-          <div id="model-info" style="margin-top: 10px;"></div>
-        </div>
-
-        <div class="client-commands-section">
-
-          <h3 style="margin-top: 15px;">アニメーション設定</h3>
-          <div style="margin-top: 8px;">
-            <button id="btn-get-eye-blink">目パチ/状態取得</button>
-            <button id="btn-set-eye-blink-enabled">目パチ/有効</button>
-            <button id="btn-set-eye-blink-disabled">目パチ/無効</button>
-          </div>
-          <div style="margin-top: 8px;">
-            <button id="btn-get-breath">呼吸/状態取得</button>
-            <button id="btn-set-breath-enabled">呼吸/有効</button>
-            <button id="btn-set-breath-disabled">呼吸/無効</button>
-          </div>
-          <div style="margin-top: 8px;">
-            <button id="btn-get-idle-motion">アイドリングモーション/状態取得</button>
-            <button id="btn-set-idle-motion-enabled">アイドリングモーション/有効</button>
-            <button id="btn-set-idle-motion-disabled">アイドリングモーション/無効</button>
-          </div>
-          <div style="margin-top: 8px;">
-            <button id="btn-get-drag-follow">ドラッグ追従/状態取得</button>
-            <button id="btn-set-drag-follow-enabled">ドラッグ追従/有効</button>
-            <button id="btn-set-drag-follow-disabled">ドラッグ追従/無効</button>
-          </div>
-          <div style="margin-top: 8px;">
-            <button id="btn-get-physics">物理演算/状態取得</button>
-            <button id="btn-set-physics-enabled">物理演算/有効</button>
-            <button id="btn-set-physics-disabled">物理演算/無効</button>
-          </div>
-        </div>
-
-        <div class="expression-section">
-          <h2>表情操作</h2>
-          <button id="btn-get-expression">現在の表情取得</button>
-          <div style="margin-top: 10px;">
-            <select id="select-expression" style="width: 300px;">
-              <option value="">表情を選択...</option>
-            </select>
-            <button id="btn-set-expression">表情設定</button>
-          </div>
-        </div>
-
-        <div class="motion-section">
-          <h2>モーション操作</h2>
-          <button id="btn-get-motion">現在のモーション取得</button>
-          <div style="margin-top: 10px;">
-            <select id="select-motion-group" style="width: 200px;">
-              <option value="">グループを選択...</option>
-            </select>
-            <select id="select-motion-no" style="width: 100px;">
-              <option value="">番号...</option>
-            </select>
-            <select id="select-motion-priority" style="width: 150px;">
-              <option value="0">None(0)</option>
-              <option value="1">Idle(1)</option>
-              <option value="2" selected>Normal(2)</option>
-              <option value="3">Force(3)</option>
-            </select>
-            <button id="btn-set-motion">モーション設定</button>
-          </div>
-        </div>
-
-        <div class="parameter-section">
-          <h2>パラメータ操作</h2>
-          <div id="parameter-list" style="margin-top: 10px; max-height: 300px; overflow-y: auto;"></div>
-          <button id="btn-set-parameters" style="margin-top: 10px;">パラメータ設定</button>
-        </div>
-
-        <div class="lipsync-section">
-          <h2>リップシンク</h2>
-          <div style="margin-top: 10px;">
-            <input type="file" id="input-wav-file" accept=".wav" style="width: 300px;" />
-            <button id="btn-send-wav">Wavファイル送信</button>
-          </div>
-        </div>
-
-        <div class="custom-command-section">
-          <h2>カスタムコマンド</h2>
-          <input type="text" id="input-command" placeholder="コマンドを入力..." style="width: 500px;" />
-          <button id="btn-send-command">送信</button>
-        </div>
+  <h2>クライアント制御</h2>
+  <div class="client-selection-section">
+    <h3>基本</h3>
+    <select id="select-client" style="width: 300px;">
+      <option value="">クライアントを選択...</option>
+    </select>
+    <button id="btn-list">クライアント一覧取得 (list)</button>
+    <div style="margin-top: 10px;">
+      <input type="text" id="input-send-message" placeholder="メッセージ" style="width: 200px;" />
+      <button id="btn-send">メッセージ送信 (send)</button>
+    </div>
+    <div class="model-section">
+      <h3>モデル操作</h3>
+      <button id="btn-client-get-model">モデル取得 (get_model)</button>
+      <select id="select-model" style="width: 300px; margin-left: 10px;">
+        <option value="">モデルを選択...</option>
+      </select>
+      <div style="margin-top: 10px;">
+        <button id="btn-model-motions">モーション一覧取得 (get_motions)</button>
+        <button id="btn-model-parameters">パラメータ一覧取得 (get_parameters)</button>
       </div>
+      <div id="model-info" style="margin-top: 10px;"></div>
+    </div>
+    <div class="client-commands-section">
+      <h3>アニメーション設定</h3>
+      <div style="margin-top: 8px;">
+        <button id="btn-get-eye-blink">目パチ/状態取得 (get_eye_blink)</button>
+        <button id="btn-set-eye-blink-enabled">目パチ/有効 (set_eye_blink enabled)</button>
+        <button id="btn-set-eye-blink-disabled">目パチ/無効 (set_eye_blink disabled)</button>
+      </div>
+      <div style="margin-top: 8px;">
+        <button id="btn-get-breath">呼吸/状態取得 (get_breath)</button>
+        <button id="btn-set-breath-enabled">呼吸/有効 (set_breath enabled)</button>
+        <button id="btn-set-breath-disabled">呼吸/無効 (set_breath disabled)</button>
+      </div>
+      <div style="margin-top: 8px;">
+        <button id="btn-get-idle-motion">アイドリングモーション/状態取得 (get_idle_motion)</button>
+        <button id="btn-set-idle-motion-enabled">アイドリングモーション/有効 (set_idle_motion enabled)</button>
+        <button id="btn-set-idle-motion-disabled">アイドリングモーション/無効 (set_idle_motion disabled)</button>
+      </div>
+      <div style="margin-top: 8px;">
+        <button id="btn-get-drag-follow">ドラッグ追従/状態取得 (get_drag_follow)</button>
+        <button id="btn-set-drag-follow-enabled">ドラッグ追従/有効 (set_drag_follow enabled)</button>
+        <button id="btn-set-drag-follow-disabled">ドラッグ追従/無効 (set_drag_follow disabled)</button>
+      </div>
+      <div style="margin-top: 8px;">
+        <button id="btn-get-physics">物理演算/状態取得 (get_physics)</button>
+        <button id="btn-set-physics-enabled">物理演算/有効 (set_physics enabled)</button>
+        <button id="btn-set-physics-disabled">物理演算/無効 (set_physics disabled)</button>
+      </div>
+    </div>
+    <div class="expression-section">
+      <h2>表情操作</h2>
+      <button id="btn-model-expressions">表情一覧取得 (get_expressions)</button>
+      <button id="btn-get-expression">現在の表情取得 (get_expression)</button>
+      <div style="margin-top: 10px;">
+        <select id="select-expression" style="width: 300px;">
+          <option value="">表情を選択...</option>
+        </select>
+        <button id="btn-set-expression">表情設定</button>
+      </div>
+    </div>
+    <div class="motion-section">
+      <h3>モーション操作</h3>
+      <button id="btn-get-motion">現在のモーション取得</button>
+      <div style="margin-top: 10px;">
+        <select id="select-motion-group" style="width: 200px;">
+          <option value="">グループを選択...</option>
+        </select>
+        <select id="select-motion-no" style="width: 100px;">
+          <option value="">番号...</option>
+        </select>
+        <select id="select-motion-priority" style="width: 150px;">
+          <option value="0">None(0)</option>
+          <option value="1">Idle(1)</option>
+          <option value="2" selected>Normal(2)</option>
+          <option value="3">Force(3)</option>
+        </select>
+        <button id="btn-set-motion">モーション設定</button>
+      </div>
+    </div>
+    <div class="parameter-section">
+      <h3>パラメータ操作</h3>
+      <div id="parameter-list" style="margin-top: 10px; max-height: 300px; overflow-y: auto;"></div>
+      <button id="btn-set-parameters" style="margin-top: 10px;">パラメータ設定</button>
+    </div>
+    <div class="lipsync-section">
+      <h3>リップシンク</h3>
+      <div style="margin-top: 10px;">
+        <input type="file" id="input-wav-file" accept=".wav" style="width: 300px;" />
+        <button id="btn-send-wav">Wavファイル送信</button>
+      </div>
+    </div>
+    <div class="custom-command-section">
+      <h3>カスタムコマンド</h3>
+      <input type="text" id="input-command" placeholder="コマンドを入力..." style="width: 500px;" />
+      <button id="btn-send-command">送信</button>
+    </div>
+  </div>
+</div>
     `;
 
     this.controlPanel.innerHTML = html;

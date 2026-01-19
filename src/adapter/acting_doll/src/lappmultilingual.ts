@@ -126,8 +126,8 @@ const messages: MessageMap = {
         en: 'The context for Canvas at index {0} was lost, possibly because the acquisition limit for WebGLRenderingContext was reached.'
     },
     WS_WELCOME_RECEIVED: {
-        ja: '[WebSocket] ウェルカムメッセージを受信しました',
-        en: '[WebSocket] Welcome message received'
+        ja: '[WebSocket] ウェルカムメッセージを受信しました: {0}',
+        en: '[WebSocket] Welcome message received: {0}'
     },
     WS_BROADCAST_RECEIVED: {
         ja: '[WebSocket] ブロードキャストメッセージを受信: {0}',

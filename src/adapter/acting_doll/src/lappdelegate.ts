@@ -291,7 +291,7 @@ export class LAppDelegate {
 
       // メッセージハンドラを登録
       this._websocketClient.onMessage('welcome', (data) => {
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_WELCOME_RECEIVED));
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_WELCOME_RECEIVED, data.client_id || 'unknown'));
       });
 
       this._websocketClient.onMessage('broadcast_message', (data) => {
@@ -604,7 +604,7 @@ export class LAppDelegate {
 
                 // Wavファイルハンドラーでロード
                 model.loadWavFileFromBuffer(arrayBuffer, binaryString.length);
-                this._websocketClient.sendLipSyncWav( data.filename || '', true);
+                this._websocketClient.sendLipSyncWav(data.filename || '', true);
                 CubismLogInfo(`リップシンク用Wavファイル受信: ${data.filename || 'unknown'}`);
               } catch (error) {
                 CubismLogError(`Wavファイルのデコードエラー: ${error}`);
