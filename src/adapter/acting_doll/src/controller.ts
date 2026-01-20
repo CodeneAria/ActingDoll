@@ -65,6 +65,10 @@ class Live2DController {
    * メッセージハンドラを設定
    */
   private setupMessageHandlers(): void {
+    // メッセージハンドラを登録
+    this.wsClient.onMessage('server_heartbeat', (data) => {
+      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.SERVER_HEARTBEAT, data.timestamp || 'unknown'));
+    });
     // コマンドレスポンスハンドラ
     this.wsClient.onMessage('command_response', (data) => {
       const response = data as CommandResponse;

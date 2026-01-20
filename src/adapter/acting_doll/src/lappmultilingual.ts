@@ -472,7 +472,21 @@ const messages: MessageMap = {
         en: 'view notfound'
     },
 
+    // LIPSYNC関連
+    LIPSYNC_RECEIVED: {
+        ja: 'リップシンク用Wavファイル受信: {0}',
+        en: 'Lipsync Wav file received: {0}'
+    },
+    LIPSYNC_DECODE_ERROR: {
+        ja: 'Wavファイルのデコードエラー: {0}',
+        en: 'Wav file decode error: {0}'
+    },
+
     // 共通
+    SERVER_HEARTBEAT: {
+        ja: 'サーバーハートビート受信: {0}',
+        en: 'Server heartbeat received: {0}'
+    },
     ENABLED: {
         ja: '有効',
         en: 'enabled'
@@ -673,7 +687,12 @@ export const MessageKey = {
     SUBDELEGATE_FRAGMENT_SHADER_FAILED: 'SUBDELEGATE_FRAGMENT_SHADER_FAILED',
     SUBDELEGATE_VIEW_NOT_FOUND: 'SUBDELEGATE_VIEW_NOT_FOUND',
 
+    // LIPSYNC関連
+    LIPSYNC_RECEIVED: 'LIPSYNC_RECEIVED',
+    LIPSYNC_DECODE_ERROR: 'LIPSYNC_DECODE_ERROR',
+
     // 共通
+    SERVER_HEARTBEAT: 'SERVER_HEARTBEAT',
     ENABLED: 'ENABLED',
     DISABLED: 'DISABLED',
     RANDOM: 'RANDOM'

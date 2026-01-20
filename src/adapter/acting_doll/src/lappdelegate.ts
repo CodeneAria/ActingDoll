@@ -605,9 +605,9 @@ export class LAppDelegate {
                 // Wavファイルハンドラーでロード
                 model.loadWavFileFromBuffer(arrayBuffer, binaryString.length);
                 this._websocketClient.sendLipSyncWav(data.filename || '', true, data.from || '');
-                CubismLogInfo(`リップシンク用Wavファイル受信: ${data.filename || 'unknown'}`);
+                CubismLogInfo(LAppMultilingual.getMessage(MessageKey.LIPSYNC_RECEIVED, data.filename || 'unknown'));
               } catch (error) {
-                CubismLogError(`Wavファイルのデコードエラー: ${error}`);
+                CubismLogError(LAppMultilingual.getMessage(MessageKey.LIPSYNC_DECODE_ERROR, error.toString()));
               }
             }
           }
