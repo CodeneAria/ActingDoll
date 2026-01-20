@@ -51,6 +51,13 @@ export class LAppPal {
   public static printMessage(message: string): void {
     console.log(message);
   }
+  /**
+   * メッセージを出力する
+   * @param message 文字列
+   */
+  public static printErrorMessage(message: string): void {
+    console.error(message);
+  }
 
   static lastUpdate = Date.now();
 

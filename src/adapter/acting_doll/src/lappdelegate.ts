@@ -305,12 +305,12 @@ export class LAppDelegate {
       // ダイレクトメッセージ受信ハンドラー
       this._websocketClient.onMessage('send', (data: any) => {
         LAppPal.printMessage(`[send] ${data.message}`);
-        this._websocketClient.sendResponseSend();
+        this._websocketClient.sendResponseSend(data.from || '');
       });
       // 通知メッセージ受信ハンドラー
       this._websocketClient.onMessage('notify', (data: any) => {
         LAppPal.printMessage(`[notify] ${data.message}`);
-        this._websocketClient.sendResponseNotify();
+        this._websocketClient.sendResponseNotify(data.from || '');
       });
 
       // 各リクエストに対するハンドラーを登録して状態を返す
@@ -322,7 +322,7 @@ export class LAppDelegate {
             const model = live2DManager.getModel(0);
             if (model) {
               const enabled = model.getEyeBlinkEnabled();
-              this._websocketClient.sendEyeBlinkStatus(enabled);
+              this._websocketClient.sendEyeBlinkStatus(enabled, data.from || '');
             }
           }
         }
@@ -336,7 +336,7 @@ export class LAppDelegate {
             const model = live2DManager.getModel(0);
             if (model) {
               const enabled = model.getBreathEnabled();
-              this._websocketClient.sendBreathStatus(enabled);
+              this._websocketClient.sendBreathStatus(enabled, data.from || '');
             }
           }
         }
@@ -350,7 +350,7 @@ export class LAppDelegate {
             const model = live2DManager.getModel(0);
             if (model) {
               const enabled = model.getIdleMotionEnabled();
-              this._websocketClient.sendIdleMotionStatus(enabled);
+              this._websocketClient.sendIdleMotionStatus(enabled, data.from || '');
             }
           }
         }
@@ -364,7 +364,7 @@ export class LAppDelegate {
             const model = live2DManager.getModel(0);
             if (model) {
               const enabled = model.getDragFollowEnabled();
-              this._websocketClient.sendDragFollowStatus(enabled);
+              this._websocketClient.sendDragFollowStatus(enabled, data.from || '');
             }
           }
         }
@@ -378,7 +378,7 @@ export class LAppDelegate {
             const model = live2DManager.getModel(0);
             if (model) {
               const enabled = model.getPhysicsEnabled();
-              this._websocketClient.sendPhysicsStatus(enabled);
+              this._websocketClient.sendPhysicsStatus(enabled, data.from || '');
             }
           }
         }
@@ -392,7 +392,7 @@ export class LAppDelegate {
             const model = live2DManager.getModel(0);
             if (model) {
               const expression = model.getCurrentExpression();
-              this._websocketClient.sendExpressionStatus(expression || '', true);
+              this._websocketClient.sendExpressionStatus(expression || '', true, data.from || '');
             }
           }
         }
@@ -407,9 +407,9 @@ export class LAppDelegate {
             if (model) {
               const motionInfo = model.getCurrentMotion();
               if (motionInfo) {
-                this._websocketClient.sendMotionStatus(motionInfo.group, motionInfo.no, motionInfo.priority, true);
+                this._websocketClient.sendMotionStatus(motionInfo.group, motionInfo.no, motionInfo.priority, true, data.from || '');
               } else {
-                this._websocketClient.sendMotionStatus('', 0, 0, false);
+                this._websocketClient.sendMotionStatus('', 0, 0, false, data.from || '');
               }
             }
           }
@@ -424,7 +424,7 @@ export class LAppDelegate {
             const model = live2DManager.getModel(0);
             if (model) {
               const modelName = model.getModelName();
-              this._websocketClient.sendModelInfo(modelName);
+              this._websocketClient.sendModelInfo(modelName, data.from || '');
             }
           }
         }
@@ -444,7 +444,7 @@ export class LAppDelegate {
               if (ui) {
                 ui.updateEyeBlinkToggle(data.enabled);
               }
-              this._websocketClient.sendEyeBlinkStatus(data.enabled);
+              this._websocketClient.sendEyeBlinkStatus(data.enabled, data.from || '');
               CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_EYE_BLINK_SET, data.enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
             }
           }
@@ -464,7 +464,7 @@ export class LAppDelegate {
               if (ui) {
                 ui.updateBreathToggle(data.enabled);
               }
-              this._websocketClient.sendBreathStatus(data.enabled);
+              this._websocketClient.sendBreathStatus(data.enabled, data.from || '');
               CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_BREATH_SET, data.enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
             }
           }
@@ -484,7 +484,7 @@ export class LAppDelegate {
               if (ui) {
                 ui.updateIdleMotionToggle(data.enabled);
               }
-              this._websocketClient.sendIdleMotionStatus(data.enabled);
+              this._websocketClient.sendIdleMotionStatus(data.enabled, data.from || '');
               CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_IDLE_MOTION_SET, data.enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
             }
           }
@@ -504,7 +504,7 @@ export class LAppDelegate {
               if (ui) {
                 ui.updateDragFollowToggle(data.enabled);
               }
-              this._websocketClient.sendDragFollowStatus(data.enabled);
+              this._websocketClient.sendDragFollowStatus(data.enabled, data.from || '');
               CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_DRAG_FOLLOW_SET, data.enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
             }
           }
@@ -524,7 +524,7 @@ export class LAppDelegate {
               if (ui) {
                 ui.updatePhysicsToggle(data.enabled);
               }
-              this._websocketClient.sendPhysicsStatus(data.enabled);
+              this._websocketClient.sendPhysicsStatus(data.enabled, data.from || '');
               CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_PHYSICS_SET, data.enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
             }
           }
@@ -545,10 +545,10 @@ export class LAppDelegate {
                 if (ui) {
                   ui.updateExpressionSelect(ret_expression);
                 }
-                this._websocketClient.sendExpressionStatus(ret_expression, true);
+                this._websocketClient.sendExpressionStatus(ret_expression, true, data.from || '');
                 CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_EXPRESSION_SET, data.expression));
               } else {
-                this._websocketClient.sendExpressionStatus(ret_expression || '', false);
+                this._websocketClient.sendExpressionStatus(ret_expression || '', false, data.from || '');
               }
             }
           }
@@ -568,9 +568,9 @@ export class LAppDelegate {
               if (result === -1) {
                 const motionInfo = model.getCurrentMotion();
                 if (null === motionInfo) {
-                  this._websocketClient.sendMotionStatus('', -1, 0, false);
+                  this._websocketClient.sendMotionStatus('', -1, 0, false, data.from || '');
                 } else {
-                  this._websocketClient.sendMotionStatus(motionInfo.group, motionInfo.no, motionInfo.priority, false);
+                  this._websocketClient.sendMotionStatus(motionInfo.group, motionInfo.no, motionInfo.priority, false, data.from || '');
                 }
               } else {
                 // Update UI select
@@ -578,7 +578,7 @@ export class LAppDelegate {
                 if (ui) {
                   ui.updateMotionSelect(data.group, no);
                 }
-                this._websocketClient.sendMotionStatus(data.group, no, priority, true);
+                this._websocketClient.sendMotionStatus(data.group, no, priority, true, data.from || '');
                 CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_MOTION_SET, data.group, no.toString()));
               }
             }
@@ -604,7 +604,7 @@ export class LAppDelegate {
 
                 // Wavファイルハンドラーでロード
                 model.loadWavFileFromBuffer(arrayBuffer, binaryString.length);
-                this._websocketClient.sendLipSyncWav(data.filename || '', true);
+                this._websocketClient.sendLipSyncWav(data.filename || '', true, data.from || '');
                 CubismLogInfo(`リップシンク用Wavファイル受信: ${data.filename || 'unknown'}`);
               } catch (error) {
                 CubismLogError(`Wavファイルのデコードエラー: ${error}`);
@@ -641,7 +641,7 @@ export class LAppDelegate {
                   notFoundCount++;
                 }
               }
-              this._websocketClient.sendParameterStatus(setCount, notFoundCount);
+              this._websocketClient.sendParameterStatus(setCount, notFoundCount, data.from || '');
               CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_PARAMS_SET, setCount.toString(), notFoundCount.toString()));
             }
           }

@@ -128,9 +128,16 @@ export class LAppLive2DManager {
     const modelPath: string = LAppDefine.ResourcesPath + model + '/';
     let modelJsonName: string = LAppDefine.ModelDir[index];
     modelJsonName += '.model3.json';
+    let model_version: number = 5;
+    for (let i = 0; i < LAppDefine.ModelDir_v3.length; i++) {
+      if (model === LAppDefine.ModelDir_v3[i]) {
+        model_version = 3;
+        break;
+      }
+    }
 
     this.releaseAllModel();
-    const instance = new LAppModel();
+    const instance = new LAppModel(model_version);
     instance.setSubdelegate(this._subdelegate);
     instance.loadAssets(modelPath, modelJsonName);
     this._models.pushBack(instance);

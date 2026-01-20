@@ -56,6 +56,8 @@ export const ModelDir: string[] = [
   'Mao',
   'Wanko'
 ];
+export const ModelDir_v3: string[] = [
+];
 export const ModelDirSize: number = ModelDir.length;
 
 // 外部定義ファイル（json）と合わせる

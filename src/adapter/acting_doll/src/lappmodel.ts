@@ -5,7 +5,7 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-//import { CubismDefaultParameterId } from './cubismdefaultparameterid_v3';
+import { CubismDefaultParameterId_v3 } from './cubismdefaultparameterid_v3';
 import { CubismDefaultParameterId } from '@framework/cubismdefaultparameterid';
 import { CubismModelSettingJson } from '@framework/cubismmodelsettingjson';
 import {
@@ -284,7 +284,7 @@ export class LAppModel extends CubismUserModel {
       breathParameters.pushBack(
         new BreathParameterData(
           CubismFramework.getIdManager().getId(
-            CubismDefaultParameterId.ParamBreath
+            this._cubismParameterId.ParamBreath !== undefined ? this._cubismParameterId.ParamBreath : CubismDefaultParameterId.ParamBreath
           ),
           0.5,
           0.5,
@@ -1260,7 +1260,7 @@ export class LAppModel extends CubismUserModel {
   /**
    * コンストラクタ
    */
-  public constructor() {
+  public constructor(model_version: number) {
     super();
 
     this._modelSetting = null;
@@ -1279,23 +1279,28 @@ export class LAppModel extends CubismUserModel {
     this._hitArea = new csmVector<csmRect>();
     this._userArea = new csmVector<csmRect>();
 
+    if (model_version == 3) {
+      this._cubismParameterId = CubismDefaultParameterId_v3;
+    } else {
+      this._cubismParameterId = CubismDefaultParameterId;
+    }
     this._idParamAngleX = CubismFramework.getIdManager().getId(
-      CubismDefaultParameterId.ParamAngleX
+      this._cubismParameterId.ParamAngleX !== undefined ? this._cubismParameterId.ParamAngleX : CubismDefaultParameterId.ParamAngleX
     );
     this._idParamAngleY = CubismFramework.getIdManager().getId(
-      CubismDefaultParameterId.ParamAngleY
+      this._cubismParameterId.ParamAngleY !== undefined ? this._cubismParameterId.ParamAngleY : CubismDefaultParameterId.ParamAngleY
     );
     this._idParamAngleZ = CubismFramework.getIdManager().getId(
-      CubismDefaultParameterId.ParamAngleZ
+      this._cubismParameterId.ParamAngleZ !== undefined ? this._cubismParameterId.ParamAngleZ : CubismDefaultParameterId.ParamAngleZ
     );
     this._idParamEyeBallX = CubismFramework.getIdManager().getId(
-      CubismDefaultParameterId.ParamEyeBallX
+      this._cubismParameterId.ParamEyeBallX !== undefined ? this._cubismParameterId.ParamEyeBallX : CubismDefaultParameterId.ParamEyeBallX
     );
     this._idParamEyeBallY = CubismFramework.getIdManager().getId(
-      CubismDefaultParameterId.ParamEyeBallY
+      this._cubismParameterId.ParamEyeBallY !== undefined ? this._cubismParameterId.ParamEyeBallY : CubismDefaultParameterId.ParamEyeBallY
     );
     this._idParamBodyAngleX = CubismFramework.getIdManager().getId(
-      CubismDefaultParameterId.ParamBodyAngleX
+      this._cubismParameterId.ParamBodyAngleX !== undefined ? this._cubismParameterId.ParamBodyAngleX : CubismDefaultParameterId.ParamBodyAngleX
     );
 
     if (LAppDefine.MOCConsistencyValidationEnable) {
@@ -1354,4 +1359,5 @@ export class LAppModel extends CubismUserModel {
   _allMotionCount: number; // モーション総数
   _wavFileHandler: LAppWavFileHandler; //wavファイルハンドラ
   _consistency: boolean; // MOC3整合性チェック管理用
+  _cubismParameterId: any; // デフォルトパラメータID
 }

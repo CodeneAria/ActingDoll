@@ -178,15 +178,16 @@ async def handle_client(websocket: ServerConnection):
                     # モデルコマンド処理
                     command = data.get("command")
                     args = data.get("args", "")
-                    response = await model_command(command, args)
+                    response = await model_command(command, args, client_id)
                     await websocket.send(json.dumps(response, ensure_ascii=False))
 
                 elif msg_type == "client":
                     # クライアント状態管理コマンド処理
                     command = data.get("command")
                     args = data.get("args", {})
-                    response = await client_command(command, args, client_id)
-                    await websocket.send(json.dumps(response, ensure_ascii=False))
+                    source_client_id = data.get("from", "")
+                    response = await client_command(command, args, client_id, source_client_id)
+                    # await websocket.send(json.dumps(response, ensure_ascii=False))
 
                 else:
                     # その他のメッセージは全クライアントに転送
@@ -218,12 +219,13 @@ async def handle_client(websocket: ServerConnection):
         await broadcast_message({
             "type": "client_disconnected",
             "client_id": client_id,
+            "from": client_id,
             "timestamp": datetime.now().isoformat(),
             "total_clients": len(connected_clients)
         })
 
 
-async def model_command(command: str, args: str) -> dict:
+async def model_command(command: str, args: str, client_id: str) -> dict:
     """
     モデル関連コマンドを処理
     Args:
@@ -239,6 +241,7 @@ async def model_command(command: str, args: str) -> dict:
         return {
             "type": "command_response",
             "command": "list",
+            "from": client_id,
             "data": models
         }
 
@@ -248,6 +251,7 @@ async def model_command(command: str, args: str) -> dict:
             return {
                 "type": "command_response",
                 "command": "get_expressions",
+                "from": client_id,
                 "error": "モデル名が必要です"
             }
         model_info = model_manager.get_model_info(args)
@@ -259,6 +263,7 @@ async def model_command(command: str, args: str) -> dict:
             return {
                 "type": "command_response",
                 "command": "get_expressions",
+                "from": client_id,
                 "data": {
                     "model_name": args,
                     "expressions": expressions
@@ -267,6 +272,7 @@ async def model_command(command: str, args: str) -> dict:
         return {
             "type": "command_response",
             "command": "get_expressions",
+            "from": client_id,
             "error": f"モデル '{args}' が見つかりません"
         }
 
@@ -276,6 +282,7 @@ async def model_command(command: str, args: str) -> dict:
             return {
                 "type": "command_response",
                 "command": "get_motions",
+                "from": client_id,
                 "error": "モデル名が必要です"
             }
         model_info = model_manager.get_model_info(args)
@@ -289,6 +296,7 @@ async def model_command(command: str, args: str) -> dict:
             return {
                 "type": "command_response",
                 "command": "get_motions",
+                "from": client_id,
                 "data": {
                     "model_name": args,
                     "motions": motions
@@ -297,6 +305,7 @@ async def model_command(command: str, args: str) -> dict:
         return {
             "type": "command_response",
             "command": "get_motions",
+            "from": client_id,
             "error": f"モデル '{args}' が見つかりません"
         }
 
@@ -306,6 +315,7 @@ async def model_command(command: str, args: str) -> dict:
             return {
                 "type": "command_response",
                 "command": "get_parameters",
+                "from": client_id,
                 "error": "モデル名が必要です"
             }
         parameters = model_manager.get_parameters_exclude_physics(args)
@@ -323,6 +333,7 @@ async def model_command(command: str, args: str) -> dict:
             return {
                 "type": "command_response",
                 "command": "get_parameters",
+                "from": client_id,
                 "data": {
                     "model_name": args,
                     "parameters": param_summary
@@ -331,6 +342,7 @@ async def model_command(command: str, args: str) -> dict:
         return {
             "type": "command_response",
             "command": "get_parameters",
+            "from": client_id,
             "error": f"モデル '{args}' のパラメータ情報が見つかりません"
         }
 
@@ -338,6 +350,7 @@ async def model_command(command: str, args: str) -> dict:
         return {
             "type": "command_response",
             "command": command,
+            "from": client_id,
             "error": f"不明なコマンド: {command}"
         }
 
@@ -359,17 +372,26 @@ async def client_command(command: str, args: dict,
         return {
             "type": "client",
             "command": command,
-            "source": source_client_id,
+            "from": source_client_id,
             "error": f"クライアント '{client_id}' が見つかりません"
         }
 
     if command.startswith("response_"):
+        if ("" != source_client_id) and (client_id != source_client_id):
+            if (source_client_id in client_id_map):
+                await send_to_client(source_client_id, {
+                    "type": "command_response",
+                    "command": command,
+                    "client_id": client_id,
+                    "data": args,
+                    "timestamp": datetime.now().isoformat()
+                })
         return {
             "type": "client_response",
             "command": command,
             "success": True,
             "client_id": client_id,
-            "source": source_client_id,
+            "from": source_client_id,
             "data": args,
             "message": "クライアントからレスポンスを受信しました"
         }
@@ -379,6 +401,7 @@ async def client_command(command: str, args: dict,
                 return {
                     "type": "client",
                     "command": command,
+                    "from": source_client_id,
                     "error": "パラメータを指定してください: enabled or disabled"
                 }
             if isinstance(args, dict):
@@ -388,7 +411,7 @@ async def client_command(command: str, args: dict,
             await send_to_client(client_id, {
                 "type": "set_eye_blink",
                 "client_id": client_id,
-                "source": source_client_id,
+                "from": source_client_id,
                 "enabled": enabled,
                 "timestamp": datetime.now().isoformat()
             })
@@ -396,6 +419,7 @@ async def client_command(command: str, args: dict,
                 "type": "client_request",
                 "command": "set_eye_blink",
                 "success": True,
+                "from": source_client_id,
                 "data": {"enabled": enabled},
                 "message": "クライアントに自動目パチ設定を送信しました"
             }
@@ -405,6 +429,7 @@ async def client_command(command: str, args: dict,
                 return {
                     "type": "client",
                     "command": command,
+                    "from": source_client_id,
                     "error": "パラメータを指定してください: enabled or disabled"
                 }
             if isinstance(args, dict):
@@ -414,7 +439,7 @@ async def client_command(command: str, args: dict,
             await send_to_client(client_id, {
                 "type": "set_breath",
                 "client_id": client_id,
-                "source": source_client_id,
+                "from": source_client_id,
                 "enabled": enabled,
                 "timestamp": datetime.now().isoformat()
             })
@@ -422,6 +447,7 @@ async def client_command(command: str, args: dict,
                 "type": "client_request",
                 "command": "set_breath",
                 "success": True,
+                "from": source_client_id,
                 "data": {"enabled": enabled},
                 "message": "クライアントに呼吸設定を送信しました"
             }
@@ -431,6 +457,7 @@ async def client_command(command: str, args: dict,
                 return {
                     "type": "client",
                     "command": command,
+                    "from": source_client_id,
                     "error": "パラメータを指定してください: enabled or disabled"
                 }
             if isinstance(args, dict):
@@ -440,7 +467,7 @@ async def client_command(command: str, args: dict,
             await send_to_client(client_id, {
                 "type": "set_idle_motion",
                 "client_id": client_id,
-                "source": source_client_id,
+                "from": source_client_id,
                 "enabled": enabled,
                 "timestamp": datetime.now().isoformat()
             })
@@ -448,6 +475,7 @@ async def client_command(command: str, args: dict,
                 "type": "client_request",
                 "command": "set_idle_motion",
                 "success": True,
+                "from": source_client_id,
                 "data": {"enabled": enabled},
                 "message": "クライアントにアイドリングモーション設定を送信しました"
             }
@@ -457,6 +485,7 @@ async def client_command(command: str, args: dict,
                 return {
                     "type": "client",
                     "command": command,
+                    "from": source_client_id,
                     "error": "パラメータを指定してください: enabled or disabled"
                 }
             if isinstance(args, dict):
@@ -466,7 +495,7 @@ async def client_command(command: str, args: dict,
             await send_to_client(client_id, {
                 "type": "set_drag_follow",
                 "client_id": client_id,
-                "source": source_client_id,
+                "from": source_client_id,
                 "enabled": enabled,
                 "timestamp": datetime.now().isoformat()
             })
@@ -474,6 +503,7 @@ async def client_command(command: str, args: dict,
                 "type": "client_request",
                 "command": "set_drag_follow",
                 "success": True,
+                "from": source_client_id,
                 "data": {"enabled": enabled},
                 "message": "クライアントにドラッグ追従設定を送信しました"
             }
@@ -483,6 +513,7 @@ async def client_command(command: str, args: dict,
                 return {
                     "type": "client",
                     "command": command,
+                    "from": source_client_id,
                     "error": "パラメータを指定してください: enabled or disabled"
                 }
             if isinstance(args, dict):
@@ -492,7 +523,7 @@ async def client_command(command: str, args: dict,
             await send_to_client(client_id, {
                 "type": "set_physics",
                 "client_id": client_id,
-                "source": source_client_id,
+                "from": source_client_id,
                 "enabled": enabled,
                 "timestamp": datetime.now().isoformat()
             })
@@ -500,6 +531,7 @@ async def client_command(command: str, args: dict,
                 "type": "client_request",
                 "command": "set_physics",
                 "success": True,
+                "from": source_client_id,
                 "data": {"enabled": enabled},
                 "message": "クライアントに物理演算設定を送信しました"
             }
@@ -511,12 +543,13 @@ async def client_command(command: str, args: dict,
                 return {
                     "type": "client_request",
                     "command": "set_expression",
+                    "from": source_client_id,
                     "error": "expression名が必要です"
                 }
             await send_to_client(client_id, {
                 "type": "set_expression",
                 "client_id": client_id,
-                "source": source_client_id,
+                "from": source_client_id,
                 "expression": expression,
                 "timestamp": datetime.now().isoformat()
             })
@@ -524,6 +557,7 @@ async def client_command(command: str, args: dict,
                 "type": "client_request",
                 "command": "set_expression",
                 "success": True,
+                "from": source_client_id,
                 "data": {"client_id": client_id, "expression": expression},
                 "message": "クライアントに表情設定を送信しました"
             }
@@ -532,18 +566,21 @@ async def client_command(command: str, args: dict,
             parts = args.strip().split(maxsplit=2) if len(args) > 0 else ""
             group = parts[0] if len(parts) > 0 else ""
             no = parts[1] if len(parts) > 1 else ""
-            priority = parts[2] if len(parts) > 2 else "2"  # デフォルトはPriorityNormal(2)
+            # デフォルトはPriorityNormal(2)
+            priority = parts[2] if len(parts) > 2 else "2"
 
             if not group:
                 return {
                     "type": "client_request",
                     "command": "set_motion",
+                    "from": source_client_id,
                     "error": "motion group名が必要です"
                 }
             if not no:
                 return {
                     "type": "client_request",
                     "command": "set_motion",
+                    "from": source_client_id,
                     "error": "motion noが必要です"
                 }
 
@@ -554,19 +591,21 @@ async def client_command(command: str, args: dict,
                     return {
                         "type": "client_request",
                         "command": "set_motion",
+                        "from": source_client_id,
                         "error": "priorityは0(None), 1(Idle), 2(Normal), 3(Force)のいずれかである必要があります"
                     }
             except ValueError:
                 return {
                     "type": "client_request",
                     "command": "set_motion",
+                    "from": source_client_id,
                     "error": "priorityは整数である必要があります"
                 }
 
             await send_to_client(client_id, {
                 "type": "set_motion",
                 "client_id": client_id,
-                "source": source_client_id,
+                "from": source_client_id,
                 "group": group,
                 "no": no,
                 "priority": priority_int,
@@ -576,6 +615,7 @@ async def client_command(command: str, args: dict,
                 "type": "client_request",
                 "command": "set_motion",
                 "success": True,
+                "from": source_client_id,
                 "data": {"group": group, "no": no, "priority": priority_int},
                 "message": "クライアントにモーション情報を送信しました"
             }
@@ -588,13 +628,14 @@ async def client_command(command: str, args: dict,
                 return {
                     "type": "client_request",
                     "command": "set_lipsync",
+                    "from": source_client_id,
                     "error": "Wavデータが必要です"
                 }
 
             await send_to_client(client_id, {
                 "type": "set_lipsync",
                 "client_id": client_id,
-                "source": source_client_id,
+                "from": source_client_id,
                 "wav_data": wav_data,
                 "timestamp": datetime.now().isoformat()
             })
@@ -602,6 +643,7 @@ async def client_command(command: str, args: dict,
                 "type": "client_request",
                 "command": "set_lipsync",
                 "success": True,
+                "from": source_client_id,
                 "message": "クライアントにWavファイルを送信しました"
             }
         elif command == "set_lipsync_from_file":  # リップシンク用Wavファイル送信
@@ -612,6 +654,7 @@ async def client_command(command: str, args: dict,
                 return {
                     "type": "client_request",
                     "command": "set_lipsync_from_file",
+                    "from": source_client_id,
                     "error": "Wavファイル名が必要です"
                 }
             wav_data = ""
@@ -622,13 +665,14 @@ async def client_command(command: str, args: dict,
                 return {
                     "type": "client_request",
                     "command": "set_lipsync_from_file",
+                    "from": source_client_id,
                     "error": f"Wavファイル '{file_name}' の読み込みに失敗しました"
                 }
 
             await send_to_client(client_id, {
                 "type": "set_lipsync",
                 "client_id": client_id,
-                "source": source_client_id,
+                "from": source_client_id,
                 "wav_data": wav_data,
                 "timestamp": datetime.now().isoformat()
             })
@@ -636,6 +680,7 @@ async def client_command(command: str, args: dict,
                 "type": "client_request",
                 "command": "set_lipsync",
                 "success": True,
+                "from": source_client_id,
                 "message": "クライアントにWavファイルを送信しました"
             }
 
@@ -654,6 +699,7 @@ async def client_command(command: str, args: dict,
                     return {
                         "type": "client",
                         "command": command,
+                        "from": source_client_id,
                         "error": "パラメータを指定してください: ParamName=value ParamName2=value2 ..."
                     }
 
@@ -678,12 +724,14 @@ async def client_command(command: str, args: dict,
                     return {
                         "type": "client",
                         "command": command,
+                        "from": source_client_id,
                         "error": f"パラメータの解析に失敗しました: {str(e)}"
                     }
             else:
                 return {
                     "type": "client",
                     "command": command,
+                    "from": source_client_id,
                     "error": "パラメータは辞書形式または 'ParamName=value' 形式で指定してください"
                 }
 
@@ -691,6 +739,7 @@ async def client_command(command: str, args: dict,
                 return {
                     "type": "client",
                     "command": command,
+                    "from": source_client_id,
                     "error": "有効なパラメータが指定されていません"
                 }
 
@@ -698,7 +747,7 @@ async def client_command(command: str, args: dict,
             success = await send_to_client(client_id, {
                 "type": "set_parameter",
                 "client_id": client_id,
-                "source": source_client_id,
+                "from": source_client_id,
                 "parameters": parameters,
                 "timestamp": datetime.now().isoformat()
             })
@@ -708,6 +757,7 @@ async def client_command(command: str, args: dict,
                     "type": "client",
                     "command": command,
                     "success": True,
+                    "from": source_client_id,
                     "client_id": client_id,
                     "parameters": parameters,
                     "message": f"パラメータ設定コマンドを送信しました（{len(parameters)}個）"
@@ -716,6 +766,7 @@ async def client_command(command: str, args: dict,
                 return {
                     "type": "client",
                     "command": command,
+                    "from": source_client_id,
                     "error": f"パラメータ設定の送信に失敗しました"
                 }
 
@@ -723,12 +774,13 @@ async def client_command(command: str, args: dict,
         if command == "get_eye_blink":  # アニメーション設定 - 自動目パチ
             await send_to_client(client_id, {
                 "type": "request_eye_blink",
-                "source": source_client_id,
+                "from": source_client_id,
                 "timestamp": datetime.now().isoformat()
             })
             return {
                 "type": "client_request",
                 "command": "get_eye_blink",
+                "from": source_client_id,
                 "client_id": client_id,
                 "message": "クライアントに自動目パチ設定をリクエストしました"
             }
@@ -736,12 +788,13 @@ async def client_command(command: str, args: dict,
         elif command == "get_breath":  # アニメーション設定 - 呼吸
             await send_to_client(client_id, {
                 "type": "request_breath",
-                "source": source_client_id,
+                "from": source_client_id,
                 "timestamp": datetime.now().isoformat()
             })
             return {
                 "type": "client_request",
                 "command": "get_breath",
+                "from": source_client_id,
                 "client_id": client_id,
                 "message": "クライアントに呼吸設定をリクエストしました"
             }
@@ -749,12 +802,13 @@ async def client_command(command: str, args: dict,
         elif command == "get_idle_motion":  # アニメーション設定 - アイドリングモーション
             await send_to_client(client_id, {
                 "type": "request_idle_motion",
-                "source": source_client_id,
+                "from": source_client_id,
                 "timestamp": datetime.now().isoformat()
             })
             return {
                 "type": "client_request",
                 "command": "get_idle_motion",
+                "from": source_client_id,
                 "client_id": client_id,
                 "message": "クライアントにアイドリングモーション設定をリクエストしました"
             }
@@ -762,12 +816,13 @@ async def client_command(command: str, args: dict,
         elif command == "get_drag_follow":  # アニメーション設定 - ドラッグ追従
             await send_to_client(client_id, {
                 "type": "request_drag_follow",
-                "source": source_client_id,
+                "from": source_client_id,
                 "timestamp": datetime.now().isoformat()
             })
             return {
                 "type": "client_request",
                 "command": "get_drag_follow",
+                "from": source_client_id,
                 "client_id": client_id,
                 "message": "クライアントにドラッグ追従設定をリクエストしました"
             }
@@ -775,12 +830,13 @@ async def client_command(command: str, args: dict,
         elif command == "get_physics":  # アニメーション設定 - 物理演算
             await send_to_client(client_id, {
                 "type": "request_physics",
-                "source": source_client_id,
+                "from": source_client_id,
                 "timestamp": datetime.now().isoformat()
             })
             return {
                 "type": "client_request",
                 "command": "get_physics",
+                "from": source_client_id,
                 "client_id": client_id,
                 "message": "クライアントに物理演算設定をリクエストしました"
             }
@@ -788,12 +844,13 @@ async def client_command(command: str, args: dict,
         elif command == "get_expression":  # Expressions
             await send_to_client(client_id, {
                 "type": "request_expression",
-                "source": source_client_id,
+                "from": source_client_id,
                 "timestamp": datetime.now().isoformat()
             })
             return {
                 "type": "client_request",
                 "command": "get_expression",
+                "from": source_client_id,
                 "client_id": client_id,
                 "message": "クライアントに表情設定をリクエストしました"
             }
@@ -801,12 +858,13 @@ async def client_command(command: str, args: dict,
         elif command == "get_motion":  # Motions
             await send_to_client(client_id, {
                 "type": "request_motion",
-                "source": source_client_id,
+                "from": source_client_id,
                 "timestamp": datetime.now().isoformat()
             })
             return {
                 "type": "client_request",
                 "command": "get_motion",
+                "from": source_client_id,
                 "client_id": client_id,
                 "message": "クライアントにモーション情報をリクエストしました"
             }
@@ -814,19 +872,22 @@ async def client_command(command: str, args: dict,
         elif command == "get_model":  # クライアントにモデル情報要求を送信
             await send_to_client(client_id, {
                 "type": "request_model_info",
-                "source": source_client_id,
+                "from": source_client_id,
                 "timestamp": datetime.now().isoformat()
             })
             return {
                 "type": "client_request",
                 "command": "get_model",
                 "success": True,
+                "from": source_client_id,
+                "client_id": client_id,
                 "message": "クライアントにモデル情報をリクエストしました"
             }
 
     return {
         "type": "client",
         "command": command,
+        "from": source_client_id,
         "error": f"不明なクライアントコマンド: {command}"
     }
 
@@ -848,6 +909,7 @@ async def process_command(user_input: str, client_id: str) -> dict:
         return {
             "type": "command_response",
             "command": "status",
+            "from": client_id,
             "data": {
                 "connected_clients": len(connected_clients),
                 "server_time": datetime.now().isoformat()
@@ -857,6 +919,7 @@ async def process_command(user_input: str, client_id: str) -> dict:
         return {
             "type": "command_response",
             "command": "ping",
+            "from": client_id,
             "data": "pong"
         }
     elif command == "list":
@@ -877,6 +940,7 @@ async def process_command(user_input: str, client_id: str) -> dict:
         return {
             "type": "command_response",
             "command": command,
+            "from": client_id,
             "data": json_data
         }
     elif command == "notify":
@@ -884,12 +948,14 @@ async def process_command(user_input: str, client_id: str) -> dict:
         await broadcast_message({
             "type": "notify",
             "message": message,
+            "from": client_id,
             "timestamp": datetime.now().isoformat()
         })
         return {
             "type": "command_response",
             "command": command,
-            "message": message
+            "from": client_id,
+            "data": message
         }
     elif command == "send":
         args = parts[1].strip().split(maxsplit=2)
@@ -898,6 +964,7 @@ async def process_command(user_input: str, client_id: str) -> dict:
             return {
                 "type": "command_response",
                 "command": command,
+                "from": client_id,
                 "error": "使い方: send <client_id> <message>"
             }
 
@@ -906,30 +973,68 @@ async def process_command(user_input: str, client_id: str) -> dict:
 
         success = await send_to_client(target_client_id, {
             "type": "send",
+            "from": client_id,
             "message": message,
             "timestamp": datetime.now().isoformat()
         })
         return {
             "type": "command_response",
             "command": command,
+            "from": client_id,
             "success": True if success else False
         }
     elif command == "model":
-        return {
-            "type": "command_response",
-            "command": command,
-            "message": "通知コマンドはサーバーコンソールから実行してください"
-        }
+        # モデルコマンドを処理
+        # 形式: model <sub_command> [args]
+        if len(parts) < 2:
+            return {
+                "type": "command_response",
+                "command": command,
+                "from": client_id,
+                "error": "使い方: model <sub_command> [args]"
+            }
+
+        # サブコマンドと引数を分離
+        sub_parts = parts[1].strip().split(maxsplit=1)
+        sub_command = sub_parts[0].lower()
+        args = sub_parts[1] if len(sub_parts) > 1 else ""
+
+        # model_command関数を呼び出し
+        return await model_command(sub_command, args, client_id)
+
     elif command == "client":
-        return {
-            "type": "command_response",
-            "command": command,
-            "message": "通知コマンドはサーバーコンソールから実行してください"
-        }
+        # クライアント制御コマンドを処理
+        # 形式: client <client_id> <sub_command> [args]
+        if len(parts) < 2:
+            return {
+                "type": "command_response",
+                "command": command,
+                "from": client_id,
+                "error": "使い方: client <client_id> <sub_command> [args]"
+            }
+
+        # client_id、サブコマンド、引数を分離
+        client_parts = parts[1].strip().split(maxsplit=2)
+        if len(client_parts) < 2:
+            return {
+                "type": "command_response",
+                "command": command,
+                "from": client_id,
+                "error": "使い方: client <client_id> <sub_command> [args]"
+            }
+
+        target_client_id = client_parts[0]
+        sub_command = client_parts[1].lower()
+        args = client_parts[2] if len(client_parts) > 2 else ""
+
+        # client_command関数を呼び出し
+        return await client_command(sub_command, args, target_client_id, client_id)
+
     else:
         return {
             "type": "command_response",
             "command": command,
+            "from": client_id,
             "error": "不明なコマンドです"
         }
 
@@ -970,7 +1075,8 @@ def print_server_console():
     print("  client <client_id> set_expression [expression_name]")
 
     print("  client <client_id> get_motion")
-    print("  client <client_id> set_motion [group_name] [no] [priority(0-3, default:2)]")
+    print(
+        "  client <client_id> set_motion [group_name] [no] [priority(0-3, default:2)]")
 
     print("  client <client_id> get_model")
     print("  client <client_id> set_lipsync [base64_wav_data]")
@@ -1044,7 +1150,7 @@ async def server_console():
             elif command == "model" and len(parts) > 1:
                 sub_command = parts[1]
                 args = parts[2] if len(parts) > 2 else ""
-                await model_command(sub_command, args)
+                await model_command(sub_command, args, "SERVER")
 
             elif command == "client" and len(parts) > 1:
                 # 形式: client <client_id> <sub_command> [args...]
@@ -1148,7 +1254,9 @@ async def main():
         else:
             # コンソールなしモード：無限待機
             logger.info("サーバーが起動しました。コンソールなしで動作中")
-            await asyncio.Future()  # 無限待機
+            console_task = asyncio.create_task(send_periodic_messages())
+            # コンソールタスクが終了するまで待機
+            await console_task
 
         # オプション: 定期メッセージタスクをキャンセル
         # periodic_task.cancel()

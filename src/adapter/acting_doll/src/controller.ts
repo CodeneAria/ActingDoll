@@ -10,6 +10,7 @@ import {
   CubismLogInfo
 } from '@framework/utils/cubismdebug';
 import { LAppMultilingual, MessageKey } from './lappmultilingual';
+import { LAppPal } from './lapppal';
 
 /**
  * Live2Dコントローラークラス
@@ -76,7 +77,7 @@ class Live2DController {
     // エラーハンドラ
     this.wsClient.onMessage('error', (data) => {
       CubismLogError(LAppMultilingual.getMessage(MessageKey.CTRL_SERVER_ERROR, data));
-      this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_SERVER_ERROR, `${ data.message }`));
+      this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_SERVER_ERROR, `${data.message}`));
     });
 
     // ウェルカムメッセージハンドラ
@@ -458,7 +459,11 @@ class Live2DController {
     }
 
     const data = response.data || {};
-    this.showMessage(`応答: ${JSON.stringify(data)}`);
+    if (JSON.stringify(data).length > 2) {
+      this.showMessage(`応答: ${JSON.stringify(data)}`);
+    } else {
+      this.showMessage(`受信: ${JSON.stringify(response)}`);
+    }
 
     // listコマンドの応答
     if (data.clients) {
@@ -648,7 +653,6 @@ class Live2DController {
   private loadInitialData(): void {
     // クライアント一覧を取得
     this.sendCommand('list');
-
     // モデル一覧を取得
     this.sendCommand('model list');
   }
@@ -657,6 +661,7 @@ class Live2DController {
    * メッセージを表示
    */
   private showMessage(message: string): void {
+    LAppPal.printMessage(message);
     const element = document.getElementById('message-display');
     if (element) {
       const time = new Date().toLocaleTimeString();
@@ -674,6 +679,7 @@ class Live2DController {
    * エラーを表示
    */
   private showError(message: string): void {
+    LAppPal.printErrorMessage(message);
     const element = document.getElementById('message-display');
     if (element) {
       const time = new Date().toLocaleTimeString();

@@ -559,102 +559,119 @@ export class WebSocketClient {
    * クライアントレスポンスをサーバーに送信
    * @param command コマンド名
    * @param args レスポンスデータ
+   * @param from送信元クライアントID
    */
-  public sendClientResponse(command: string, args: any): void {
-    this.sendMessage({ type: 'client', command: command, args: args });
+  public sendClientResponse(command: string, args: any, from: string): void {
+    this.sendMessage({ type: 'client', command: command, args: args, from: from });
   }
 
   /**
    * 目パチ状態を送信
    * @param enabled 有効/無効
+   * @param from 送信元クライアントID
    */
-  public sendEyeBlinkStatus(enabled: boolean): void {
-    this.sendClientResponse('response_eye_blink', { enabled });
+  public sendEyeBlinkStatus(enabled: boolean, from: string): void {
+    this.sendClientResponse('response_eye_blink', { enabled }, from);
   }
 
   /**
    * 呼吸状態を送信
    * @param enabled 有効/無効
+   * @param from 送信元クライアントID
    */
-  public sendBreathStatus(enabled: boolean): void {
-    this.sendClientResponse('response_breath', { enabled });
+  public sendBreathStatus(enabled: boolean, from: string): void {
+    this.sendClientResponse('response_breath', { enabled }, from);
   }
 
   /**
    * アイドリングモーション状態を送信
    * @param enabled 有効/無効
+   * @param from 送信元クライアントID
    */
-  public sendIdleMotionStatus(enabled: boolean): void {
-    this.sendClientResponse('response_idle_motion', { enabled });
+  public sendIdleMotionStatus(enabled: boolean, from: string): void {
+    this.sendClientResponse('response_idle_motion', { enabled }, from);
   }
 
   /**
    * ドラッグ追従状態を送信
    * @param enabled 有効/無効
+   * @param from 送信元クライアントID
    */
-  public sendDragFollowStatus(enabled: boolean): void {
-    this.sendClientResponse('response_drag_follow', { enabled });
+  public sendDragFollowStatus(enabled: boolean, from: string): void {
+    this.sendClientResponse('response_drag_follow', { enabled }, from);
   }
 
   /**
    * 物理演算状態を送信
    * @param enabled 有効/無効
+   * @param from 送信元クライアントID
    */
-  public sendPhysicsStatus(enabled: boolean): void {
-    this.sendClientResponse('response_physics', { enabled });
+  public sendPhysicsStatus(enabled: boolean, from: string): void {
+    this.sendClientResponse('response_physics', { enabled }, from);
   }
 
   /**
    * 現在の表情を送信
    * @param expression 表情名
+   * @param result 結果
+   * @param from 送信元クライアントID
    */
-  public sendExpressionStatus(expression: string, result: boolean): void {
-    this.sendClientResponse('response_expression', { expression, result });
+  public sendExpressionStatus(expression: string, result: boolean, from: string): void {
+    this.sendClientResponse('response_expression', { expression, result }, from);
   }
 
   /**
    * 現在のモーションを送信
    * @param group モーショングループ
    * @param no モーションインデックス
+   * @param priority 優先度
+   * @param result 結果
+   * @param from 送信元クライアントID
    */
-  public sendMotionStatus(group: string, no: number, priority: number, result: boolean): void {
-    this.sendClientResponse('response_motion', { group, no, priority, result });
+  public sendMotionStatus(group: string, no: number, priority: number, result: boolean, from: string): void {
+    this.sendClientResponse('response_motion', { group, no, priority, result }, from);
   }
 
   /**
    * パラメータ設定結果を送信
    * @param successful 成功したパラメータ数
    * @param failed 失敗したパラメータ数
+   * @param from 送信元クライアントID
    */
-  public sendParameterStatus(successful: number, failed: number): void {
-    this.sendClientResponse('response_parameter', { successful, failed });
+  public sendParameterStatus(successful: number, failed: number, from: string): void {
+    this.sendClientResponse('response_parameter', { successful, failed }, from);
   }
   /**
    * 現在のモデル情報を送信
    * @param modelName モデル名
    * @param modelData モデル情報
+   * @param from 送信元クライアントID
    */
-  public sendModelInfo(modelName: string, modelData?: any): void {
-    this.sendClientResponse('response_model', { model_name: modelName, ...modelData });
+  public sendModelInfo(modelName: string, from: string): void {
+    this.sendClientResponse('response_model', { model_name: modelName }, from);
   }
   /**
    * ダイレクトメッセージ送信完了通知
+   * @param from 送信元クライアントID
    */
-  public sendResponseSend(): void {
-    this.sendClientResponse('response_send', {});
+  public sendResponseSend(from: string): void {
+    this.sendClientResponse('response_send', {}, from);
   }
   /**
    * 通知メッセージ送信完了通知
+   * @param from 送信元クライアントID
    */
-  public sendResponseNotify(): void {
-    this.sendClientResponse('response_notify', {});
+  public sendResponseNotify(from: string): void {
+    this.sendClientResponse('response_notify', {}, from);
   }
 
   /**
    * Wavファイルをリップシンク用に送信
-   * @param wavData base64エンコードされたWavデータ
+   * @param filename ファイル名
+   * @param result 結果
+   * @param from 送信元クライアントID
    */
-  public sendLipSyncWav(filename: string, result: boolean): void {
-    this.sendClientResponse('response_lipsync', { filename, result });
+  public sendLipSyncWav(filename: string, result: boolean, from: string): void {
+    this.sendClientResponse('response_lipsync', { filename, result }, from);
   }
 }
