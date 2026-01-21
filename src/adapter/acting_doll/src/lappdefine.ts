@@ -45,20 +45,25 @@ export const GearImageName = 'icon_gear.png';
 export const PowerImageName = 'CloseNormal.png';
 
 // モデル定義---------------------------------------------
-// モデルを配置したディレクトリ名の配列
-// ディレクトリ名とmodel3.jsonの名前を一致させておくこと
-export const ModelDir: Array<string> = [
-  'Haru',
-  'Hiyori',
-  'Mao',
-  'Mark',
-  'Natori',
-  'Rice',
-  'Wanko'
+// モデル設定の型定義
+export interface ModelConfig {
+  name: string;          // モデル名（ディレクトリ名とmodel3.jsonの名前を一致させること）
+  isCustom: boolean;     // カスタムパラメータIDを使用するか
+  initX: number;         // 初期位置 X軸
+  initY: number;         // 初期位置 Y軸
+  initScale: number;     // 初期スケール
+}
+
+// モデル設定配列
+export const ModelConfigs: ModelConfig[] = [
+  { name: 'Haru', isCustom: false, initX: 0, initY: 0, initScale: 1.0 },
+  { name: 'Hiyori', isCustom: false, initX: 0, initY: 0, initScale: 1.0 },
+  { name: 'Mao', isCustom: false, initX: 0, initY: 0, initScale: 1.0 },
+  { name: 'Mark', isCustom: false, initX: 0, initY: 0, initScale: 1.0 },
+  { name: 'Natori', isCustom: false, initX: 0, initY: 0, initScale: 1.0 },
+  { name: 'Rice', isCustom: false, initX: 0, initY: 0, initScale: 1.0 },
+  { name: 'Wanko', isCustom: false, initX: 0, initY: 0, initScale: 1.0 }
 ];
-export const ModelDir_custom: Array<string> = [
-];
-export const ModelDirSize: number = ModelDir.length;
 
 // 外部定義ファイル（json）と合わせる
 export const MotionGroupIdle = 'Idle'; // アイドリング

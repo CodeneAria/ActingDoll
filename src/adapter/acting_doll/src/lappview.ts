@@ -347,6 +347,10 @@ export class LAppView {
     this._viewMatrix.translateRelative(currentX - newX, currentY - newY);
   }
 
+  public getViewMatrix(): CubismViewMatrix {
+    return this._viewMatrix;
+  }
+
   _touchManager: TouchManager; // タッチマネージャー
   _deviceToScreen: CubismMatrix44; // デバイスからスクリーンへの行列
   _viewMatrix: CubismViewMatrix; // viewMatrix

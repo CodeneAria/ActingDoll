@@ -105,7 +105,7 @@ export class LAppLive2DManager {
    * サンプルアプリケーションではモデルセットの切り替えを行う。
    */
   public nextScene(): void {
-    const no: number = (this._sceneIndex + 1) % LAppDefine.ModelDirSize;
+    const no: number = (this._sceneIndex + 1) % LAppDefine.ModelConfigs.length;
     this.changeScene(no);
   }
 
@@ -115,31 +115,27 @@ export class LAppLive2DManager {
    * @param index
    */
   private changeScene(index: number): void {
+    if (index < 0 || index >= LAppDefine.ModelConfigs.length) {
+      index = index % LAppDefine.ModelConfigs.length;
+      if (index < 0) {
+        index += LAppDefine.ModelConfigs.length;
+      }
+    }
     this._sceneIndex = index;
 
     if (LAppDefine.DebugLogEnable) {
       CubismLogInfo(LAppMultilingual.getMessage(MessageKey.MODEL_INDEX, this._sceneIndex));
     }
 
-    // ModelDir[]に保持したディレクトリ名から
-    // model3.jsonのパスを決定する。
-    // ディレクトリ名とmodel3.jsonの名前を一致させておくこと。
-    const model: string = LAppDefine.ModelDir[index];
-    const modelPath: string = LAppDefine.ResourcesPath + model + '/';
-    let modelJsonName: string = LAppDefine.ModelDir[index];
-    modelJsonName += '.model3.json';
-    let is_model_custom: boolean = false;
-    for (let i = 0; i < LAppDefine.ModelDir_custom.length; i++) {
-      if (model === LAppDefine.ModelDir_custom[i]) {
-        is_model_custom = true;
-        break;
-      }
-    }
+    // ModelConfigsからモデル設定を取得
+    const modelConfig = LAppDefine.ModelConfigs[index];
+    const modelPath: string = LAppDefine.ResourcesPath + modelConfig.name + '/';
+    const modelJsonName: string = modelConfig.name + '.model3.json';
 
     this.releaseAllModel();
-    const instance = new LAppModel(is_model_custom);
+    const instance = new LAppModel(modelConfig.isCustom);
     instance.setSubdelegate(this._subdelegate);
-    instance.loadAssets(modelPath, modelJsonName);
+    instance.loadAssets(modelPath, modelJsonName, modelConfig);
     this._models.pushBack(instance);
   }
 

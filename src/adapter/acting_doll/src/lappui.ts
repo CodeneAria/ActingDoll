@@ -6,7 +6,7 @@
 import { LAppDelegate } from './lappdelegate';
 import { LAppModel } from './lappmodel';
 import * as LAppDefine from './lappdefine';
-import { CubismLogError, CubismLogInfo } from '@framework/utils/cubismdebug';
+import { CubismLogError, CubismLogInfo, CubismLogVerbose } from '@framework/utils/cubismdebug';
 import { LAppMultilingual, MessageKey } from './lappmultilingual';
 
 /**
@@ -64,11 +64,8 @@ export class LAppUI {
             this._scaleSlider.min = LAppDefine.ModelScaleMin.toString();
             this._scaleSlider.max = LAppDefine.ModelScaleMax.toString();
             this._scaleSlider.step = LAppDefine.ModelScaleStep.toString();
-            this._scaleSlider.value = LAppDefine.ModelScaleDefault.toString();
         }
-        if (this._scaleValue) {
-            this._scaleValue.textContent = LAppDefine.ModelScaleDefault.toFixed(1);
-        }
+        this.resetScaleSlider(LAppDefine.ModelScaleDefault);
 
         this._expressionSelect = document.getElementById('expressionSelect') as HTMLSelectElement;
         this._motionSelect = document.getElementById('motionSelect') as HTMLSelectElement;
@@ -826,6 +823,14 @@ export class LAppUI {
         const view = subdelegate.getView();
         if (view) {
             view.translateViewMatrix(deltaX, deltaY);
+            const viewMatrix = view.getViewMatrix();
+            if (viewMatrix) {
+                CubismLogVerbose(
+                    LAppMultilingual.getMessage(MessageKey.UI_MODEL_MOVED,
+                        viewMatrix.getTranslateX().toFixed(2),
+                        viewMatrix.getTranslateY().toFixed(2))
+                );
+            }
         }
     }
 
@@ -844,13 +849,16 @@ export class LAppUI {
             // 位置リセット
             view.resetViewMatrix();
             // スケールもリセット
-            if (this._scaleSlider) {
-                this._scaleSlider.value = LAppDefine.ModelScaleDefault.toString();
-            }
-            if (this._scaleValue) {
-                this._scaleValue.textContent = LAppDefine.ModelScaleDefault.toFixed(1);
-            }
+            this.resetScaleSlider(LAppDefine.ModelScaleDefault);
         }
+    }
+
+    /**
+     * スケールスライダーをデフォルト値にリセット
+     */
+    public resetScaleSlider(value: number): void {
+        if (this._scaleSlider) { this._scaleSlider.value = value.toString(); }
+        if (this._scaleValue) { this._scaleValue.textContent = value.toFixed(1); }
     }
 
     /**
@@ -866,6 +874,7 @@ export class LAppUI {
         const view = subdelegate.getView();
         if (view) {
             view.setViewScale(scale);
+            this.resetScaleSlider(scale);
         }
     }
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-src/modelsフォルダを検索して、lappdefine.tsのModelDir配列を自動更新するスクリプト
+src/modelsフォルダを検索して、lappdefine.tsのModelConfigs配列を自動更新するスクリプト
 """
 import os
 import re
@@ -35,7 +35,7 @@ def find_model_directories(models_dir: Path) -> list[str]:
 
 def update_lappdefine_ts(file_path: Path, model_dirs: list[str]) -> bool:
     """
-    lappdefine.tsのModelDir配列を更新
+    lappdefine.tsのModelConfigs配列を更新
 
     Args:
         file_path: lappdefine.tsのPath
@@ -51,23 +51,29 @@ def update_lappdefine_ts(file_path: Path, model_dirs: list[str]) -> bool:
     # ファイルを読み込み
     content = file_path.read_text(encoding='utf-8')
 
-    # ModelDir配列の部分を検索して置換
-    # export const ModelDir: string[] = [...]; の形式を探す
-    pattern = r'(export const ModelDir: string\[\] = \[)[^\]]*(\];)'
+    # ModelConfigs配列の部分を検索して置換
+    # export const ModelConfigs: ModelConfig[] = [...]; の形式を探す
+    pattern = r'(export const ModelConfigs: ModelConfig\[\] = \[)[^\]]*(\];)'
 
     # 新しい配列の内容を生成
     if model_dirs:
-        new_array_content = '\n  ' + ',\n  '.join(f"'{dir}'" for dir in model_dirs) + '\n'
+        model_entries = []
+        for dir_name in model_dirs:
+            # デフォルトはカスタムフラグfalse、初期位置(0,0)、スケール1.5
+            model_entries.append(
+                f"  {{ name: '{dir_name}', isCustom: false, initX: 0, initY: 0, initScale: 1.0 }}"
+            )
+        new_array_content = '\n' + ',\n'.join(model_entries) + '\n'
     else:
         new_array_content = ''
 
     replacement = f'\\g<1>{new_array_content}\\g<2>'
 
     # 置換を実行
-    new_content, count = re.subn(pattern, replacement, content)
+    new_content, count = re.subn(pattern, replacement, content, flags=re.DOTALL)
 
     if count == 0:
-        print("警告: ModelDir配列が見つかりませんでした")
+        print("警告: ModelConfigs配列が見つかりませんでした")
         return False
 
     # ファイルに書き込み
@@ -87,7 +93,7 @@ def main(work_dir, config_path):
     lappdefine_path = work_dir /  "adapter" / "acting_doll"  / "src" / "lappdefine.ts"
 
     print("=" * 60)
-    print("ModelDir自動更新スクリプト")
+    print("ModelConfigs自動更新スクリプト")
     print("=" * 60)
     print(f"プロジェクトルート : {work_dir}")
     print(f"モデルディレクトリ : {models_dir}")
@@ -114,6 +120,9 @@ def main(work_dir, config_path):
     if success:
         print()
         print("✓ 更新が完了しました！")
+        print()
+        print("注意: カスタムパラメータIDが必要なモデルは、")
+        print("      手動でlappdefine.tsのisCustomをtrueに変更してください。")
     else:
         print()
         print("✗ 更新に失敗しました")

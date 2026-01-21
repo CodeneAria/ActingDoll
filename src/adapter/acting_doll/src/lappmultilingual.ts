@@ -211,6 +211,10 @@ const messages: MessageMap = {
         ja: '[LAppUI] 物理演算: {0}',
         en: '[LAppUI] Physics: {0}'
     },
+    UI_MODEL_MOVED: {
+        ja: '[LAppUI] モデル位置: X={0}, Y={1}',
+        en: '[LAppUI] Model position: X={0}, Y={1}'
+    },
 
     // WebSocketClient関連
     WS_CONNECTING: {
@@ -612,6 +616,7 @@ export const MessageKey = {
     UI_IDLE_MOTION_TOGGLED: 'UI_IDLE_MOTION_TOGGLED',
     UI_DRAG_FOLLOW_TOGGLED: 'UI_DRAG_FOLLOW_TOGGLED',
     UI_PHYSICS_TOGGLED: 'UI_PHYSICS_TOGGLED',
+    UI_MODEL_MOVED: 'UI_MODEL_MOVED',
 
     // WebSocketClient関連
     WS_CONNECTING: 'WS_CONNECTING',

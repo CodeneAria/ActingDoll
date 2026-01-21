@@ -85,7 +85,7 @@ export class LAppModel extends CubismUserModel {
    * @param dir
    * @param fileName
    */
-  public loadAssets(dir: string, fileName: string): void {
+  public loadAssets(dir: string, fileName: string, model_config: LAppDefine.ModelConfig): void {
     this._modelHomeDir = dir;
 
     fetch(`${this._modelHomeDir}${fileName}`)
@@ -101,6 +101,14 @@ export class LAppModel extends CubismUserModel {
 
         // 結果を保存
         this.setupModel(setting);
+        if (this._subdelegate) {
+          const ui = this._subdelegate.getUI();
+          if (ui) {
+            ui.resetModelPosition();
+            ui.moveModel(model_config.initX, model_config.initY);
+            ui.setModelScale(model_config.initScale);
+          }
+        }
       })
       .catch(error => {
         // model3.json読み込みでエラーが発生した時点で描画は不可能なので、setupせずエラーをcatchして何もしない
