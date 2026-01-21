@@ -91,6 +91,15 @@ export const CubismLoggingLevel: LogLevel = LogLevel.LogLevel_Info;
 export const RenderTargetWidth = 1900;
 export const RenderTargetHeight = 1000;
 
+// モデル位置移動量設定
+export const ModelPositionMoveStep = 0.01;
+
+// モデルスケールスライダー設定
+export const ModelScaleMin = 0.5;
+export const ModelScaleMax = 8.0;
+export const ModelScaleStep = 0.1;
+export const ModelScaleDefault = 1.0;
+
 // WebSocket設定
 export const WebSocketUrl = 'ws://';
 export const WebSocketAddress = 'localhost';

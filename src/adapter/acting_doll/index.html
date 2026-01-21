@@ -53,6 +53,24 @@
         </div>
       </div>
 
+      <!-- Model Transform Section -->
+      <div class="control-section">
+        <label>Model Position:</label>
+        <div style="margin-top: 8px; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+          <button id="moveUp" style="padding: 8px 16px; min-width: 60px;">▲</button>
+          <div style="display: flex; gap: 4px;">
+            <button id="moveLeft" style="padding: 8px 16px; min-width: 60px;">◀</button>
+            <button id="resetPosition" style="padding: 8px 16px; min-width: 60px;">●</button>
+            <button id="moveRight" style="padding: 8px 16px; min-width: 60px;">▶</button>
+          </div>
+          <button id="moveDown" style="padding: 8px 16px; min-width: 60px;">▼</button>
+        </div>
+        <div style="margin-top: 12px;">
+          <label for="scaleSlider" style="display: block; margin-bottom: 4px;">Model Scale: <span id="scaleValue">1.0</span></label>
+          <input type="range" id="scaleSlider" min="0.1" max="3.0" step="0.1" value="1.0" style="width: 100%;">
+        </div>
+      </div>
+
       <!-- Expressions Section -->
       <div class="control-section">
         <label for="expressionSelect">Expressions:</label>

@@ -1,4 +1,9 @@
-
+/*
+* 特別な事情があるモデルに対して使用するカスタムのパラメータID定義
+*    - R3以前に作成されたモデル
+*    - 公式とは違う設定を行ったモデル
+*    - 鏡動作など事情が異なる割り当てを任意で行う場合
+*/
 export const CubismDefaultParameterId_custom = Object.freeze<Record<string, string>>({
     // パーツID
     HitAreaPrefix: 'HitArea',

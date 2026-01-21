@@ -282,6 +282,71 @@ export class LAppView {
     return this._deviceToScreen.transformY(deviceY);
   }
 
+  /**
+   * ViewMatrixを平行移動する
+   * @param deltaX X方向の移動量
+   * @param deltaY Y方向の移動量
+   */
+  public translateViewMatrix(deltaX: number, deltaY: number): void {
+    if (this._viewMatrix) {
+      this._viewMatrix.translateRelative(deltaX, deltaY);
+    }
+  }
+
+  /**
+   * ViewMatrixをリセットする
+   */
+  public resetViewMatrix(): void {
+    if (!this._viewMatrix || !this._subdelegate) return;
+
+    const { width, height } = this._subdelegate.getCanvas();
+    const ratio: number = width / height;
+    const left: number = -ratio;
+    const right: number = ratio;
+    const bottom: number = LAppDefine.ViewLogicalLeft;
+    const top: number = LAppDefine.ViewLogicalRight;
+
+    this._viewMatrix.setScreenRect(left, right, bottom, top);
+    this._viewMatrix.scale(LAppDefine.ViewScale, LAppDefine.ViewScale);
+    this._viewMatrix.setMaxScale(LAppDefine.ViewMaxScale);
+    this._viewMatrix.setMinScale(LAppDefine.ViewMinScale);
+    this._viewMatrix.setMaxScreenRect(
+      LAppDefine.ViewLogicalMaxLeft,
+      LAppDefine.ViewLogicalMaxRight,
+      LAppDefine.ViewLogicalMaxBottom,
+      LAppDefine.ViewLogicalMaxTop
+    );
+    this.translateViewMatrix((-1 * this._viewMatrix.getTranslateX()), (-1 * this._viewMatrix.getTranslateY()));
+  }
+
+  /**
+   * ViewMatrixのスケールを設定する
+   * @param scale スケール値
+   */
+  public setViewScale(scale: number): void {
+    if (!this._viewMatrix || !this._subdelegate) return;
+
+    const { width, height } = this._subdelegate.getCanvas();
+    const ratio: number = width / height;
+    const left: number = -ratio;
+    const right: number = ratio;
+    const bottom: number = LAppDefine.ViewLogicalLeft;
+    const top: number = LAppDefine.ViewLogicalRight;
+
+    // 現在の位置を保持
+    const currentX = (this._viewMatrix.getScreenLeft() + this._viewMatrix.getScreenRight()) / 2;
+    const currentY = (this._viewMatrix.getScreenBottom() + this._viewMatrix.getScreenTop()) / 2;
+
+    // スクリーンを再設定
+    this._viewMatrix.setScreenRect(left, right, bottom, top);
+    this._viewMatrix.scale(LAppDefine.ViewScale * scale, LAppDefine.ViewScale * scale);
+
+    // 位置を復元
+    const newX = (this._viewMatrix.getScreenLeft() + this._viewMatrix.getScreenRight()) / 2;
+    const newY = (this._viewMatrix.getScreenBottom() + this._viewMatrix.getScreenTop()) / 2;
+    this._viewMatrix.translateRelative(currentX - newX, currentY - newY);
+  }
+
   _touchManager: TouchManager; // タッチマネージャー
   _deviceToScreen: CubismMatrix44; // デバイスからスクリーンへの行列
   _viewMatrix: CubismViewMatrix; // viewMatrix

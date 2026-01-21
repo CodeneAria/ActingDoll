@@ -23,6 +23,13 @@ export class LAppUI {
     private _idleMotionToggle!: HTMLInputElement;
     private _dragFollowToggle!: HTMLInputElement;
     private _physicsToggle!: HTMLInputElement;
+    private _moveUpButton!: HTMLButtonElement;
+    private _moveDownButton!: HTMLButtonElement;
+    private _moveLeftButton!: HTMLButtonElement;
+    private _moveRightButton!: HTMLButtonElement;
+    private _resetPositionButton!: HTMLButtonElement;
+    private _scaleSlider!: HTMLInputElement;
+    private _scaleValue!: HTMLSpanElement;
     private _parameterSliders: Map<string, HTMLInputElement> = new Map();
     private _parameterValues: Map<string, HTMLSpanElement> = new Map();
     private _manualControlParams: Set<number> = new Set();
@@ -44,6 +51,25 @@ export class LAppUI {
         this._idleMotionToggle = document.getElementById('idleMotionToggle') as HTMLInputElement;
         this._dragFollowToggle = document.getElementById('dragFollowToggle') as HTMLInputElement;
         this._physicsToggle = document.getElementById('physicsToggle') as HTMLInputElement;
+        this._moveUpButton = document.getElementById('moveUp') as HTMLButtonElement;
+        this._moveDownButton = document.getElementById('moveDown') as HTMLButtonElement;
+        this._moveLeftButton = document.getElementById('moveLeft') as HTMLButtonElement;
+        this._moveRightButton = document.getElementById('moveRight') as HTMLButtonElement;
+        this._resetPositionButton = document.getElementById('resetPosition') as HTMLButtonElement;
+        this._scaleSlider = document.getElementById('scaleSlider') as HTMLInputElement;
+        this._scaleValue = document.getElementById('scaleValue') as HTMLSpanElement;
+
+        // スケールスライダーの設定
+        if (this._scaleSlider) {
+            this._scaleSlider.min = LAppDefine.ModelScaleMin.toString();
+            this._scaleSlider.max = LAppDefine.ModelScaleMax.toString();
+            this._scaleSlider.step = LAppDefine.ModelScaleStep.toString();
+            this._scaleSlider.value = LAppDefine.ModelScaleDefault.toString();
+        }
+        if (this._scaleValue) {
+            this._scaleValue.textContent = LAppDefine.ModelScaleDefault.toFixed(1);
+        }
+
         this._expressionSelect = document.getElementById('expressionSelect') as HTMLSelectElement;
         this._motionSelect = document.getElementById('motionSelect') as HTMLSelectElement;
         this._parametersContainer = document.getElementById('parametersContainer') as HTMLDivElement;
@@ -108,6 +134,33 @@ export class LAppUI {
         this._physicsToggle.addEventListener('change', (e) => {
             const target = e.target as HTMLInputElement;
             this.setPhysicsEnabled(target.checked);
+        });
+
+        // Setup model position controls
+        this._moveUpButton?.addEventListener('click', () => {
+            this.moveModel(0, -LAppDefine.ModelPositionMoveStep);
+        });
+        this._moveDownButton?.addEventListener('click', () => {
+            this.moveModel(0, LAppDefine.ModelPositionMoveStep);
+        });
+        this._moveLeftButton?.addEventListener('click', () => {
+            this.moveModel(-LAppDefine.ModelPositionMoveStep, 0);
+        });
+        this._moveRightButton?.addEventListener('click', () => {
+            this.moveModel(LAppDefine.ModelPositionMoveStep, 0);
+        });
+        this._resetPositionButton?.addEventListener('click', () => {
+            this.resetModelPosition();
+        });
+
+        // Setup scale slider
+        this._scaleSlider?.addEventListener('input', (e) => {
+            const target = e.target as HTMLInputElement;
+            const scale = parseFloat(target.value);
+            this.setModelScale(scale);
+            if (this._scaleValue) {
+                this._scaleValue.textContent = scale.toFixed(1);
+            }
         });
 
         // Listen for model loaded events
@@ -757,6 +810,63 @@ export class LAppUI {
 
         this._parameterSliders.clear();
         this._parameterValues.clear();
+    }
+
+    /**
+     * モデルの位置を移動
+     * @param deltaX X方向の移動量
+     * @param deltaY Y方向の移動量
+     */
+    public moveModel(deltaX: number, deltaY: number): void {
+        const delegate = LAppDelegate.getInstance();
+        const subdelegate = delegate.getSubdelegate(0);
+
+        if (!subdelegate) return;
+
+        const view = subdelegate.getView();
+        if (view) {
+            view.translateViewMatrix(deltaX, deltaY);
+        }
+    }
+
+    /**
+     * モデルの位置をリセット
+     */
+    public resetModelPosition(): void {
+        const delegate = LAppDelegate.getInstance();
+        if (!delegate) { return; }
+
+        const subdelegate = delegate.getSubdelegate(0);
+        if (!subdelegate) { return; }
+
+        const view = subdelegate.getView();
+        if (view) {
+            // 位置リセット
+            view.resetViewMatrix();
+            // スケールもリセット
+            if (this._scaleSlider) {
+                this._scaleSlider.value = LAppDefine.ModelScaleDefault.toString();
+            }
+            if (this._scaleValue) {
+                this._scaleValue.textContent = LAppDefine.ModelScaleDefault.toFixed(1);
+            }
+        }
+    }
+
+    /**
+     * モデルのスケールを設定
+     * @param scale スケール値
+     */
+    public setModelScale(scale: number): void {
+        const delegate = LAppDelegate.getInstance();
+        const subdelegate = delegate.getSubdelegate(0);
+
+        if (!subdelegate) return;
+
+        const view = subdelegate.getView();
+        if (view) {
+            view.setViewScale(scale);
+        }
     }
 
     /**

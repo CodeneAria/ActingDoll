@@ -244,6 +244,10 @@ export class LAppSubdelegate {
     return this._ui;
   }
 
+  public getView(): LAppView {
+    return this._view;
+  }
+
   /**
    * Resize the canvas to fill the screen.
    */
