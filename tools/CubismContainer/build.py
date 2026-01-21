@@ -3,6 +3,7 @@
 Docker container run script for Cubism SDK Web
 """
 
+import argparse
 import os
 import subprocess
 import sys
@@ -27,7 +28,7 @@ def run_command(cmd, shell=True, capture_output=False, check=False):
         return e
 
 
-def main(work_dir, config_path):
+def main(work_dir, config_path, is_production=False):
     # Load settings from YAML
     try:
         with open(config_path, 'r', encoding='utf-8') as f:
@@ -68,13 +69,16 @@ def main(work_dir, config_path):
 
     # Run npm start inside container
     print("# npm install and build inside the container...")
+    build_mode = "production" if is_production else "development"
+    build_cmd = "npm run build:prod" if is_production else "npm run build"
+    print(f"# Build mode: {build_mode}")
     # npm install -g npm && npm install && npm run build
     npm_cmd = (
         f'docker exec -t {DOCKER_CONTAINER_NAME} /bin/sh -c "'
         f'cd {node_dir};'
         f'npm install -g npm && npm install'
         f' && npm audit fix'
-        f' && npm run build'
+        f' && {build_cmd}'
         f'"'
     )
 
@@ -91,7 +95,23 @@ def main(work_dir, config_path):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Build Cubism SDK Web project in Docker container"
+    )
+    parser.add_argument(
+        "-p",
+        "--production",
+        action="store_true",
+        default=False,
+        help="Build in production mode (npm run build:prod)"
+    )
+
+    args = parser.parse_args()
+
+    # Determine production mode
+    is_production = args.production
+
     work_dir = Path(__file__).parent.parent.parent.resolve()
     os.chdir(work_dir)
     config_path = Path("src").resolve().absolute() / "config.yaml"
-    main(work_dir, config_path)
+    main(work_dir, config_path, is_production)

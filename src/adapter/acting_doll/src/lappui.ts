@@ -554,12 +554,12 @@ export class LAppUI {
         if (model) {
             const cubismModel = model.getModel();
             if (cubismModel) {
+                // 一旦保存された状態を読み込み
+                cubismModel.loadParameters();
                 // パラメータ値を設定
                 cubismModel.setParameterValueByIndex(index, value);
-
                 // 保存された状態も更新（loadParameters()で上書きされないように）
                 cubismModel.saveParameters();
-
                 // モデルに手動制御フラグを設定
                 model.setParameterManualControl(index);
             }
@@ -724,12 +724,12 @@ export class LAppUI {
             if (cubismModel) {
                 const paramIndex = model.getParameterIndex(paramName);
                 if (paramIndex >= 0) {
+                    // 一旦保存された状態を読み込み
+                    cubismModel.loadParameters();
                     // パラメータ値を設定
                     cubismModel.setParameterValueByIndex(paramIndex, value);
-
                     // 保存された状態も更新（loadParameters()で上書きされないように）
                     cubismModel.saveParameters();
-
                     // モデルに手動制御フラグを設定
                     model.setParameterManualControl(paramIndex);
                 }

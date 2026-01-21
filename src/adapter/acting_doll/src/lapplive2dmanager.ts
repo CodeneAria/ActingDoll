@@ -128,16 +128,16 @@ export class LAppLive2DManager {
     const modelPath: string = LAppDefine.ResourcesPath + model + '/';
     let modelJsonName: string = LAppDefine.ModelDir[index];
     modelJsonName += '.model3.json';
-    let model_version: number = 5;
-    for (let i = 0; i < LAppDefine.ModelDir_v3.length; i++) {
-      if (model === LAppDefine.ModelDir_v3[i]) {
-        model_version = 3;
+    let is_model_custom: boolean = false;
+    for (let i = 0; i < LAppDefine.ModelDir_custom.length; i++) {
+      if (model === LAppDefine.ModelDir_custom[i]) {
+        is_model_custom = true;
         break;
       }
     }
 
     this.releaseAllModel();
-    const instance = new LAppModel(model_version);
+    const instance = new LAppModel(is_model_custom);
     instance.setSubdelegate(this._subdelegate);
     instance.loadAssets(modelPath, modelJsonName);
     this._models.pushBack(instance);

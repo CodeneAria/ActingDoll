@@ -1,5 +1,5 @@
 
-export const CubismDefaultParameterId_v3 = Object.freeze<Record<string, string>>({
+export const CubismDefaultParameterId_custom = Object.freeze<Record<string, string>>({
     // パーツID
     HitAreaPrefix: 'HitArea',
     HitAreaHead: 'Head',

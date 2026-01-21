@@ -5,7 +5,7 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { CubismDefaultParameterId_v3 } from './cubismdefaultparameterid_v3';
+import { CubismDefaultParameterId_custom } from './cubismdefaultparameterid_custom';
 import { CubismDefaultParameterId } from '@framework/cubismdefaultparameterid';
 import { CubismModelSettingJson } from '@framework/cubismmodelsettingjson';
 import {
@@ -281,15 +281,23 @@ export class LAppModel extends CubismUserModel {
       this._breath = CubismBreath.create();
 
       const breathParameters: csmVector<BreathParameterData> = new csmVector();
+      let parameter_id = CubismFramework.getIdManager().getId(
+        this._cubismParameterId.ParamBreath !== undefined ? this._cubismParameterId.ParamBreath : CubismDefaultParameterId.ParamBreath
+      );
+      const paramIndex = this._model.getParameterIndex(parameter_id);
+      let breath_min = this._model.getParameterMinimumValue(paramIndex);
+      let breath_max = this._model.getParameterMaximumValue(paramIndex);
+      let breath_offset = (breath_min + breath_max) / 2; // 中央値
+      let breath_peak = (Math.abs(breath_min) + Math.abs(breath_max)) / 2;
+      let breath_cycle = 3.2345;
+      let breath_weight = 1;
       breathParameters.pushBack(
         new BreathParameterData(
-          CubismFramework.getIdManager().getId(
-            this._cubismParameterId.ParamBreath !== undefined ? this._cubismParameterId.ParamBreath : CubismDefaultParameterId.ParamBreath
-          ),
-          0.5,
-          0.5,
-          3.2345,
-          1
+          parameter_id,   // 呼吸をひもづけるパラメータID
+          breath_offset,  // 呼吸を正弦波としたときの、波のオフセット
+          breath_peak,    // 呼吸を正弦波としたときの、波の高さ
+          breath_cycle,   // 呼吸を正弦波としたときの、波の周期
+          breath_weight   // パラメータへの重み
         )
       );
 
@@ -1260,7 +1268,7 @@ export class LAppModel extends CubismUserModel {
   /**
    * コンストラクタ
    */
-  public constructor(model_version: number) {
+  public constructor(is_custom: boolean) {
     super();
 
     this._modelSetting = null;
@@ -1279,8 +1287,8 @@ export class LAppModel extends CubismUserModel {
     this._hitArea = new csmVector<csmRect>();
     this._userArea = new csmVector<csmRect>();
 
-    if (model_version == 3) {
-      this._cubismParameterId = CubismDefaultParameterId_v3;
+    if (is_custom) {
+      this._cubismParameterId = CubismDefaultParameterId_custom;
     } else {
       this._cubismParameterId = CubismDefaultParameterId;
     }
