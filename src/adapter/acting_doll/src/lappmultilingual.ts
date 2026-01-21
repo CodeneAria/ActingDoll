@@ -379,6 +379,10 @@ const messages: MessageMap = {
         ja: 'エラー: {0}',
         en: 'Error: {0}'
     },
+    WS_HANDLED: {
+        ja: '受信メッセージ: {0}',
+        en: 'Received message: {0}'
+    },
 
     // Controller関連
     CTRL_PANEL_NOT_FOUND: {
@@ -607,6 +611,7 @@ export const MessageKey = {
     WS_PARAMS_SET: 'WS_PARAMS_SET',
     WS_CLIENT_INITIALIZED: 'WS_CLIENT_INITIALIZED',
     WS_CLIENT_RELEASED: 'WS_CLIENT_RELEASED',
+    WS_HANDLED: 'WS_HANDLED',
 
     // LAppUI関連
     UI_ELEMENTS_NOT_FOUND: 'UI_ELEMENTS_NOT_FOUND',

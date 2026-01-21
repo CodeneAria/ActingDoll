@@ -283,13 +283,23 @@ export class LAppView {
   }
 
   /**
-   * ViewMatrixを平行移動する
+   * ViewMatrixを移動する
    * @param deltaX X方向の移動量
    * @param deltaY Y方向の移動量
    */
-  public translateViewMatrix(deltaX: number, deltaY: number): void {
+  public translateRelativeViewMatrix(deltaX: number, deltaY: number): void {
     if (this._viewMatrix) {
       this._viewMatrix.translateRelative(deltaX, deltaY);
+    }
+  }
+  /**
+   * ViewMatrixを移動する
+   * @param deltaX X座標
+   * @param deltaY Y座標
+   */
+  public translateViewMatrix(x: number, y: number): void {
+    if (this._viewMatrix) {
+      this._viewMatrix.translate(x, y);
     }
   }
 
@@ -316,7 +326,7 @@ export class LAppView {
       LAppDefine.ViewLogicalMaxBottom,
       LAppDefine.ViewLogicalMaxTop
     );
-    this.translateViewMatrix((-1 * this._viewMatrix.getTranslateX()), (-1 * this._viewMatrix.getTranslateY()));
+    this.translateViewMatrix(0, 0);
   }
 
   /**

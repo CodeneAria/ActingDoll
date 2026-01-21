@@ -213,7 +213,29 @@ class Live2DController {
         <button id="btn-send-wav">Wavファイル送信</button>
       </div>
     </div>
-    <div class="custom-command-section">
+    <div class="transform-section">
+      <h3>位置・スケール操作</h3>
+      <div style="margin-top: 10px;">
+        <button id="btn-get-position">位置取得 (get_position)</button>
+        <div style="margin-top: 10px;">
+          <input type="number" id="input-position-x" placeholder="X座標" step="0.1" style="width: 100px;" value="0" />
+          <input type="number" id="input-position-y" placeholder="Y座標" step="0.1" style="width: 100px;" value="0" />
+          <label style="margin-left: 10px;">
+            <input type="checkbox" id="checkbox-position-relative" />
+            相対移動
+          </label>
+          <button id="btn-set-position">位置設定 (set_position)</button>
+        </div>
+      </div>
+      <div style="margin-top: 10px;">
+        <button id="btn-get-scale">スケール取得 (get_scale)</button>
+        <div style="margin-top: 10px;">
+          <input type="number" id="input-scale" placeholder="スケール" step="0.1" min="0.1" max="3.0" style="width: 100px;" value="1.0" />
+          <button id="btn-set-scale">スケール設定 (set_scale)</button>
+        </div>
+      </div>
+    </div>
+    <div class="custom-command-section" hidden>
       <h3>カスタムコマンド</h3>
       <input type="text" id="input-command" placeholder="コマンドを入力..." style="width: 500px;" />
       <button id="btn-send-command">送信</button>
@@ -394,6 +416,52 @@ class Live2DController {
         reader.readAsArrayBuffer(file);
       } else {
         this.showError('Wavファイルを選択してください');
+      }
+    });
+
+    // 位置・スケール操作
+    document.getElementById('btn-get-position')?.addEventListener('click', () => {
+      if (!this.selectedClientId) {
+        this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_SELECT_CLIENT));
+        return;
+      }
+      this.sendCommand(`client ${this.selectedClientId} get_position`);
+    });
+
+    document.getElementById('btn-set-position')?.addEventListener('click', () => {
+      if (!this.selectedClientId) {
+        this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_SELECT_CLIENT));
+        return;
+      }
+      const xInput = document.getElementById('input-position-x') as HTMLInputElement;
+      const yInput = document.getElementById('input-position-y') as HTMLInputElement;
+      const relativeCheckbox = document.getElementById('checkbox-position-relative') as HTMLInputElement;
+      if (xInput && yInput && xInput.value && yInput.value) {
+        const relativeOption = relativeCheckbox && relativeCheckbox.checked ? ' relative' : '';
+        this.sendCommand(`client ${this.selectedClientId} set_position ${xInput.value} ${yInput.value}${relativeOption}`);
+      } else {
+        this.showError('X座標とY座標を入力してください');
+      }
+    });
+
+    document.getElementById('btn-get-scale')?.addEventListener('click', () => {
+      if (!this.selectedClientId) {
+        this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_SELECT_CLIENT));
+        return;
+      }
+      this.sendCommand(`client ${this.selectedClientId} get_scale`);
+    });
+
+    document.getElementById('btn-set-scale')?.addEventListener('click', () => {
+      if (!this.selectedClientId) {
+        this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_SELECT_CLIENT));
+        return;
+      }
+      const scaleInput = document.getElementById('input-scale') as HTMLInputElement;
+      if (scaleInput && scaleInput.value) {
+        this.sendCommand(`client ${this.selectedClientId} set_scale ${scaleInput.value}`);
+      } else {
+        this.showError('スケール値を入力してください');
       }
     });
 

@@ -247,6 +247,39 @@ export interface SetLipSyncMessage extends WebSocketMessage {
   client_id: string;
 }
 
+/**
+ * 位置情報リクエストメッセージ
+ */
+export interface RequestPositionMessage extends WebSocketMessage {
+  type: 'request_position';
+}
+
+/**
+ * 位置設定メッセージ
+ */
+export interface SetPositionMessage extends WebSocketMessage {
+  type: 'set_position';
+  x: number;
+  y: number;
+  relative: boolean;
+  client_id: string;
+}
+
+/**
+ * スケール情報リクエストメッセージ
+ */
+export interface RequestScaleMessage extends WebSocketMessage {
+  type: 'request_scale';
+}
+
+/**
+ * スケール設定メッセージ
+ */
+export interface SetScaleMessage extends WebSocketMessage {
+  type: 'set_scale';
+  scale: number;
+  client_id: string;
+}
 
 /**
  * メッセージハンドラの型
@@ -379,105 +412,7 @@ export class WebSocketClient {
     }
 
     // デフォルトのログ出力
-    //this.logMessage(data);
-  }
-
-  /**
-   * メッセージのログ出力
-   * @param data メッセージデータ
-   */
-  private logMessage(data: WebSocketMessage): void {
-    const msgType = data.type || 'unknown';
-
-    switch (msgType) {
-      case 'welcome':
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_WELCOME_MESSAGE, (data as WelcomeResponse).message));
-        break;
-      case 'echo_response':
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_ECHO_RESPONSE, (data as EchoResponse).original));
-        break;
-      case 'broadcast_message':
-        const broadcast = data as BroadcastResponse;
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_BROADCAST_FROM, broadcast.from, broadcast.content));
-        break;
-      case 'client_connected':
-        const connected = data as ClientConnectedMessage;
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_CLIENT_CONNECTED, connected.total_clients.toString()));
-        break;
-      case 'client_disconnected':
-        const disconnected = data as ClientDisconnectedMessage;
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_CLIENT_DISCONNECTED, disconnected.total_clients.toString()));
-        break;
-      case 'command_response':
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_COMMAND_RESPONSE, data));
-        break;
-      case 'error':
-        CubismLogError(LAppMultilingual.getMessage(MessageKey.WS_ERROR_MESSAGE, (data as ErrorMessage).message));
-        break;
-      case 'set_eye_blink':
-        const eyeBlink = data as SetEyeBlinkMessage;
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_EYE_BLINK_SETTING,
-          eyeBlink.enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
-        break;
-      case 'set_breath':
-        const breath = data as SetBreathMessage;
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_BREATH_SETTING,
-          breath.enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
-        break;
-      case 'set_idle_motion':
-        const idleMotion = data as SetIdleMotionMessage;
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_IDLE_MOTION_SETTING,
-          idleMotion.enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
-        break;
-      case 'set_drag_follow':
-        const dragFollow = data as SetDragFollowMessage;
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_DRAG_FOLLOW_SETTING,
-          dragFollow.enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
-        break;
-      case 'set_physics':
-        const physics = data as SetPhysicsMessage;
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_PHYSICS_SETTING,
-          physics.enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
-        break;
-      case 'set_expression':
-        const expression = data as SetExpressionMessage;
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_EXPRESSION_SETTING, expression.expression));
-        break;
-      case 'set_motion':
-        const motion = data as SetMotionMessage;
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_MOTION_SETTING, motion.group,
-          (motion.no ?? LAppMultilingual.getMessage(MessageKey.RANDOM)).toString()));
-        break;
-      case 'set_parameter':
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_PARAM_RECEIVED));
-        break;
-      case 'request_model_info':
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_MODEL_INFO_REQUEST));
-        break;
-      case 'request_eye_blink':
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_EYE_BLINK_REQUEST));
-        break;
-      case 'request_breath':
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_BREATH_REQUEST));
-        break;
-      case 'request_idle_motion':
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_IDLE_MOTION_REQUEST));
-        break;
-      case 'request_drag_follow':
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_DRAG_FOLLOW_REQUEST));
-        break;
-      case 'request_physics':
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_PHYSICS_REQUEST));
-        break;
-      case 'request_expression':
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_EXPRESSION_REQUEST));
-        break;
-      case 'request_motion':
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_MOTION_REQUEST));
-        break;
-      default:
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_UNHANDLED_MESSAGE, msgType, data));
-    }
+    // CubismLogVerbose(LAppMultilingual.getMessage(MessageKey.WS_HANDLED, JSON.stringify(data)));
   }
 
   /**
@@ -673,5 +608,24 @@ export class WebSocketClient {
    */
   public sendLipSyncWav(filename: string, result: boolean, from: string): void {
     this.sendClientResponse('response_lipsync', { filename, result }, from);
+  }
+
+  /**
+   * 位置情報を送信
+   * @param x X座標
+   * @param y Y座標
+   * @param from 送信元クライアントID
+   */
+  public sendResponsePosition(x: number, y: number, from: string): void {
+    this.sendClientResponse('response_position', { x, y }, from);
+  }
+
+  /**
+   * スケール情報を送信
+   * @param scale スケール値
+   * @param from 送信元クライアントID
+   */
+  public sendResponseScale(scale: number, from: string): void {
+    this.sendClientResponse('response_scale', { scale }, from);
   }
 }

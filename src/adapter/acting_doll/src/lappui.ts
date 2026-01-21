@@ -65,7 +65,7 @@ export class LAppUI {
             this._scaleSlider.max = LAppDefine.ModelScaleMax.toString();
             this._scaleSlider.step = LAppDefine.ModelScaleStep.toString();
         }
-        this.resetScaleSlider(LAppDefine.ModelScaleDefault);
+        this.updateScaleSlider(LAppDefine.ModelScaleDefault);
 
         this._expressionSelect = document.getElementById('expressionSelect') as HTMLSelectElement;
         this._motionSelect = document.getElementById('motionSelect') as HTMLSelectElement;
@@ -135,16 +135,16 @@ export class LAppUI {
 
         // Setup model position controls
         this._moveUpButton?.addEventListener('click', () => {
-            this.moveModel(0, -LAppDefine.ModelPositionMoveStep);
+            this.moveModel(0, -LAppDefine.ModelPositionMoveStep, true);
         });
         this._moveDownButton?.addEventListener('click', () => {
-            this.moveModel(0, LAppDefine.ModelPositionMoveStep);
+            this.moveModel(0, LAppDefine.ModelPositionMoveStep, true);
         });
         this._moveLeftButton?.addEventListener('click', () => {
-            this.moveModel(-LAppDefine.ModelPositionMoveStep, 0);
+            this.moveModel(-LAppDefine.ModelPositionMoveStep, 0, true);
         });
         this._moveRightButton?.addEventListener('click', () => {
-            this.moveModel(LAppDefine.ModelPositionMoveStep, 0);
+            this.moveModel(LAppDefine.ModelPositionMoveStep, 0, true);
         });
         this._resetPositionButton?.addEventListener('click', () => {
             this.resetModelPosition();
@@ -811,10 +811,11 @@ export class LAppUI {
 
     /**
      * モデルの位置を移動
-     * @param deltaX X方向の移動量
-     * @param deltaY Y方向の移動量
+     * @param xValue X方向の移動量
+     * @param yValue Y方向の移動量
+     * @param isRelative 相対移動かどうか
      */
-    public moveModel(deltaX: number, deltaY: number): void {
+    public moveModel(xValue: number, yValue: number, isRelative: boolean): void {
         const delegate = LAppDelegate.getInstance();
         const subdelegate = delegate.getSubdelegate(0);
 
@@ -822,7 +823,11 @@ export class LAppUI {
 
         const view = subdelegate.getView();
         if (view) {
-            view.translateViewMatrix(deltaX, deltaY);
+            if (isRelative) {
+                view.translateRelativeViewMatrix(xValue, yValue);
+            } else {
+                view.translateViewMatrix(xValue, yValue);
+            }
             const viewMatrix = view.getViewMatrix();
             if (viewMatrix) {
                 CubismLogVerbose(
@@ -849,16 +854,17 @@ export class LAppUI {
             // 位置リセット
             view.resetViewMatrix();
             // スケールもリセット
-            this.resetScaleSlider(LAppDefine.ModelScaleDefault);
+            this.updateScaleSlider(LAppDefine.ModelScaleDefault);
         }
     }
 
     /**
-     * スケールスライダーをデフォルト値にリセット
+     * スケールスライダーを更新
+     * @param scale スケール値
      */
-    public resetScaleSlider(value: number): void {
-        if (this._scaleSlider) { this._scaleSlider.value = value.toString(); }
-        if (this._scaleValue) { this._scaleValue.textContent = value.toFixed(1); }
+    public updateScaleSlider(scale: number): void {
+        if (this._scaleSlider) { this._scaleSlider.value = scale.toString(); }
+        if (this._scaleValue) { this._scaleValue.textContent = scale.toFixed(1); }
     }
 
     /**
@@ -874,7 +880,7 @@ export class LAppUI {
         const view = subdelegate.getView();
         if (view) {
             view.setViewScale(scale);
-            this.resetScaleSlider(scale);
+            this.updateScaleSlider(scale);
         }
     }
 

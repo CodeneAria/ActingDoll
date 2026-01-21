@@ -648,6 +648,69 @@ export class LAppDelegate {
         }
       });
 
+      this._websocketClient.onMessage('request_position', (data: any) => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const view = subdelegate.getView();
+          if (view) {
+            const viewMatrix = view.getViewMatrix();
+            if (viewMatrix) {
+              const x: number = parseFloat(viewMatrix.getTranslateX().toFixed(3));
+              const y: number = parseFloat(viewMatrix.getTranslateY().toFixed(3));
+              this._websocketClient.sendResponsePosition(x, y, data.from || '');
+            }
+          }
+        }
+      });
+
+      this._websocketClient.onMessage('set_position', (data: any) => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const view = subdelegate.getView();
+          if (view && data.x !== undefined && data.y !== undefined) {
+            // Update UI
+            const ui = subdelegate.getUI();
+            if (ui) {
+              ui.moveModel(data.x, data.y, data.relative);
+              const viewMatrix = view.getViewMatrix();
+              if (viewMatrix) {
+                const x: number = parseFloat(viewMatrix.getTranslateX().toFixed(3));
+                const y: number = parseFloat(viewMatrix.getTranslateY().toFixed(3));
+                this._websocketClient.sendResponsePosition(x, y, data.from || '');
+              }
+            }
+          }
+        }
+      });
+
+      this._websocketClient.onMessage('request_scale', (data: any) => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const view = subdelegate.getView();
+          if (view) {
+            const viewMatrix = view.getViewMatrix();
+            const scale = viewMatrix.getScaleX();
+            this._websocketClient.sendResponseScale(scale, data.from || '');
+          }
+        }
+      });
+
+      this._websocketClient.onMessage('set_scale', (data: any) => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const view = subdelegate.getView();
+          if (view && data.scale !== undefined) {
+            view.setViewScale(data.scale);
+            // Update UI
+            const ui = subdelegate.getUI();
+            if (ui) {
+              ui.updateScaleSlider(data.scale);
+              this._websocketClient.sendResponseScale(data.scale, data.from || '');
+            }
+          }
+        }
+      });
+
       CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_CLIENT_INITIALIZED));
     }
   }

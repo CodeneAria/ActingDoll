@@ -770,6 +770,82 @@ async def client_command(command: str, args: dict,
                     "error": f"パラメータ設定の送信に失敗しました"
                 }
 
+        elif command == "set_position":  # モデル位置設定
+            parts = args.strip().split() if len(args) > 0 else []
+            if len(parts) < 2:
+                return {
+                    "type": "client_request",
+                    "command": "set_position",
+                    "from": source_client_id,
+                    "error": "x座標とy座標が必要です: set_position [x] [y] <relative>"
+                }
+
+            try:
+                x = float(parts[0])
+                y = float(parts[1])
+                relative = parts[2].lower() == "relative" if len(parts) > 2 else False
+            except ValueError:
+                return {
+                    "type": "client_request",
+                    "command": "set_position",
+                    "from": source_client_id,
+                    "error": "x座標とy座標は数値である必要があります"
+                }
+
+            await send_to_client(client_id, {
+                "type": "set_position",
+                "client_id": client_id,
+                "from": source_client_id,
+                "x": x,
+                "y": y,
+                "relative": relative,
+                "timestamp": datetime.now().isoformat()
+            })
+            return {
+                "type": "client_request",
+                "command": "set_position",
+                "success": True,
+                "from": source_client_id,
+                "data": {"x": x, "y": y, "relative": relative},
+                "message": f"クライアントに位置設定を送信しました (x={x}, y={y}, relative={relative})"
+            }
+
+        elif command == "set_scale":  # モデルスケール設定
+            parts = args.strip().split() if len(args) > 0 else []
+            if not parts:
+                return {
+                    "type": "client_request",
+                    "command": "set_scale",
+                    "from": source_client_id,
+                    "error": "スケール値が必要です: set_scale [size]"
+                }
+
+            try:
+                scale = float(parts[0])
+            except ValueError:
+                return {
+                    "type": "client_request",
+                    "command": "set_scale",
+                    "from": source_client_id,
+                    "error": "スケール値は数値である必要があります"
+                }
+
+            await send_to_client(client_id, {
+                "type": "set_scale",
+                "client_id": client_id,
+                "from": source_client_id,
+                "scale": scale,
+                "timestamp": datetime.now().isoformat()
+            })
+            return {
+                "type": "client_request",
+                "command": "set_scale",
+                "success": True,
+                "from": source_client_id,
+                "data": {"scale": scale},
+                "message": f"クライアントにスケール設定を送信しました (scale={scale})"
+            }
+
     elif command.startswith("get_"):
         if command == "get_eye_blink":  # アニメーション設定 - 自動目パチ
             await send_to_client(client_id, {
@@ -882,6 +958,36 @@ async def client_command(command: str, args: dict,
                 "from": source_client_id,
                 "client_id": client_id,
                 "message": "クライアントにモデル情報をリクエストしました"
+            }
+
+        elif command == "get_position":  # モデル位置取得
+            await send_to_client(client_id, {
+                "type": "request_position",
+                "from": source_client_id,
+                "timestamp": datetime.now().isoformat()
+            })
+            return {
+                "type": "client_request",
+                "command": "get_position",
+                "success": True,
+                "from": source_client_id,
+                "client_id": client_id,
+                "message": "クライアントに位置取得リクエストを送信しました"
+            }
+
+        elif command == "get_scale":  # モデルスケール取得
+            await send_to_client(client_id, {
+                "type": "request_scale",
+                "from": source_client_id,
+                "timestamp": datetime.now().isoformat()
+            })
+            return {
+                "type": "client_request",
+                "command": "get_scale",
+                "success": True,
+                "from": source_client_id,
+                "client_id": client_id,
+                "message": "クライアントにスケール取得リクエストを送信しました"
             }
 
     return {
@@ -1056,6 +1162,8 @@ def print_server_console():
     print("  model get_parameters <name>     - モデルのparameters一覧を取得")
 
     print("クライアント制御コマンド (WebSocket経由):")
+    print("  client <client_id> get_model")
+
     print("  client <client_id> get_eye_blink")
     print("  client <client_id> set_eye_blink [enabled|disabled]")
 
@@ -1078,10 +1186,15 @@ def print_server_console():
     print(
         "  client <client_id> set_motion [group_name] [no] [priority(0-3, default:2)]")
 
-    print("  client <client_id> get_model")
     print("  client <client_id> set_lipsync [base64_wav_data]")
     print("  client <client_id> set_lipsync_from_file [filename]")
     print("  client <client_id> set_parameter ID01=VALUE01 ID02=VALUE02 ...")
+
+    print("  client <client_id> get_position")
+    print("  client <client_id> set_position [x] [y] <relative>")
+
+    print("  client <client_id> get_scale")
+    print("  client <client_id> set_scale [size]")
     print("========================\n")
 
 
