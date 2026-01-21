@@ -106,9 +106,18 @@ export class LAppSubdelegate {
    * Resize canvas and re-initialize view.
    */
   public onResize(): void {
+    // 現在のスケール値を取得
+    const currentScale = this._ui.getCurrentScale();
+
     this.resizeCanvas();
     this._view.initialize(this);
     this._view.initializeSprite();
+
+    // スケールを復元
+    if (currentScale !== undefined && currentScale !== LAppDefine.ViewScale) {
+      this._view.setViewScale(currentScale);
+      this._ui.updateScaleSlider(currentScale);
+    }
   }
 
   private resizeObserverCallback(

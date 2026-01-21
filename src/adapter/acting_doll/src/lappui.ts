@@ -885,6 +885,15 @@ export class LAppUI {
     }
 
     /**
+     * 現在のスケール値を取得
+     * @returns 現在のスケール値
+     */
+    public getCurrentScale(): number | undefined {
+        if (!this._scaleSlider) return undefined;
+        return parseFloat(this._scaleSlider.value);
+    }
+
+    /**
      * Get instance
      */
     public static getInstance(): LAppUI {
