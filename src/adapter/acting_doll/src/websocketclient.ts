@@ -628,4 +628,12 @@ export class WebSocketClient {
   public sendResponseScale(scale: number, from: string): void {
     this.sendClientResponse('response_scale', { scale }, from);
   }
+
+  /**
+   * 認証メッセージを送信
+   * @param token 認証トークン
+   */
+  public sendAuth(token: string): void {
+    this.sendMessage({ type: 'auth', token: token });
+  }
 }

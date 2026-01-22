@@ -127,71 +127,6 @@ async def handle_client(websocket: ServerConnection):
     client_id_map[client_id] = websocket
 
     try:
-        # 認証が必要な場合
-        if security_config and security_config.require_auth:
-            # ウェルカムメッセージで認証を要求
-            await websocket.send(json.dumps({
-                "type": "auth_required",
-                "message": "Authentication required. Please send auth token.",
-                "client_id": client_id,
-                "timestamp": datetime.now().isoformat()
-            }, ensure_ascii=False))
-
-            # 最初のメッセージで認証を待つ
-            try:
-                auth_message = await asyncio.wait_for(websocket.recv(), timeout=30.0)
-                auth_data = json.loads(auth_message)
-
-                if auth_data.get("type") != "auth":
-                    await websocket.send(json.dumps({
-                        "type": "auth_failed",
-                        "message": "Authentication failed: Expected auth message"
-                    }, ensure_ascii=False))
-                    return
-
-                token = auth_data.get("token")
-                if not security_config.validate_auth_token(token):
-                    await websocket.send(json.dumps({
-                        "type": "auth_failed",
-                        "message": "Authentication failed: Invalid token"
-                    }, ensure_ascii=False))
-                    logger.warning(f"認証失敗: {client_id}")
-                    return
-
-                # 認証成功
-                authenticated_clients.add(websocket)
-                await websocket.send(json.dumps({
-                    "type": "auth_success",
-                    "message": "Authentication successful",
-                    "client_id": client_id
-                }, ensure_ascii=False))
-                logger.info(f"認証成功: {client_id}")
-
-            except asyncio.TimeoutError:
-                await websocket.send(json.dumps({
-                    "type": "auth_failed",
-                    "message": "Authentication timeout"
-                }, ensure_ascii=False))
-                logger.warning(f"認証タイムアウト: {client_id}")
-                return
-            except json.JSONDecodeError:
-                await websocket.send(json.dumps({
-                    "type": "auth_failed",
-                    "message": "Invalid JSON in auth message"
-                }, ensure_ascii=False))
-                return
-        else:
-            # 認証不要の場合は自動的に認証済みとする
-            authenticated_clients.add(websocket)
-
-        # 接続通知を他のクライアントにブロードキャスト
-        await broadcast_message({
-            "type": "client_connected",
-            "client_id": client_id,
-            "timestamp": datetime.now().isoformat(),
-            "total_clients": len(connected_clients)
-        }, exclude=websocket)
-
         # ウェルカムメッセージを送信
         await websocket.send(json.dumps({
             "type": "welcome",
@@ -203,14 +138,6 @@ async def handle_client(websocket: ServerConnection):
         # メッセージ受信ループ
         async for message in websocket:
             try:
-                # 認証チェック（setによるO(1)検索）
-                if websocket not in authenticated_clients:
-                    await websocket.send(json.dumps({
-                        "type": "error",
-                        "message": "Not authenticated"
-                    }, ensure_ascii=False))
-                    continue
-
                 # JSON形式で受信
                 data = json.loads(message)
                 logger.info(f"受信 from {client_id}: {data}")
@@ -226,6 +153,24 @@ async def handle_client(websocket: ServerConnection):
                         "timestamp": datetime.now().isoformat()
                     }
                     await websocket.send(json.dumps(response, ensure_ascii=False))
+
+                elif msg_type == "auth":
+                    # 認証処理
+                    token = data.get("token")
+                    if security_config and security_config.validate_auth_token(token):
+                        authenticated_clients.add(websocket)
+                        await websocket.send(json.dumps({
+                            "type": "auth_success",
+                            "message": "Authentication successful",
+                            "client_id": client_id
+                        }, ensure_ascii=False))
+                        logger.info(f"認証成功: {client_id}")
+                    else:
+                        await websocket.send(json.dumps({
+                            "type": "auth_failed",
+                            "message": "Authentication failed: Invalid token"
+                        }, ensure_ascii=False))
+                        logger.warning(f"認証失敗: {client_id}")
 
                 elif msg_type == "broadcast":
                     # 全クライアントにブロードキャスト
@@ -256,7 +201,7 @@ async def handle_client(websocket: ServerConnection):
                     command = data.get("command")
                     args = data.get("args", {})
                     source_client_id = data.get("from", "")
-                    response = await client_command(command, args, client_id, source_client_id)
+                    await client_command(command, args, client_id, source_client_id)
                     # await websocket.send(json.dumps(response, ensure_ascii=False))
 
                 else:
@@ -718,6 +663,18 @@ async def client_command(command: str, args: dict,
                 "message": "クライアントにWavファイルを送信しました"
             }
         elif command == "set_lipsync_from_file":  # リップシンク用Wavファイル送信
+            # 認証チェック: このコマンドは認証が必要
+            source_ws = client_id_map.get(source_client_id)
+            if security_config and security_config.require_auth:
+                if not source_ws or source_ws not in authenticated_clients:
+                    logger.warning(f"認証されていないクライアントがset_lipsync_from_fileを試行: {source_client_id}")
+                    return {
+                        "type": "client_request",
+                        "command": "set_lipsync_from_file",
+                        "from": source_client_id,
+                        "error": "このコマンドには認証が必要です。先にauthコマンドで認証してください。"
+                    }
+
             parts = args.strip().split(maxsplit=1) if len(args) > 0 else []
             file_name = parts[0] if len(parts) > 0 else ""
 
@@ -1294,6 +1251,7 @@ def print_server_console():
 
     print("  client <client_id> set_lipsync [base64_wav_data]")
     print("  client <client_id> set_lipsync_from_file [filename]")
+    print("    ※ set_lipsync_from_fileは、auth コマンドで認証が必要")
     print("  client <client_id> set_parameter ID01=VALUE01 ID02=VALUE02 ...")
 
     print("  client <client_id> get_position")
@@ -1479,7 +1437,7 @@ async def main():
     else:
         logger.info("ファイルアクセスホワイトリスト: 未設定（ファイル読み取りコマンド無効）")
 
-    logger.info(f"WebSocketサーバーを起動中: ws://{host}:{port}")
+    logger.info(f"WebSocketサーバー: ws://{host}:{port}")
 
     async with websockets.serve(handle_client, host, port):
         # サーバーコンソールを起動（--no-console が指定されていない場合のみ）
