@@ -15,10 +15,13 @@ docker:
   dockerfile: "tools/CubismContainer/volume/Dockerfile"
 
 authentication:
+  # WEBSOCKET_AUTH_TOKEN
+  token: "your_authentication_token_here"
+  # WEBSOCKET_REQUIRE_AUTH
+  require_auth: true
+  # WEBSOCKET_ALLOWED_DIRS
   dirs:
     - "/root/workspace/adapter/allowed"
-  token: "your_authentication_token_here"
-  require_auth: true
 
 # Cubism SDK settings
 cubism:

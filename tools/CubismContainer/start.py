@@ -44,6 +44,11 @@ def main(work_dir, config_path):
     DOCKER_IMAGE_VER = config['docker']['image']['version']
     DOCKER_CONTAINER_NAME = config['docker']['container']['name']
 
+    # Authentication settings
+    AUTH_TOKEN = config['authentication']['token']
+    REQUIRE_AUTH = str(config['authentication']['require_auth']).lower()
+    ALLOWED_DIRS = ':'.join(config['authentication']['dirs'])
+
     server_dir = f"/root/workspace/adapter/server"
 
     # Show running containers
@@ -69,7 +74,11 @@ def main(work_dir, config_path):
     # Run npm start inside container
     print("# Running npm start...")
     npm_cmd = (
-        f'docker exec -t {DOCKER_CONTAINER_NAME} /bin/sh -c "'
+        f'docker exec -t '
+        f'-e WEBSOCKET_AUTH_TOKEN={AUTH_TOKEN} '
+        f'-e WEBSOCKET_REQUIRE_AUTH={REQUIRE_AUTH} '
+        f'-e WEBSOCKET_ALLOWED_DIRS={ALLOWED_DIRS} '
+        f'{DOCKER_CONTAINER_NAME} /bin/sh -c "'
         f'cd {server_dir} && /bin/sh start.sh"'
     )
 

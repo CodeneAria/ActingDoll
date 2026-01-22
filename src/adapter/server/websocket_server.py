@@ -1430,13 +1430,13 @@ def parse_args():
         '--host',
         type=str,
         default=None,
-        help='サーバーのホスト (デフォルト: 環境変数WEBSOCKET_HOSTまたは127.0.0.1)'
+        help='サーバーのホスト (デフォルト: 環境変数"WEBSOCKET_HOST"または127.0.0.1)'
     )
     parser.add_argument(
         '--port',
         type=int,
         default=None,
-        help='サーバーのポート (デフォルト: 環境変数WEBSOCKET_PORTまたは8765)'
+        help='サーバーのポート (デフォルト: 環境変数"WEBSOCKET_PORT"または8765)'
     )
     parser.add_argument(
         '--no-console',
