@@ -79,7 +79,8 @@ def main(work_dir, config_path):
     print(f"    dockerfile : {dockerfile_path}")
     print(f"    image      : {DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}")
     print(f"    container  : {DOCKER_CONTAINER_NAME}")
-    print(f"        port   : {SERVER_PORT}")
+    print(f"        port(HTTP)      : {SERVER_PORT}")
+    print(f"        port(Websocket) : {WEBSOCKET_PORT}")
     print("=" * 50)
 
     # Check Cubism Core files

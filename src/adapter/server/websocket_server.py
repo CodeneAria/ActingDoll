@@ -136,19 +136,19 @@ async def handle_client(websocket: ServerConnection):
                 "client_id": client_id,
                 "timestamp": datetime.now().isoformat()
             }, ensure_ascii=False))
-            
+
             # 最初のメッセージで認証を待つ
             try:
                 auth_message = await asyncio.wait_for(websocket.recv(), timeout=30.0)
                 auth_data = json.loads(auth_message)
-                
+
                 if auth_data.get("type") != "auth":
                     await websocket.send(json.dumps({
                         "type": "auth_failed",
                         "message": "Authentication failed: Expected auth message"
                     }, ensure_ascii=False))
                     return
-                
+
                 token = auth_data.get("token")
                 if not security_config.validate_auth_token(token):
                     await websocket.send(json.dumps({
@@ -157,7 +157,7 @@ async def handle_client(websocket: ServerConnection):
                     }, ensure_ascii=False))
                     logger.warning(f"認証失敗: {client_id}")
                     return
-                
+
                 # 認証成功
                 authenticated_clients.add(websocket)
                 await websocket.send(json.dumps({
@@ -166,7 +166,7 @@ async def handle_client(websocket: ServerConnection):
                     "client_id": client_id
                 }, ensure_ascii=False))
                 logger.info(f"認証成功: {client_id}")
-                
+
             except asyncio.TimeoutError:
                 await websocket.send(json.dumps({
                     "type": "auth_failed",
@@ -183,7 +183,7 @@ async def handle_client(websocket: ServerConnection):
         else:
             # 認証不要の場合は自動的に認証済みとする
             authenticated_clients.add(websocket)
-        
+
         # 接続通知を他のクライアントにブロードキャスト
         await broadcast_message({
             "type": "client_connected",
@@ -210,7 +210,7 @@ async def handle_client(websocket: ServerConnection):
                         "message": "Not authenticated"
                     }, ensure_ascii=False))
                     continue
-                
+
                 # JSON形式で受信
                 data = json.loads(message)
                 logger.info(f"受信 from {client_id}: {data}")
@@ -256,7 +256,7 @@ async def handle_client(websocket: ServerConnection):
                     command = data.get("command")
                     args = data.get("args", {})
                     source_client_id = data.get("from", "")
-                    await client_command(command, args, client_id, source_client_id)
+                    response = await client_command(command, args, client_id, source_client_id)
                     # await websocket.send(json.dumps(response, ensure_ascii=False))
 
                 else:
@@ -728,7 +728,7 @@ async def client_command(command: str, args: dict,
                     "from": source_client_id,
                     "error": "Wavファイル名が必要です"
                 }
-            
+
             # セキュリティチェック: ファイルパスがホワイトリストに含まれているか確認
             if security_config and not security_config.is_file_allowed(file_name):
                 logger.warning(f"ファイルアクセス拒否: {file_name} (クライアント: {source_client_id})")
@@ -738,7 +738,7 @@ async def client_command(command: str, args: dict,
                     "from": source_client_id,
                     "error": f"ファイル '{file_name}' へのアクセスが拒否されました。許可されたディレクトリ内のファイルのみアクセス可能です。"
                 }
-            
+
             wav_data = ""
             try:
                 with open(file_name, 'rb') as f:
@@ -766,7 +766,7 @@ async def client_command(command: str, args: dict,
                     "from": source_client_id,
                     "error": f"Wavファイル '{file_name}' の読み込みに失敗しました"
                 }
-            
+
             if not wav_data:
                 return {
                     "type": "client_request",
@@ -1473,7 +1473,7 @@ async def main():
             logger.warning("警告: 認証が必須ですが、WEBSOCKET_AUTH_TOKENが設定されていません。接続は全て拒否されます。")
     else:
         logger.warning("警告: 認証が無効です。本番環境では認証を有効にすることを推奨します。")
-    
+
     if security_config.allowed_file_dirs:
         logger.info(f"ファイルアクセスホワイトリスト: {[str(d) for d in security_config.allowed_file_dirs]}")
     else:

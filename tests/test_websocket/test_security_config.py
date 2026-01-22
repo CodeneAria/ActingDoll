@@ -8,7 +8,8 @@ import pytest
 import sys
 
 # Add src/adapter/server to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src" / "adapter" / "server"))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent /
+                "src" / "adapter" / "server"))
 
 from security_config import SecurityConfig
 
@@ -20,13 +21,13 @@ class TestSecurityConfig:
         """デフォルト設定のテスト"""
         # 環境変数をクリア
         env_backup = {}
-        for key in ['WEBSOCKET_AUTH_TOKEN', 'WEBSOCKET_REQUIRE_AUTH', 
+        for key in ['WEBSOCKET_AUTH_TOKEN', 'WEBSOCKET_REQUIRE_AUTH',
                     'WEBSOCKET_ALLOWED_DIRS', 'WEBSOCKET_HOST', 'WEBSOCKET_PORT']:
             env_backup[key] = os.environ.pop(key, None)
-        
+
         try:
             config = SecurityConfig()
-            
+
             # デフォルトは認証必須
             assert config.require_auth is True
             # トークンは未設定
@@ -78,7 +79,7 @@ class TestSecurityConfig:
         """ホワイトリストが空の場合のファイルアクセステスト"""
         config = SecurityConfig()
         assert config.allowed_file_dirs == []
-        
+
         with tempfile.NamedTemporaryFile() as tmpfile:
             # ホワイトリストが空の場合は全て拒否
             assert config.is_file_allowed(tmpfile.name) is False
@@ -89,23 +90,23 @@ class TestSecurityConfig:
             # テスト用ファイルを作成
             allowed_file = Path(tmpdir) / "allowed.txt"
             allowed_file.write_text("test")
-            
+
             # 別のディレクトリを作成
             with tempfile.TemporaryDirectory() as tmpdir2:
                 denied_file = Path(tmpdir2) / "denied.txt"
                 denied_file.write_text("test")
-                
+
                 # ホワイトリストを設定
                 os.environ['WEBSOCKET_ALLOWED_DIRS'] = tmpdir
                 try:
                     config = SecurityConfig()
-                    
+
                     # 許可されたディレクトリ内のファイルはOK
                     assert config.is_file_allowed(str(allowed_file)) is True
-                    
+
                     # 許可されていないディレクトリ内のファイルはNG
                     assert config.is_file_allowed(str(denied_file)) is False
-                    
+
                     # 存在しないファイルはNG
                     assert config.is_file_allowed(str(Path(tmpdir) / "nonexistent.txt")) is False
                 finally:
@@ -119,12 +120,12 @@ class TestSecurityConfig:
             subdir.mkdir(parents=True)
             test_file = subdir / "test.txt"
             test_file.write_text("test")
-            
+
             # 親ディレクトリをホワイトリストに追加
             os.environ['WEBSOCKET_ALLOWED_DIRS'] = tmpdir
             try:
                 config = SecurityConfig()
-                
+
                 # サブディレクトリ内のファイルもOK
                 assert config.is_file_allowed(str(test_file)) is True
             finally:
@@ -135,7 +136,7 @@ class TestSecurityConfig:
         os.environ['WEBSOCKET_REQUIRE_AUTH'] = 'false'
         try:
             config = SecurityConfig()
-            
+
             # 認証が無効なら常にTrue
             assert config.validate_auth_token(None) is True
             assert config.validate_auth_token("any-token") is True
@@ -147,10 +148,10 @@ class TestSecurityConfig:
         os.environ['WEBSOCKET_AUTH_TOKEN'] = 'correct-token'
         try:
             config = SecurityConfig()
-            
+
             # 正しいトークンはOK
             assert config.validate_auth_token('correct-token') is True
-            
+
             # 間違ったトークンはNG
             assert config.validate_auth_token('wrong-token') is False
             assert config.validate_auth_token(None) is False
@@ -163,12 +164,12 @@ class TestSecurityConfig:
         env_backup = {}
         for key in ['WEBSOCKET_AUTH_TOKEN', 'WEBSOCKET_REQUIRE_AUTH']:
             env_backup[key] = os.environ.pop(key, None)
-        
+
         try:
             # 認証必須にするが、トークンは設定しない
             os.environ['WEBSOCKET_REQUIRE_AUTH'] = 'true'
             config = SecurityConfig()
-            
+
             # トークンが設定されていないので全て拒否
             assert config.validate_auth_token('any-token') is False
             assert config.validate_auth_token(None) is False

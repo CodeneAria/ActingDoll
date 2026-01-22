@@ -14,6 +14,12 @@ docker:
   # Dockerfile name
   dockerfile: "tools/CubismContainer/volume/Dockerfile"
 
+authentication:
+  dirs:
+    - "/root/workspace/adapter/allowed"
+  token: "your_authentication_token_here"
+  require_auth: true
+
 # Cubism SDK settings
 cubism:
   # Git repository and tag for Cubism Framework
