@@ -14,7 +14,8 @@ from acting_doll.client import Live2DClient
 server = Server("acting-doll")
 
 # Get Live2D server URL from environment variable
-LIVE2D_SERVER_URL = os.environ.get("LIVE2D_SERVER_URL", "http://localhost:8080")
+LIVE2D_SERVER_URL = os.environ.get(
+    "LIVE2D_SERVER_URL", "http://localhost:5000")
 
 
 @asynccontextmanager

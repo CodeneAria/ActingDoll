@@ -1,0 +1,58 @@
+/*
+* 特別な事情があるモデルに対して使用するカスタムのパラメータID定義
+*    - R3以前に作成されたモデル
+*    - 公式とは違う設定を行ったモデル
+*    - 鏡動作など事情が異なる割り当てを任意で行う場合
+*/
+export const CubismDefaultParameterId_custom = Object.freeze<Record<string, string>>({
+    // パーツID
+    HitAreaPrefix: 'HitArea',
+    HitAreaHead: 'Head',
+    HitAreaBody: 'Body',
+    PartsIdCore: 'Parts01Core',
+    PartsArmPrefix: 'Parts01Arm_',
+    PartsArmLPrefix: 'Parts01ArmL_',
+    PartsArmRPrefix: 'Parts01ArmR_',
+    // パラメータID
+    ParamAngleX: 'PARAM_ANGLE_X',
+    ParamAngleY: 'PARAM_ANGLE_Y',
+    ParamAngleZ: 'PARAM_ANGLE_Z',
+    ParamEyeLOpen: 'PARAM_EYE_L_OPEN',
+    ParamEyeLSmile: 'PARAM_EYE_L_SMILE',
+    ParamEyeROpen: 'PARAM_EYE_R_OPEN',
+    ParamEyeRSmile: 'PARAM_EYE_R_SMILE',
+    ParamEyeBallX: 'PARAM_EYE_BALL_X',
+    ParamEyeBallY: 'PARAM_EYE_BALL_Y',
+    ParamEyeBallForm: 'PARAM_EYE_BALL_FORM',
+    ParamBrowLY: 'PARAM_BROW_L_Y',
+    ParamBrowRY: 'PARAM_BROW_R_Y',
+    ParamBrowLX: 'PARAM_BROW_L_X',
+    ParamBrowRX: 'PARAM_BROW_R_X',
+    ParamBrowLAngle: 'PARAM_BROW_L_ANGLE',
+    ParamBrowRAngle: 'PARAM_BROW_R_ANGLE',
+    ParamBrowLForm: 'PARAM_BROW_L_FORM',
+    ParamBrowRForm: 'PARAM_BROW_R_FORM',
+    ParamMouthForm: 'PARAM_Mouth_FORM',
+    ParamMouthOpenY: 'PARAM_MOUTH_OPEN_Y',
+    ParamCheek: 'PARAM_CHEEK',
+    ParamBodyAngleX: 'PARAM_BODY_ANGLE_X',
+    ParamBodyAngleY: 'PARAM_BODY_ANGLE_Y',
+    ParamBodyAngleZ: 'PARAM_BODY_ANGLE_Z',
+    ParamBreath: 'PARAM_BREATH',
+    ParamArmLA: 'PARAM_ARM_LA',
+    ParamArmRA: 'PARAM_ARM_RA',
+    ParamArmLB: 'PARAM_ARM_LB',
+    ParamArmRB: 'PARAM_ARM_RB',
+    ParamHandL: 'PARAM_HAND_L',
+    ParamHandR: 'PARAM_HAND_R',
+    ParamHairFront: 'PARAM_HAIR_FRONT',
+    ParamHairSide: 'PARAM_HAIR_SIDE',
+    ParamHairBack: 'PARAM_HAIR_BACK',
+    ParamHairFluffy: 'PARAM_HAIR_FLUFFY',
+    ParamShoulderY: 'PARAM_SHOULDER_Y',
+    ParamBustX: 'PARAM_BUST_X',
+    ParamBustY: 'PARAM_BUST_Y',
+    ParamBaseX: 'PARAM_BASE_X',
+    ParamBaseY: 'PARAM_BASE_Y',
+    ParamNONE: 'NONE:'
+});

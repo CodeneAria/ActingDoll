@@ -1,0 +1,83 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Docker:Exec",
+            "type": "shell",
+            "command": "${workspaceFolder}/tools/CubismContainer/exec.py",
+            "args": [],
+            "detail": "Dockerの中に入って操作できるコンソール",
+        },
+        {
+            "label": "Docker:00_Create",
+            "type": "shell",
+            "command": "${workspaceFolder}/tools/CubismContainer/create_container.py",
+            "args": [],
+            "detail": "Dockerイメージとコンテナを作成する"
+        },
+        {
+            "label": "Docker:01_Build",
+            "type": "shell",
+            "command": "${workspaceFolder}/tools/CubismContainer/build.py",
+            "args": [],
+            "detail": "モデルデータをビルドして dist フォルダに出力する"
+        },
+        {
+            "label": "Docker:02_Start",
+            "type": "shell",
+            "command": "${workspaceFolder}/tools/CubismContainer/start.py",
+            "args": [],
+            "detail": "Dockerコンテナを起動してモデルサーバーを立ち上げる"
+        },
+        {
+            "label": "Docker:03_Production-Build",
+            "type": "shell",
+            "command": "${workspaceFolder}/tools/CubismContainer/build.py",
+            "args": [
+                "-p"
+            ],
+            "detail": "モデルデータを本番用にビルドして dist フォルダに出力する"
+        },
+        {
+            "label": "Docker:Sub:Start-Demo",
+            "type": "shell",
+            "command": "${workspaceFolder}/tools/CubismContainer/start_demo.py",
+            "args": [],
+            "hide": true,
+            "detail": "Demo版のモデルサーバーを起動する"
+        },
+        {
+            "label": "Docker:Sub:CleanDist",
+            "type": "shell",
+            "command": "${workspaceFolder}/tools/CubismContainer/clean.py",
+            "args": [],
+            "detail": "Buildで作成したdistフォルダを削除する"
+        },
+        {
+            "label": "Docker:Model:DirUpdate",
+            "type": "shell",
+            "command": "${workspaceFolder}/src/Cubism/update_model_dirs.py",
+            "args": [],
+            "detail": "src/Cubism/Resources/ 以下のモデルディレクトリを参照するように lappdefine.ts を更新する"
+        },
+        {
+            "label": "Docker:Model:Copy_from_CubismSamples",
+            "type": "shell",
+            "command": "${workspaceFolder}/src/Cubism/copy_from_CubismWebSamples.py",
+            "args": [],
+            "detail": "src/Cubism/Resources/ 以下にCubism Web Samples for Webのサンプルリソースをコピーする"
+        },
+        {
+            "label": "Debug:Server:Websocket(Port8766)",
+            "type": "shell",
+            "command": "${workspaceFolder}/src/adapter/server/websocket_server.py",
+            "args": [
+                "--port", "8766",
+                "--host", "localhost"
+            ],
+            "detail": "WebSocketのサーバーを起動する"
+        }
+    ]
+}
