@@ -9,10 +9,11 @@ import logging
 import os
 import base64
 from datetime import datetime
-from typing import Set
+from typing import Set, Optional
 import moc3manager
 import websockets
 from websockets.server import ServerConnection
+from security_config import SecurityConfig
 
 # ロギング設定
 logging.basicConfig(
@@ -25,9 +26,13 @@ logger = logging.getLogger(__name__)
 connected_clients: Set[ServerConnection] = set()
 # クライアントIDとWebSocket接続のマッピング
 client_id_map: dict[str, ServerConnection] = {}
+# 認証済みクライアントを追跡
+authenticated_clients: Set[ServerConnection] = set()
 
 # グローバルなモデルマネージャー（後で初期化）
 model_manager = None
+# グローバルなセキュリティ設定（後で初期化）
+security_config: Optional[SecurityConfig] = None
 
 
 async def broadcast_message(message: dict, exclude: ServerConnection = None):
@@ -122,6 +127,63 @@ async def handle_client(websocket: ServerConnection):
     client_id_map[client_id] = websocket
 
     try:
+        # 認証が必要な場合
+        if security_config and security_config.require_auth:
+            # ウェルカムメッセージで認証を要求
+            await websocket.send(json.dumps({
+                "type": "auth_required",
+                "message": "Authentication required. Please send auth token.",
+                "client_id": client_id,
+                "timestamp": datetime.now().isoformat()
+            }, ensure_ascii=False))
+            
+            # 最初のメッセージで認証を待つ
+            try:
+                auth_message = await asyncio.wait_for(websocket.recv(), timeout=30.0)
+                auth_data = json.loads(auth_message)
+                
+                if auth_data.get("type") != "auth":
+                    await websocket.send(json.dumps({
+                        "type": "auth_failed",
+                        "message": "Authentication failed: Expected auth message"
+                    }, ensure_ascii=False))
+                    return
+                
+                token = auth_data.get("token")
+                if not security_config.validate_auth_token(token):
+                    await websocket.send(json.dumps({
+                        "type": "auth_failed",
+                        "message": "Authentication failed: Invalid token"
+                    }, ensure_ascii=False))
+                    logger.warning(f"認証失敗: {client_id}")
+                    return
+                
+                # 認証成功
+                authenticated_clients.add(websocket)
+                await websocket.send(json.dumps({
+                    "type": "auth_success",
+                    "message": "Authentication successful",
+                    "client_id": client_id
+                }, ensure_ascii=False))
+                logger.info(f"認証成功: {client_id}")
+                
+            except asyncio.TimeoutError:
+                await websocket.send(json.dumps({
+                    "type": "auth_failed",
+                    "message": "Authentication timeout"
+                }, ensure_ascii=False))
+                logger.warning(f"認証タイムアウト: {client_id}")
+                return
+            except json.JSONDecodeError:
+                await websocket.send(json.dumps({
+                    "type": "auth_failed",
+                    "message": "Invalid JSON in auth message"
+                }, ensure_ascii=False))
+                return
+        else:
+            # 認証不要の場合は自動的に認証済みとする
+            authenticated_clients.add(websocket)
+        
         # 接続通知を他のクライアントにブロードキャスト
         await broadcast_message({
             "type": "client_connected",
@@ -141,6 +203,14 @@ async def handle_client(websocket: ServerConnection):
         # メッセージ受信ループ
         async for message in websocket:
             try:
+                # 認証チェック
+                if websocket not in authenticated_clients:
+                    await websocket.send(json.dumps({
+                        "type": "error",
+                        "message": "Not authenticated"
+                    }, ensure_ascii=False))
+                    continue
+                
                 # JSON形式で受信
                 data = json.loads(message)
                 logger.info(f"受信 from {client_id}: {data}")
@@ -213,6 +283,7 @@ async def handle_client(websocket: ServerConnection):
     finally:
         # クライアントを削除
         connected_clients.discard(websocket)
+        authenticated_clients.discard(websocket)
         client_id_map.pop(client_id, None)
 
         # 切断通知をブロードキャスト
@@ -657,10 +728,45 @@ async def client_command(command: str, args: dict,
                     "from": source_client_id,
                     "error": "Wavファイル名が必要です"
                 }
+            
+            # セキュリティチェック: ファイルパスがホワイトリストに含まれているか確認
+            if security_config and not security_config.is_file_allowed(file_name):
+                logger.warning(f"ファイルアクセス拒否: {file_name} (クライアント: {source_client_id})")
+                return {
+                    "type": "client_request",
+                    "command": "set_lipsync_from_file",
+                    "from": source_client_id,
+                    "error": f"ファイル '{file_name}' へのアクセスが拒否されました。許可されたディレクトリ内のファイルのみアクセス可能です。"
+                }
+            
             wav_data = ""
-            with open(file_name, 'rb') as f:
-                data = f.read()
-                wav_data = base64.b64encode(data).decode('utf-8')
+            try:
+                with open(file_name, 'rb') as f:
+                    data = f.read()
+                    wav_data = base64.b64encode(data).decode('utf-8')
+            except FileNotFoundError:
+                return {
+                    "type": "client_request",
+                    "command": "set_lipsync_from_file",
+                    "from": source_client_id,
+                    "error": f"Wavファイル '{file_name}' が見つかりません"
+                }
+            except PermissionError:
+                return {
+                    "type": "client_request",
+                    "command": "set_lipsync_from_file",
+                    "from": source_client_id,
+                    "error": f"Wavファイル '{file_name}' へのアクセス権限がありません"
+                }
+            except Exception as e:
+                logger.error(f"ファイル読み込みエラー: {e}")
+                return {
+                    "type": "client_request",
+                    "command": "set_lipsync_from_file",
+                    "from": source_client_id,
+                    "error": f"Wavファイル '{file_name}' の読み込みに失敗しました"
+                }
+            
             if not wav_data:
                 return {
                     "type": "client_request",
@@ -1323,14 +1429,14 @@ def parse_args():
     parser.add_argument(
         '--host',
         type=str,
-        default='0.0.0.0',
-        help='サーバーのホスト (デフォルト: 0.0.0.0)'
+        default=None,
+        help='サーバーのホスト (デフォルト: 環境変数WEBSOCKET_HOSTまたは127.0.0.1)'
     )
     parser.add_argument(
         '--port',
         type=int,
-        default=8765,
-        help='サーバーのポート (デフォルト: 8765)'
+        default=None,
+        help='サーバーのポート (デフォルト: 環境変数WEBSOCKET_PORTまたは8765)'
     )
     parser.add_argument(
         '--no-console',
@@ -1344,7 +1450,10 @@ async def main():
     """
     WebSocketサーバーを起動
     """
-    global model_manager
+    global model_manager, security_config
+
+    # セキュリティ設定を初期化
+    security_config = SecurityConfig()
 
     # コマンドライン引数をパース
     args = parse_args()
@@ -1352,8 +1461,23 @@ async def main():
     # モデルマネージャーを初期化
     model_manager = moc3manager.ModelManager(args.model_dir)
 
-    host = args.host
-    port = args.port
+    # ホストとポートを決定（コマンドライン引数 > セキュリティ設定のデフォルト）
+    host = args.host if args.host is not None else security_config.default_host
+    port = args.port if args.port is not None else security_config.default_port
+
+    # セキュリティ情報をログ出力
+    if security_config.require_auth:
+        if security_config.auth_token:
+            logger.info("認証が有効です（トークン認証）")
+        else:
+            logger.warning("警告: 認証が必須ですが、WEBSOCKET_AUTH_TOKENが設定されていません。接続は全て拒否されます。")
+    else:
+        logger.warning("警告: 認証が無効です。本番環境では認証を有効にすることを推奨します。")
+    
+    if security_config.allowed_file_dirs:
+        logger.info(f"ファイルアクセスホワイトリスト: {[str(d) for d in security_config.allowed_file_dirs]}")
+    else:
+        logger.info("ファイルアクセスホワイトリスト: 未設定（ファイル読み取りコマンド無効）")
 
     logger.info(f"WebSocketサーバーを起動中: ws://{host}:{port}")
 
