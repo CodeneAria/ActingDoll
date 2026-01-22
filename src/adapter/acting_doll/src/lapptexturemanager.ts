@@ -132,17 +132,13 @@ export class LAppTextureManager {
           .bindTexture(this._glManager.getGl().TEXTURE_2D, null);
 
         const textureInfo: TextureInfo = new TextureInfo();
-        if (textureInfo != null) {
-          textureInfo.fileName = fileName;
-          textureInfo.width = img.width;
-          textureInfo.height = img.height;
-          textureInfo.id = tex;
-          textureInfo.img = img;
-          textureInfo.usePremultply = usePremultiply;
-          if (this._textures != null) {
-            this._textures.pushBack(textureInfo);
-          }
-        }
+        textureInfo.fileName = fileName;
+        textureInfo.width = img.width;
+        textureInfo.height = img.height;
+        textureInfo.id = tex;
+        textureInfo.img = img;
+        textureInfo.usePremultply = usePremultiply;
+        this._textures.pushBack(textureInfo);
 
         callback(textureInfo);
       },
