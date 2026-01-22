@@ -5,15 +5,13 @@
 ###################################
 SERVER_DIR="/root/workspace/adapter/server"
 NODE_DIR="/root/workspace/adapter/acting_doll"
+# 外部アクセスを許可する場合は 0.0.0.0 を指定してください（認証必須）
 HOST_ADDRESS="0.0.0.0"
 PORT_NUMBER="8765"
 
 # セキュリティ設定: デフォルトでlocalhostにバインド
 # 本番環境では環境変数で認証トークンとホワイトリストを設定してください:
-# export WEBSOCKET_AUTH_TOKEN="your-secret-token-here"
-# export WEBSOCKET_ALLOWED_DIRS="/path/to/allowed/dir1:/path/to/allowed/dir2"
-# 外部アクセスを許可する場合は --host 0.0.0.0 を指定してください（認証必須）
-export WEBSOCKET_AUTH_TOKEN=${WEBSOCKET_AUTH_TOKEN:-"your-secret-token-here"}
+export WEBSOCKET_AUTH_TOKEN=${WEBSOCKET_AUTH_TOKEN:-"your_secret_token_here"}
 export WEBSOCKET_ALLOWED_DIRS=${WEBSOCKET_ALLOWED_DIRS:-"/root/workspace/adapter/allowed"}
 export WEBSOCKET_REQUIRE_AUTH=${WEBSOCKET_REQUIRE_AUTH:-"false"}
 

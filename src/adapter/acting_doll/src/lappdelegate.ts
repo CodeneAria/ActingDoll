@@ -291,7 +291,9 @@ export class LAppDelegate {
 
       // メッセージハンドラを登録
       this._websocketClient.onMessage('welcome', (data) => {
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_WELCOME_RECEIVED, data.client_id || 'unknown'));
+        const clientId = data.client_id || 'unknown';
+        this._websocketClient.setClientId(clientId);
+        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_WELCOME_RECEIVED, clientId));
       });
 
       this._websocketClient.onMessage('broadcast_message', (data) => {

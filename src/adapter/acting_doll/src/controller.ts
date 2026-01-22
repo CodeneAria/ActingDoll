@@ -25,6 +25,7 @@ class Live2DController {
   private parameters: Array<{ id: string; value: number }> = [];
   private selectedClientId: string = '';
   private selectedModel: string = '';
+  private myClientId: string = '';
 
   constructor() {
     // WebSocketクライアントを初期化
@@ -88,6 +89,11 @@ class Live2DController {
     this.wsClient.onMessage('welcome', (data) => {
       CubismLogInfo(LAppMultilingual.getMessage(MessageKey.CTRL_WELCOME_MSG, data));
       this.showMessage(LAppMultilingual.getMessage(MessageKey.CTRL_SERVER_CONNECTED));
+      // クライアントIDを保存して表示
+      if (data.client_id) {
+        this.myClientId = data.client_id;
+        this.updateConnectionStatus();
+      }
     });
 
     // 認証成功ハンドラ
@@ -117,6 +123,7 @@ class Live2DController {
   <div class="status-section">
     <h2>接続状態</h2>
     <div id="connection-status">接続済み</div>
+    <div id="my-client-id" style="margin-top: 5px; font-size: 0.9em; color: #666;">クライアントID: 取得中...</div>
   </div>
 
   <div class="message-section">
@@ -563,7 +570,7 @@ class Live2DController {
    * 認証を実行
    */
   private authenticate(token: string): void {
-    this.wsClient.sendCommand(token);
+    this.wsClient.sendAuth(token);
     this.showMessage('認証を試行中...');
   }
 
@@ -583,6 +590,16 @@ class Live2DController {
         statusDiv.style.backgroundColor = '#f8d7da';
         statusDiv.style.color = '#721c24';
       }
+    }
+  }
+
+  /**
+   * 接続状態を更新
+   */
+  private updateConnectionStatus(): void {
+    const element = document.getElementById('my-client-id');
+    if (element && this.myClientId) {
+      element.textContent = `クライアントID: ${this.myClientId}`;
     }
   }
 
