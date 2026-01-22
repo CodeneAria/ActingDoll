@@ -6,7 +6,7 @@ import httpx
 class Live2DClient:
     """Client to communicate with Live2D Cubism SDK web server."""
 
-    def __init__(self, base_url: str = "http://localhost:8080") -> None:
+    def __init__(self, base_url: str = "http://localhost:5000") -> None:
         """Initialize the Live2D client.
 
         Args:
