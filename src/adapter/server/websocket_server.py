@@ -203,7 +203,7 @@ async def handle_client(websocket: ServerConnection):
         # メッセージ受信ループ
         async for message in websocket:
             try:
-                # 認証チェック
+                # 認証チェック（setによるO(1)検索）
                 if websocket not in authenticated_clients:
                     await websocket.send(json.dumps({
                         "type": "error",

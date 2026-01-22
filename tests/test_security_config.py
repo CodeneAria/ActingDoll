@@ -160,17 +160,25 @@ class TestSecurityConfig:
     def test_validate_auth_token_no_token_set(self):
         """認証トークンが設定されていない場合のテスト"""
         # 認証必須だがトークンが設定されていない場合
-        env_backup = os.environ.pop('WEBSOCKET_AUTH_TOKEN', None)
+        env_backup = {}
+        for key in ['WEBSOCKET_AUTH_TOKEN', 'WEBSOCKET_REQUIRE_AUTH']:
+            env_backup[key] = os.environ.pop(key, None)
+        
         try:
+            # 認証必須にするが、トークンは設定しない
+            os.environ['WEBSOCKET_REQUIRE_AUTH'] = 'true'
             config = SecurityConfig()
-            config.require_auth = True
-            config.auth_token = None
             
             # トークンが設定されていないので全て拒否
             assert config.validate_auth_token('any-token') is False
+            assert config.validate_auth_token(None) is False
         finally:
-            if env_backup is not None:
-                os.environ['WEBSOCKET_AUTH_TOKEN'] = env_backup
+            # 環境変数を復元
+            for key, value in env_backup.items():
+                if value is not None:
+                    os.environ[key] = value
+                else:
+                    os.environ.pop(key, None)
 
 
 if __name__ == '__main__':
