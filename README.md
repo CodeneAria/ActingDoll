@@ -33,7 +33,7 @@ pip install -e ".[dev]"
 
 ### Live2D Cubism SDK Webサーバーの準備
 
-まず、Live2D Cubism SDKを使用してWebサーバーを起動してください。サーバーはデフォルトで `http://localhost:8080` で起動することを想定しています。
+まず、Live2D Cubism SDKを使用してWebサーバーを起動してください。サーバーはデフォルトで `http://localhost:5000` で起動することを想定しています。
 
 ### MCP設定
 
@@ -45,7 +45,7 @@ pip install -e ".[dev]"
     "acting-doll": {
       "command": "acting-doll",
       "env": {
-        "LIVE2D_SERVER_URL": "http://localhost:8080"
+        "LIVE2D_SERVER_URL": "http://localhost:5000"
       }
     }
   }
@@ -54,9 +54,9 @@ pip install -e ".[dev]"
 
 ### 環境変数
 
-| 変数名 | 説明 | デフォルト値 |
-| ----- | ---- | ----------- |
-| `LIVE2D_SERVER_URL` | Live2D Cubism SDK WebサーバーのURL | `http://localhost:8080` |
+| 変数名              | 説明                               | デフォルト値            |
+| ------------------- | ---------------------------------- | ----------------------- |
+| `LIVE2D_SERVER_URL` | Live2D Cubism SDK WebサーバーのURL | `http://localhost:5000` |
 
 ## MCP ツール一覧
 

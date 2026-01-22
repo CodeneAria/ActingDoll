@@ -25,6 +25,7 @@ class Live2DController {
   private parameters: Array<{ id: string; value: number }> = [];
   private selectedClientId: string = '';
   private selectedModel: string = '';
+  private myClientId: string = '';
 
   constructor() {
     // WebSocketクライアントを初期化
@@ -88,6 +89,25 @@ class Live2DController {
     this.wsClient.onMessage('welcome', (data) => {
       CubismLogInfo(LAppMultilingual.getMessage(MessageKey.CTRL_WELCOME_MSG, data));
       this.showMessage(LAppMultilingual.getMessage(MessageKey.CTRL_SERVER_CONNECTED));
+      // クライアントIDを保存して表示
+      if (data.client_id) {
+        this.myClientId = data.client_id;
+        this.updateConnectionStatus();
+      }
+    });
+
+    // 認証成功ハンドラ
+    this.wsClient.onMessage('auth_success', (data) => {
+      CubismLogInfo('認証成功: ' + JSON.stringify(data));
+      this.showMessage('認証に成功しました');
+      this.updateAuthStatus(true);
+    });
+
+    // 認証失敗ハンドラ
+    this.wsClient.onMessage('auth_failed', (data) => {
+      CubismLogError('認証失敗: ' + JSON.stringify(data));
+      this.showError('認証に失敗しました: ' + (data.message || '不明なエラー'));
+      this.updateAuthStatus(false);
     });
   }
 
@@ -103,10 +123,25 @@ class Live2DController {
   <div class="status-section">
     <h2>接続状態</h2>
     <div id="connection-status">接続済み</div>
+    <div id="my-client-id" style="margin-top: 5px; font-size: 0.9em; color: #666;">クライアントID: 取得中...</div>
   </div>
 
   <div class="message-section">
     <div id="message-display"></div>
+  </div>
+
+  <h2>認証</h2>
+  <div class="auth-section">
+    <div id="auth-status" style="padding: 10px; margin-bottom: 10px; border-radius: 5px; background-color: #f0f0f0;">
+      認証状態: <span id="auth-status-text" style="font-weight: bold;">未認証</span>
+    </div>
+    <div style="margin-top: 10px;">
+      <input type="password" id="input-auth-token" placeholder="認証トークン" style="width: 300px;" />
+      <button id="btn-authenticate">認証 (auth)</button>
+    </div>
+    <div style="margin-top: 5px; font-size: 0.9em; color: #666;">
+      ※ set_lipsync_from_file コマンドを使用するには認証が必要です
+    </div>
   </div>
 
   <h2>基本コマンド</h2>
@@ -254,6 +289,16 @@ class Live2DController {
    * イベントリスナーを設定
    */
   private setupEventListeners(): void {
+    // 認証ボタン
+    document.getElementById('btn-authenticate')?.addEventListener('click', () => {
+      const input = document.getElementById('input-auth-token') as HTMLInputElement;
+      if (input && input.value) {
+        this.authenticate(input.value);
+      } else {
+        this.showError('認証トークンを入力してください');
+      }
+    });
+
     // 基本コマンド
     document.getElementById('btn-list')?.addEventListener('click', () => {
       this.sendCommand('list');
@@ -519,6 +564,43 @@ class Live2DController {
   private sendCommand(command: string): void {
     this.wsClient.sendCommand(command);
     this.showMessage(`コマンド送信: ${command}`);
+  }
+
+  /**
+   * 認証を実行
+   */
+  private authenticate(token: string): void {
+    this.wsClient.sendAuth(token);
+    this.showMessage('認証を試行中...');
+  }
+
+  /**
+   * 認証状態を更新
+   */
+  private updateAuthStatus(authenticated: boolean): void {
+    const statusText = document.getElementById('auth-status-text');
+    const statusDiv = document.getElementById('auth-status');
+    if (statusText && statusDiv) {
+      if (authenticated) {
+        statusText.textContent = '認証済み';
+        statusDiv.style.backgroundColor = '#d4edda';
+        statusDiv.style.color = '#155724';
+      } else {
+        statusText.textContent = '未認証';
+        statusDiv.style.backgroundColor = '#f8d7da';
+        statusDiv.style.color = '#721c24';
+      }
+    }
+  }
+
+  /**
+   * 接続状態を更新
+   */
+  private updateConnectionStatus(): void {
+    const element = document.getElementById('my-client-id');
+    if (element && this.myClientId) {
+      element.textContent = `クライアントID: ${this.myClientId}`;
+    }
   }
 
   /**

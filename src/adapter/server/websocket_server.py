@@ -9,10 +9,11 @@ import logging
 import os
 import base64
 from datetime import datetime
-from typing import Set
+from typing import Set, Optional
 import moc3manager
 import websockets
 from websockets.server import ServerConnection
+from security_config import SecurityConfig
 
 # ロギング設定
 logging.basicConfig(
@@ -25,9 +26,67 @@ logger = logging.getLogger(__name__)
 connected_clients: Set[ServerConnection] = set()
 # クライアントIDとWebSocket接続のマッピング
 client_id_map: dict[str, ServerConnection] = {}
+# 認証済みクライアントを追跡
+authenticated_clients: Set[ServerConnection] = set()
 
 # グローバルなモデルマネージャー（後で初期化）
 model_manager = None
+# グローバルなセキュリティ設定（後で初期化）
+security_config: Optional[SecurityConfig] = None
+
+
+def print_server_console():
+    print("=== サーバーコンソール ===")
+
+    print("サーバーコマンド:")
+    print("  quit                       - サーバーを停止")
+    # print("  count                      - 接続数を表示")
+    print("  list                       - 接続中のクライアント一覧")
+    print("  notify <message>           - 全クライアントに通知を送信")
+    print("  send <client_id> <message> - 特定のクライアントにメッセージを送信")
+
+    print("モデルコマンド:")
+    print("  model list                      - 利用可能なモデル一覧を取得")
+    print("  model get_expressions <name>    - モデルのexpressions一覧を取得")
+    print("  model get_motions <name>        - モデルのmotions一覧を取得")
+    print("  model get_parameters <name>     - モデルのparameters一覧を取得")
+
+    print("クライアント制御コマンド (WebSocket経由):")
+    print("  client <client_id> get_model")
+
+    print("  client <client_id> get_eye_blink")
+    print("  client <client_id> set_eye_blink [enabled|disabled]")
+
+    print("  client <client_id> get_breath")
+    print("  client <client_id> set_breath [enabled|disabled]")
+
+    print("  client <client_id> get_idle_motion")
+    print("  client <client_id> set_idle_motion [enabled|disabled]")
+
+    print("  client <client_id> get_drag_follow")
+    print("  client <client_id> set_drag_follow [enabled|disabled]")
+
+    print("  client <client_id> get_physics")
+    print("  client <client_id> set_physics [enabled|disabled]")
+
+    print("  client <client_id> get_expression")
+    print("  client <client_id> set_expression [expression_name]")
+
+    print("  client <client_id> get_motion")
+    print(
+        "  client <client_id> set_motion [group_name] [no] [priority(0-3, default:2)]")
+
+    print("  client <client_id> set_lipsync [base64_wav_data]")
+    print("  client <client_id> set_lipsync_from_file [filename]")
+    print("    ※ set_lipsync_from_fileは、auth コマンドで認証が必要")
+    print("  client <client_id> set_parameter ID01=VALUE01 ID02=VALUE02 ...")
+
+    print("  client <client_id> get_position")
+    print("  client <client_id> set_position [x] [y] <relative>")
+
+    print("  client <client_id> get_scale")
+    print("  client <client_id> set_scale [size]")
+    print("========================\n")
 
 
 async def broadcast_message(message: dict, exclude: ServerConnection = None):
@@ -122,14 +181,6 @@ async def handle_client(websocket: ServerConnection):
     client_id_map[client_id] = websocket
 
     try:
-        # 接続通知を他のクライアントにブロードキャスト
-        await broadcast_message({
-            "type": "client_connected",
-            "client_id": client_id,
-            "timestamp": datetime.now().isoformat(),
-            "total_clients": len(connected_clients)
-        }, exclude=websocket)
-
         # ウェルカムメッセージを送信
         await websocket.send(json.dumps({
             "type": "welcome",
@@ -156,6 +207,24 @@ async def handle_client(websocket: ServerConnection):
                         "timestamp": datetime.now().isoformat()
                     }
                     await websocket.send(json.dumps(response, ensure_ascii=False))
+
+                elif msg_type == "auth":
+                    # 認証処理
+                    token = data.get("token")
+                    if security_config and security_config.validate_auth_token(token):
+                        authenticated_clients.add(websocket)
+                        await websocket.send(json.dumps({
+                            "type": "auth_success",
+                            "message": "Authentication successful",
+                            "client_id": client_id
+                        }, ensure_ascii=False))
+                        logger.info(f"認証成功: {client_id}")
+                    else:
+                        await websocket.send(json.dumps({
+                            "type": "auth_failed",
+                            "message": "Authentication failed: Invalid token"
+                        }, ensure_ascii=False))
+                        logger.warning(f"認証失敗: {client_id}")
 
                 elif msg_type == "broadcast":
                     # 全クライアントにブロードキャスト
@@ -213,6 +282,7 @@ async def handle_client(websocket: ServerConnection):
     finally:
         # クライアントを削除
         connected_clients.discard(websocket)
+        authenticated_clients.discard(websocket)
         client_id_map.pop(client_id, None)
 
         # 切断通知をブロードキャスト
@@ -647,6 +717,19 @@ async def client_command(command: str, args: dict,
                 "message": "クライアントにWavファイルを送信しました"
             }
         elif command == "set_lipsync_from_file":  # リップシンク用Wavファイル送信
+            # 認証チェック: このコマンドは認証が必要
+            source_ws = client_id_map.get(source_client_id)
+            if security_config and security_config.require_auth:
+                if not source_ws or source_ws not in authenticated_clients:
+                    logger.warning(
+                        f"認証されていないクライアントがset_lipsync_from_fileを試行: {source_client_id}")
+                    return {
+                        "type": "client_request",
+                        "command": "set_lipsync_from_file",
+                        "from": source_client_id,
+                        "error": "このコマンドには認証が必要です。先にauthコマンドで認証してください。"
+                    }
+
             parts = args.strip().split(maxsplit=1) if len(args) > 0 else []
             file_name = parts[0] if len(parts) > 0 else ""
 
@@ -657,10 +740,46 @@ async def client_command(command: str, args: dict,
                     "from": source_client_id,
                     "error": "Wavファイル名が必要です"
                 }
+
+            # セキュリティチェック: ファイルパスがホワイトリストに含まれているか確認
+            if security_config and not security_config.is_file_allowed(file_name):
+                logger.warning(
+                    f"ファイルアクセス拒否: {file_name} (クライアント: {source_client_id})")
+                return {
+                    "type": "client_request",
+                    "command": "set_lipsync_from_file",
+                    "from": source_client_id,
+                    "error": f"ファイル '{file_name}' へのアクセスが拒否されました。許可されたディレクトリ内のファイルのみアクセス可能です。"
+                }
+
             wav_data = ""
-            with open(file_name, 'rb') as f:
-                data = f.read()
-                wav_data = base64.b64encode(data).decode('utf-8')
+            try:
+                with open(file_name, 'rb') as f:
+                    data = f.read()
+                    wav_data = base64.b64encode(data).decode('utf-8')
+            except FileNotFoundError:
+                return {
+                    "type": "client_request",
+                    "command": "set_lipsync_from_file",
+                    "from": source_client_id,
+                    "error": f"Wavファイル '{file_name}' が見つかりません"
+                }
+            except PermissionError:
+                return {
+                    "type": "client_request",
+                    "command": "set_lipsync_from_file",
+                    "from": source_client_id,
+                    "error": f"Wavファイル '{file_name}' へのアクセス権限がありません"
+                }
+            except Exception as e:
+                logger.error(f"ファイル読み込みエラー: {e}")
+                return {
+                    "type": "client_request",
+                    "command": "set_lipsync_from_file",
+                    "from": source_client_id,
+                    "error": f"Wavファイル '{file_name}' の読み込みに失敗しました"
+                }
+
             if not wav_data:
                 return {
                     "type": "client_request",
@@ -783,7 +902,8 @@ async def client_command(command: str, args: dict,
             try:
                 x = float(parts[0])
                 y = float(parts[1])
-                relative = parts[2].lower() == "relative" if len(parts) > 2 else False
+                relative = parts[2].lower() == "relative" if len(
+                    parts) > 2 else False
             except ValueError:
                 return {
                     "type": "client_request",
@@ -1021,6 +1141,37 @@ async def process_command(user_input: str, client_id: str) -> dict:
                 "server_time": datetime.now().isoformat()
             }
         }
+    elif command == "auth":
+        # 認証コマンド処理
+        if len(parts) < 2:
+            return {
+                "type": "command_response",
+                "command": "auth",
+                "from": client_id,
+                "error": "使い方: auth <token>"
+            }
+
+        token = parts[1]
+        websocket = client_id_map.get(client_id)
+
+        if security_config and security_config.validate_auth_token(token):
+            if websocket:
+                authenticated_clients.add(websocket)
+            return {
+                "type": "command_response",
+                "command": "auth",
+                "from": client_id,
+                "success": True,
+                "message": "認証に成功しました"
+            }
+        else:
+            return {
+                "type": "command_response",
+                "command": "auth",
+                "from": client_id,
+                "success": False,
+                "error": "認証に失敗しました: 無効なトークン"
+            }
     elif command == "ping":
         return {
             "type": "command_response",
@@ -1143,59 +1294,6 @@ async def process_command(user_input: str, client_id: str) -> dict:
             "from": client_id,
             "error": "不明なコマンドです"
         }
-
-
-def print_server_console():
-    print("=== サーバーコンソール ===")
-
-    print("サーバーコマンド:")
-    print("  quit                       - サーバーを停止")
-    # print("  count                      - 接続数を表示")
-    print("  list                       - 接続中のクライアント一覧")
-    print("  notify <message>           - 全クライアントに通知を送信")
-    print("  send <client_id> <message> - 特定のクライアントにメッセージを送信")
-
-    print("モデルコマンド:")
-    print("  model list                      - 利用可能なモデル一覧を取得")
-    print("  model get_expressions <name>    - モデルのexpressions一覧を取得")
-    print("  model get_motions <name>        - モデルのmotions一覧を取得")
-    print("  model get_parameters <name>     - モデルのparameters一覧を取得")
-
-    print("クライアント制御コマンド (WebSocket経由):")
-    print("  client <client_id> get_model")
-
-    print("  client <client_id> get_eye_blink")
-    print("  client <client_id> set_eye_blink [enabled|disabled]")
-
-    print("  client <client_id> get_breath")
-    print("  client <client_id> set_breath [enabled|disabled]")
-
-    print("  client <client_id> get_idle_motion")
-    print("  client <client_id> set_idle_motion [enabled|disabled]")
-
-    print("  client <client_id> get_drag_follow")
-    print("  client <client_id> set_drag_follow [enabled|disabled]")
-
-    print("  client <client_id> get_physics")
-    print("  client <client_id> set_physics [enabled|disabled]")
-
-    print("  client <client_id> get_expression")
-    print("  client <client_id> set_expression [expression_name]")
-
-    print("  client <client_id> get_motion")
-    print(
-        "  client <client_id> set_motion [group_name] [no] [priority(0-3, default:2)]")
-
-    print("  client <client_id> set_lipsync [base64_wav_data]")
-    print("  client <client_id> set_lipsync_from_file [filename]")
-    print("  client <client_id> set_parameter ID01=VALUE01 ID02=VALUE02 ...")
-
-    print("  client <client_id> get_position")
-    print("  client <client_id> set_position [x] [y] <relative>")
-
-    print("  client <client_id> get_scale")
-    print("  client <client_id> set_scale [size]")
-    print("========================\n")
 
 
 async def server_console():
@@ -1323,14 +1421,14 @@ def parse_args():
     parser.add_argument(
         '--host',
         type=str,
-        default='0.0.0.0',
-        help='サーバーのホスト (デフォルト: 0.0.0.0)'
+        default=None,
+        help='サーバーのホスト (デフォルト: 環境変数"WEBSOCKET_HOST"または127.0.0.1)'
     )
     parser.add_argument(
         '--port',
         type=int,
-        default=8765,
-        help='サーバーのポート (デフォルト: 8765)'
+        default=None,
+        help='サーバーのポート (デフォルト: 環境変数"WEBSOCKET_PORT"または8765)'
     )
     parser.add_argument(
         '--no-console',
@@ -1344,7 +1442,10 @@ async def main():
     """
     WebSocketサーバーを起動
     """
-    global model_manager
+    global model_manager, security_config
+
+    # セキュリティ設定を初期化
+    security_config = SecurityConfig()
 
     # コマンドライン引数をパース
     args = parse_args()
@@ -1352,10 +1453,27 @@ async def main():
     # モデルマネージャーを初期化
     model_manager = moc3manager.ModelManager(args.model_dir)
 
-    host = args.host
-    port = args.port
+    # ホストとポートを決定（コマンドライン引数 > セキュリティ設定のデフォルト）
+    host = args.host if args.host is not None else security_config.default_host
+    port = args.port if args.port is not None else security_config.default_port
 
-    logger.info(f"WebSocketサーバーを起動中: ws://{host}:{port}")
+    # セキュリティ情報をログ出力
+    if security_config.require_auth:
+        if security_config.auth_token:
+            logger.info("認証が有効です（トークン認証）")
+        else:
+            logger.warning(
+                "警告: 認証が必須ですが、WEBSOCKET_AUTH_TOKENが設定されていません。接続は全て拒否されます。")
+    else:
+        logger.warning("警告: 認証が無効です。本番環境では認証を有効にすることを推奨します。")
+
+    if security_config.allowed_file_dirs:
+        logger.info(
+            f"ファイルアクセスホワイトリスト: {[str(d) for d in security_config.allowed_file_dirs]}")
+    else:
+        logger.info("ファイルアクセスホワイトリスト: 未設定（ファイル読み取りコマンド無効）")
+
+    logger.info(f"WebSocketサーバー: ws://{host}:{port}")
 
     async with websockets.serve(handle_client, host, port):
         # サーバーコンソールを起動（--no-console が指定されていない場合のみ）

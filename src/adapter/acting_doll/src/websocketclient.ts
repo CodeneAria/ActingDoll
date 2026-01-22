@@ -297,6 +297,7 @@ export class WebSocketClient {
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 0; // 0で無制限
   private reconnectDelay: number = 3000;
+  private clientId: string | null = null;
 
   /**
    * コンストラクタ
@@ -454,6 +455,22 @@ export class WebSocketClient {
    */
   public isRunning(): boolean {
     return this.running;
+  }
+
+  /**
+   * クライアントIDを設定
+   * @param clientId クライアントID
+   */
+  public setClientId(clientId: string): void {
+    this.clientId = clientId;
+  }
+
+  /**
+   * クライアントIDを取得
+   * @returns クライアントID
+   */
+  public getClientId(): string | null {
+    return this.clientId;
   }
 
 
@@ -627,5 +644,13 @@ export class WebSocketClient {
    */
   public sendResponseScale(scale: number, from: string): void {
     this.sendClientResponse('response_scale', { scale }, from);
+  }
+
+  /**
+   * 認証メッセージを送信
+   * @param token 認証トークン
+   */
+  public sendAuth(token: string): void {
+    this.sendMessage({ type: 'auth', token: token });
   }
 }

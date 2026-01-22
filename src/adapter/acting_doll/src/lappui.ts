@@ -37,6 +37,7 @@ export class LAppUI {
     private _updateInterval: number | null = null;
     private _wsStatusText!: HTMLSpanElement;
     private _wsStatusIndicator!: HTMLSpanElement;
+    private _wsClientId!: HTMLDivElement;
     private _wsCheckInterval: number | null = null;
 
     /**
@@ -72,6 +73,7 @@ export class LAppUI {
         this._parametersContainer = document.getElementById('parametersContainer') as HTMLDivElement;
         this._wsStatusText = document.getElementById('wsStatusText') as HTMLSpanElement;
         this._wsStatusIndicator = document.getElementById('wsStatusIndicator') as HTMLSpanElement;
+        this._wsClientId = document.getElementById('wsClientId') as HTMLDivElement;
 
         if (!this._controlPanel || !this._toggleButton) {
             CubismLogError(LAppMultilingual.getMessage(MessageKey.UI_ELEMENTS_NOT_FOUND));
@@ -636,12 +638,24 @@ export class LAppUI {
         if (wsClient && wsClient.isConnected()) {
             this._wsStatusText.textContent = '接続済み';
             this._wsStatusIndicator.style.background = '#4CAF50'; // Green
+
+            // クライアントIDを表示
+            const clientId = wsClient.getClientId();
+            if (this._wsClientId && clientId) {
+                this._wsClientId.textContent = `クライアントID: ${clientId}`;
+            }
         } else if (wsClient && wsClient.isRunning()) {
             this._wsStatusText.textContent = '再接続中...';
             this._wsStatusIndicator.style.background = '#FFC107'; // Yellow
+            if (this._wsClientId) {
+                this._wsClientId.textContent = 'クライアントID: 取得中...';
+            }
         } else {
             this._wsStatusText.textContent = '未接続';
             this._wsStatusIndicator.style.background = '#999'; // Gray
+            if (this._wsClientId) {
+                this._wsClientId.textContent = 'クライアントID: 取得中...';
+            }
         }
     }
 

@@ -58,6 +58,11 @@ def main(work_dir, config_path):
     MODELS_DIR = config['cubism']['models_dir']
     ADAPTER_DIR = config['custom']['adapter_dir']
 
+    # Authentication settings
+    AUTH_TOKEN = config['authentication']['token']
+    REQUIRE_AUTH = str(config['authentication']['require_auth']).lower()
+    ALLOWED_DIRS = ':'.join(config['authentication']['dirs'])
+
     dockerfile_path = Path(work_dir / DOCKER_FILE_NAME).resolve().absolute()
     adapter_dir = Path(ADAPTER_DIR).resolve().absolute()
     archive_core_path = Path(ARCHIVE_CORE_DIR).resolve().absolute()
@@ -75,11 +80,16 @@ def main(work_dir, config_path):
     print(f"    Config            : {config_path}")
     print(f"    Cubism Core Dir   : {archive_core_path}")
     print(f"    Cubism Models Dir : {models_path}")
+    print(f"  Authentication")
+    print(f"    Auth Token        : {AUTH_TOKEN}")
+    print(f"    Require Auth      : {REQUIRE_AUTH}")
+    print(f"    Allowed Dirs      : {ALLOWED_DIRS}")
     print(f"  Docker")
     print(f"    dockerfile : {dockerfile_path}")
     print(f"    image      : {DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}")
     print(f"    container  : {DOCKER_CONTAINER_NAME}")
-    print(f"        port   : {SERVER_PORT}")
+    print(f"      port(HTTP)      : {SERVER_PORT}")
+    print(f"      port(Websocket) : {WEBSOCKET_PORT}")
     print("=" * 50)
 
     # Check Cubism Core files
@@ -162,6 +172,9 @@ def main(work_dir, config_path):
         "-v", f"{models_path}:/root/workspace/Cubism/Resources",
         "-p", f"{SERVER_PORT}:5000",
         "-p", f"{WEBSOCKET_PORT}:8765",
+        "-e", f"WEBSOCKET_AUTH_TOKEN={AUTH_TOKEN}",
+        "-e", f"WEBSOCKET_REQUIRE_AUTH={REQUIRE_AUTH}",
+        "-e", f"WEBSOCKET_ALLOWED_DIRS={ALLOWED_DIRS}",
         f"{DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}"
     ]
     result = run_command(run_cmd, shell=False, capture_output=True)
