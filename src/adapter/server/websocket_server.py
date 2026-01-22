@@ -186,7 +186,7 @@ async def handle_client(websocket: ServerConnection):
                     command = data.get("command")
                     args = data.get("args", {})
                     source_client_id = data.get("from", "")
-                    response = await client_command(command, args, client_id, source_client_id)
+                    await client_command(command, args, client_id, source_client_id)
                     # await websocket.send(json.dumps(response, ensure_ascii=False))
 
                 else:

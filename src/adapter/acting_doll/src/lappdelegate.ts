@@ -236,7 +236,7 @@ export class LAppDelegate {
    * Canvasを生成配置、Subdelegateを初期化する
    */
   private initializeSubdelegates(): void {
-    let width: number = 100;
+    let width: number;
     let height: number = 100;
     if (LAppDefine.CanvasNum > 3) {
       const widthunit: number = Math.ceil(Math.sqrt(LAppDefine.CanvasNum));
