@@ -9,8 +9,9 @@
 const fs = require('fs');
 const publicResources = [
   { src: '../../Cubism/Core', dst: './../public/Core' },
-  { src: '../../Cubism/Resources', dst: './../public/Resources' }
+  { src: '../../Cubism/Resources', dst: './../public/Resources' },
+  { src: '../../Cubism/Framework/Shaders', dst: './../public/Framework/Shaders' },
 ];
 
-publicResources.forEach((e)=>{if (fs.existsSync(e.dst)) fs.rmSync(e.dst, { recursive: true })});
-publicResources.forEach((e)=>fs.cpSync(e.src, e.dst, {recursive: true}));
+publicResources.forEach((e) => { if (fs.existsSync(e.dst)) fs.rmSync(e.dst, { recursive: true }) });
+publicResources.forEach((e) => fs.cpSync(e.src, e.dst, { recursive: true }));

@@ -141,26 +141,26 @@ export class LAppWavFileHandler {
           // シグネチャ "RIFF"
           if (!this._byteReader.getCheckSignature('RIFF')) {
             ret = false;
-            throw new Error('Cannot find Signature "RIFF".');
+            throw new Error(LAppMultilingual.getMessage(MessageKey.WAV_RIFF_NOT_FOUND));
           }
           // ファイルサイズ-8（読み飛ばし）
           this._byteReader.get32LittleEndian();
           // シグネチャ "WAVE"
           if (!this._byteReader.getCheckSignature('WAVE')) {
             ret = false;
-            throw new Error('Cannot find Signature "WAVE".');
+            throw new Error(LAppMultilingual.getMessage(MessageKey.WAV_WAVE_NOT_FOUND));
           }
           // シグネチャ "fmt "
           if (!this._byteReader.getCheckSignature('fmt ')) {
             ret = false;
-            throw new Error('Cannot find Signature "fmt".');
+            throw new Error(LAppMultilingual.getMessage(MessageKey.WAV_FMT_NOT_FOUND));
           }
           // fmtチャンクサイズ
           const fmtChunkSize = this._byteReader.get32LittleEndian();
           // フォーマットIDは1（リニアPCM）以外受け付けない
           if (this._byteReader.get16LittleEndian() != 1) {
             ret = false;
-            throw new Error('File is not linear PCM.');
+            throw new Error(LAppMultilingual.getMessage(MessageKey.WAV_NOT_LINEAR_PCM));
           }
           // チャンネル数
           this._wavFileInfo._numberOfChannels =
@@ -190,7 +190,7 @@ export class LAppWavFileHandler {
           // ファイル内に"data"チャンクが出現しなかった
           if (this._byteReader._readOffset >= this._byteReader._fileSize) {
             ret = false;
-            throw new Error('Cannot find "data" Chunk.');
+            throw new Error(LAppMultilingual.getMessage(MessageKey.WAV_DATA_CHUNK_NOT_FOUND));
           }
           // サンプル数
           {
@@ -272,26 +272,26 @@ export class LAppWavFileHandler {
           // シグネチャ "RIFF"
           if (!this._byteReader.getCheckSignature('RIFF')) {
             ret = false;
-            throw new Error('Cannot find Signature "RIFF".');
+            throw new Error(LAppMultilingual.getMessage(MessageKey.WAV_RIFF_NOT_FOUND));
           }
           // ファイルサイズ-8（読み飛ばし）
           this._byteReader.get32LittleEndian();
           // シグネチャ "WAVE"
           if (!this._byteReader.getCheckSignature('WAVE')) {
             ret = false;
-            throw new Error('Cannot find Signature "WAVE".');
+            throw new Error(LAppMultilingual.getMessage(MessageKey.WAV_WAVE_NOT_FOUND));
           }
           // シグネチャ "fmt "
           if (!this._byteReader.getCheckSignature('fmt ')) {
             ret = false;
-            throw new Error('Cannot find Signature "fmt".');
+            throw new Error(LAppMultilingual.getMessage(MessageKey.WAV_FMT_NOT_FOUND));
           }
           // fmtチャンクサイズ
           const fmtChunkSize = this._byteReader.get32LittleEndian();
           // フォーマットIDは1（リニアPCM）以外受け付けない
           if (this._byteReader.get16LittleEndian() != 1) {
             ret = false;
-            throw new Error('File is not linear PCM.');
+            throw new Error(LAppMultilingual.getMessage(MessageKey.WAV_NOT_LINEAR_PCM));
           }
           // チャンネル数
           this._wavFileInfo._numberOfChannels =
@@ -321,7 +321,7 @@ export class LAppWavFileHandler {
           // ファイル内に"data"チャンクが出現しなかった
           if (this._byteReader._readOffset >= this._byteReader._fileSize) {
             ret = false;
-            throw new Error('Cannot find "data" Chunk.');
+            throw new Error(LAppMultilingual.getMessage(MessageKey.WAV_DATA_CHUNK_NOT_FOUND));
           }
           // サンプル数
           {
@@ -397,7 +397,7 @@ export class LAppWavFileHandler {
    * 指定したチャンネルから音声サンプルの配列を取得する
    *
    * @param use_channel 利用するチャンネル
-   * @returns 指定したチャンネルの音声サンプルの配列
+   * @return 指定したチャンネルの音声サンプルの配列
    */
   public getPcmDataChannel(use_channel: number): Float32Array {
     // 指定したチャンネル数がデータ用配列の長さより多いならnullを返す。
@@ -412,7 +412,7 @@ export class LAppWavFileHandler {
   /**
    * 音声のサンプリング周波数を取得する。
    *
-   * @returns 音声のサンプリング周波数
+   * @return 音声のサンプリング周波数
    */
   public getWavSamplingRate(): number {
     if (!this._wavFileInfo || this._wavFileInfo._samplingRate < 1) {
@@ -532,8 +532,8 @@ export class ByteReader {
   /**
    * @brief シグネチャの取得と参照文字列との一致チェック
    * @param[in] reference 検査対象のシグネチャ文字列
-   * @retval  true    一致している
-   * @retval  false   一致していない
+   * @return  true    一致している
+   *          false   一致していない
    */
   public getCheckSignature(reference: string): boolean {
     const getSignature: Uint8Array = new Uint8Array(4);

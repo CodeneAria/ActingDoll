@@ -10,6 +10,7 @@ import { CubismViewMatrix } from '@framework/math/cubismviewmatrix';
 
 import * as LAppDefine from './lappdefine';
 import { LAppDelegate } from './lappdelegate';
+import { LAppPal } from './lapppal';
 import { LAppSprite } from './lappsprite';
 import { TextureInfo } from './lapptexturemanager';
 import { TouchManager } from './touchmanager';
@@ -350,6 +351,7 @@ export class LAppView {
     // スクリーンを再設定
     this._viewMatrix.setScreenRect(left, right, bottom, top);
     this._viewMatrix.scale(LAppDefine.ViewScale * scale, LAppDefine.ViewScale * scale);
+    this._currentScale = scale;
 
     // 位置を復元
     const newX = (this._viewMatrix.getScreenLeft() + this._viewMatrix.getScreenRight()) / 2;
@@ -361,6 +363,10 @@ export class LAppView {
     return this._viewMatrix;
   }
 
+  public getViewScale(): number {
+    return this._currentScale;
+  }
+
   _touchManager: TouchManager; // タッチマネージャー
   _deviceToScreen: CubismMatrix44; // デバイスからスクリーンへの行列
   _viewMatrix: CubismViewMatrix; // viewMatrix
@@ -369,5 +375,6 @@ export class LAppView {
   _gear: LAppSprite; // ギア画像
   _changeModel: boolean; // モデル切り替えフラグ
   _isClick: boolean; // クリック中
+  _currentScale: number; // 現在のスケール値
   private _subdelegate: LAppSubdelegate;
 }

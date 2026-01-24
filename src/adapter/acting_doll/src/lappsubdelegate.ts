@@ -8,6 +8,7 @@
 import * as LAppDefine from './lappdefine';
 import { LAppGlManager } from './lappglmanager';
 import { LAppLive2DManager } from './lapplive2dmanager';
+import { LAppPal } from './lapppal';
 import { LAppTextureManager } from './lapptexturemanager';
 import { LAppUI } from './lappui';
 import { LAppView } from './lappview';
@@ -87,6 +88,13 @@ export class LAppSubdelegate {
 
     // AppViewの初期化
     this._view.initialize(this);
+
+    // フレームバッファサイズの設定
+    this._live2dManager.setOffscreenSize(
+      this._canvas.width,
+      this._canvas.height
+    );
+
     this._view.initializeSprite();
 
     this._live2dManager.initialize(this);
@@ -243,6 +251,10 @@ export class LAppSubdelegate {
 
   public getGlManager(): LAppGlManager {
     return this._glManager;
+  }
+
+  public getGl(): WebGLRenderingContext | WebGL2RenderingContext {
+    return this._glManager.getGl();
   }
 
   public getLive2DManager(): LAppLive2DManager {

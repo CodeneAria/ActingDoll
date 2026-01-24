@@ -459,6 +459,26 @@ const messages: MessageMap = {
         ja: 'WAVファイルエラー: {0}',
         en: 'WAV file error: {0}'
     },
+    WAV_RIFF_NOT_FOUND: {
+        ja: 'シグネチャ "RIFF" が見つかりません。',
+        en: 'Cannot find Signature "RIFF".'
+    },
+    WAV_WAVE_NOT_FOUND: {
+        ja: 'シグネチャ "WAVE" が見つかりません。',
+        en: 'Cannot find Signature "WAVE".'
+    },
+    WAV_FMT_NOT_FOUND: {
+        ja: 'シグネチャ "fmt" が見つかりません。',
+        en: 'Cannot find Signature "fmt".'
+    },
+    WAV_NOT_LINEAR_PCM: {
+        ja: 'ファイルはリニアPCMではありません。',
+        en: 'File is not linear PCM.'
+    },
+    WAV_DATA_CHUNK_NOT_FOUND: {
+        ja: '"data" チャンクが見つかりません。',
+        en: 'Cannot find "data" Chunk.'
+    },
 
     // LAppView関連
     VIEW_TOUCHES_ENDED: {
@@ -506,6 +526,10 @@ const messages: MessageMap = {
     RANDOM: {
         ja: 'ランダム',
         en: 'random'
+    },
+    UNKNOWN: {
+        ja: '[不明]',
+        en: '[Unknown]'
     }
 };
 
@@ -673,7 +697,6 @@ export const MessageKey = {
     CTRL_WS_FAILED: 'CTRL_WS_FAILED',
     CTRL_WS_FAILED_SHOW: 'CTRL_WS_FAILED_SHOW',
 
-
     CTRL_CMD_RESPONSE: 'CTRL_CMD_RESPONSE',
     CTRL_SERVER_ERROR: 'CTRL_SERVER_ERROR',
     CTRL_WELCOME_MSG: 'CTRL_WELCOME_MSG',
@@ -689,6 +712,11 @@ export const MessageKey = {
     CTRL_SERVER_CONNECTED: 'CTRL_SERVER_CONNECTED',
     // LAppWavFileHandler関連
     WAV_ERROR: 'WAV_ERROR',
+    WAV_RIFF_NOT_FOUND: 'WAV_RIFF_NOT_FOUND',
+    WAV_WAVE_NOT_FOUND: 'WAV_WAVE_NOT_FOUND',
+    WAV_FMT_NOT_FOUND: 'WAV_FMT_NOT_FOUND',
+    WAV_NOT_LINEAR_PCM: 'WAV_NOT_LINEAR_PCM',
+    WAV_DATA_CHUNK_NOT_FOUND: 'WAV_DATA_CHUNK_NOT_FOUND',
 
     // LAppView関連
     VIEW_TOUCHES_ENDED: 'VIEW_TOUCHES_ENDED',
@@ -706,5 +734,6 @@ export const MessageKey = {
     SERVER_HEARTBEAT: 'SERVER_HEARTBEAT',
     ENABLED: 'ENABLED',
     DISABLED: 'DISABLED',
-    RANDOM: 'RANDOM'
+    RANDOM: 'RANDOM',
+    UNKNOWN: 'UNKNOWN'
 } as const;

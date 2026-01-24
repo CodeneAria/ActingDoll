@@ -16,6 +16,7 @@
         "cubismmodelsettingjson",
         "cubismmotion",
         "cubismmotionqueuemanager",
+        "cubismoffscreenmanager",
         "cubismusermodel",
         "cubismviewmatrix",
         "dcubismcore",
@@ -53,5 +54,5 @@
         "websocketclient",
         "widthunit"
     ],
-    "editor.formatOnSave": false
+    "editor.formatOnSave": true
 }

@@ -8,9 +8,11 @@
 import { CubismMatrix44 } from '@framework/math/cubismmatrix44';
 import { ACubismMotion } from '@framework/motion/acubismmotion';
 import { csmVector } from '@framework/type/csmvector';
+import { CubismWebGLOffscreenManager } from '@framework/rendering/cubismoffscreenmanager';
 
 import * as LAppDefine from './lappdefine';
 import { LAppModel } from './lappmodel';
+import { LAppPal } from './lapppal';
 import { LAppSubdelegate } from './lappsubdelegate';
 import { CubismLogDebug, CubismLogInfo } from '@framework/utils/cubismdebug';
 import { LAppMultilingual, MessageKey } from './lappmultilingual';
@@ -27,6 +29,13 @@ export class LAppLive2DManager {
     this._models.clear();
   }
 
+  public setOffscreenSize(width: number, height: number): void {
+    for (let i = 0; i < this._models.getSize(); i++) {
+      const model: LAppModel = this.getModel(i);
+      model?.setRenderTargetSize(width, height);
+    }
+  }
+
   /**
    * 画面をドラッグした時の処理
    *
@@ -34,7 +43,7 @@ export class LAppLive2DManager {
    * @param y 画面のY座標
    */
   public onDrag(x: number, y: number): void {
-    const model: LAppModel = this._models.at(0);
+    const model: LAppModel = this.getModel(0);
     if (model) {
       model.setDragging(x, y);
     }
@@ -51,7 +60,7 @@ export class LAppLive2DManager {
       CubismLogInfo(LAppMultilingual.getMessage(MessageKey.TAP_POINT, x.toFixed(2), y.toFixed(2)));
     }
 
-    const model: LAppModel = this._models.at(0);
+    const model: LAppModel = this.getModel(0);
 
     if (model.hitTest(LAppDefine.HitAreaNameHead, x, y)) {
       if (LAppDefine.DebugLogEnable) {
@@ -76,10 +85,14 @@ export class LAppLive2DManager {
    * モデルの更新処理及び描画処理を行う
    */
   public onUpdate(): void {
+    // 全てのモデルの描画処理開始前に、フレームごとのリセットフラグをクリアする
+    const gl = this._subdelegate.getGl();
+    CubismWebGLOffscreenManager.getInstance().resetPreviousActiveCount(gl);
+
     const { width, height } = this._subdelegate.getCanvas();
 
     const projection: CubismMatrix44 = new CubismMatrix44();
-    const model: LAppModel = this._models.at(0);
+    const model: LAppModel = this.getModel(0);
 
     if (model.getModel()) {
       if (model.getModel().getCanvasWidth() > 1.0 && width < height) {
@@ -107,6 +120,14 @@ export class LAppLive2DManager {
   public nextScene(): void {
     const no: number = (this._sceneIndex + 1) % LAppDefine.ModelConfigs.length;
     this.changeScene(no);
+
+    // 不要なオフスクリーン描画用のレンダーテクスチャを解放する
+    const gl = this._subdelegate.getGl();
+    CubismWebGLOffscreenManager.getInstance().clearPreviousActiveRenderTextureCountResetFlag(
+      gl
+    );
+    CubismWebGLOffscreenManager.getInstance().resetPreviousActiveCount(gl);
+    CubismWebGLOffscreenManager.getInstance().releaseStaleRenderTextures(gl);
   }
 
   /**

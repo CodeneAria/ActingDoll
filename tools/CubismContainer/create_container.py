@@ -28,6 +28,28 @@ def run_command(cmd, shell=True, capture_output=False, check=False):
         return e
 
 
+def remove_if_empty(work_dir, directory, max_depth=2):
+    """Remove directory if it exists and is empty, recursively up to work_dir.
+
+    Args:
+        work_dir: Root directory to stop at
+        directory: Target directory to remove
+        max_depth: Maximum number of parent directories to check (default: 2)
+    """
+    if directory.exists():
+        shutil.rmtree(directory)
+    current = Path(directory).parent
+    work_path = Path(work_dir)
+    depth = 0
+    while current.exists() and current != work_path and depth < max_depth:
+        if not any(current.iterdir()):
+            shutil.rmtree(current)
+            current = current.parent
+            depth += 1
+        else:
+            break
+
+
 def main(work_dir, config_path):
     # Load settings from YAML
     try:
@@ -67,7 +89,8 @@ def main(work_dir, config_path):
     adapter_dir = Path(ADAPTER_DIR).resolve().absolute()
     archive_core_path = Path(ARCHIVE_CORE_DIR).resolve().absolute()
     models_path = Path(MODELS_DIR).resolve().absolute()
-    temp_core_dir = Path(work_dir / "volume" / "Core").resolve().absolute()
+    args_core_dir = "./._volume/Core"
+    temp_core_dir = Path(work_dir / args_core_dir).resolve().absolute()
 
     # Display settings
     print("=" * 50)
@@ -133,8 +156,7 @@ def main(work_dir, config_path):
 
     print(f"# Copying Core files to {temp_core_dir}")
     try:
-        if temp_core_dir.exists():
-            shutil.rmtree(temp_core_dir)
+        remove_if_empty(work_dir, temp_core_dir)
         shutil.copytree(archive_core_path, temp_core_dir)
     except Exception as e:
         print(f"[Error] Failed to copy Core files: {e}", file=sys.stderr)
@@ -149,19 +171,23 @@ def main(work_dir, config_path):
             "--build-arg", f"GIT_SAMPLE_REPO={GIT_SAMPLE_REPO}",
             "--build-arg", f"GIT_SAMPLE_TAG={GIT_SAMPLE_TAG}",
             "--build-arg", f"GIT_SAMPLE_DIR_NAME={GIT_SAMPLE_DIR_NAME}",
+            "--build-arg", f"CORE_ARCHIVE_DIR={args_core_dir}",
             "-t", f"{DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}",
             "-f", str(dockerfile_path),
             "."
         ]
-        run_command(build_cmd, shell=False, check=True)
+        result = run_command(build_cmd, shell=False, check=True)
+        if result.returncode != 0:
+            print(f"[Error] Failed to create Docker image", file=sys.stderr)
+            print(result.stderr, file=sys.stderr)
+            sys.exit(1)
     except subprocess.CalledProcessError as e:
         print(f"[Error] Failed to build Docker image", file=sys.stderr)
         sys.exit(1)
     finally:
         # Clean up temporary Core files
         print("# Cleaning up temporary Core files...")
-        if temp_core_dir.exists():
-            shutil.rmtree(temp_core_dir)
+        remove_if_empty(work_dir, temp_core_dir)
 
     # Run container
     run_cmd = [

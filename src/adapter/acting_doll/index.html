@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,16 +8,16 @@
   <link rel="icon" href="./assets/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="./css/acting_doll.css">
   <!-- Live2DCubismCore script -->
-  <script src = "./Core/live2dcubismcore.min.js"></script>
+  <script src="./Core/live2dcubismcore.min.js"></script>
   <!-- Build script -->
-  <script src = "./src/main.ts" type="module"></script>
+  <script src="./src/main.ts" type="module"></script>
 </head>
+
 <body>
   <article id="article_controlPanel">
     <button id="togglePanel">Controls</button>
     <div id="controlPanel" class="hidden">
       <h3>Live2D Controls</h3>
-
       <!-- WebSocket Connection Status -->
       <div class="control-section">
         <label>WebSocket Status:</label>
@@ -28,7 +29,6 @@
           <div id="wsClientId" style="font-size: 0.9em; color: #666;">クライアントID: 取得中...</div>
         </div>
       </div>
-
       <!-- Animation Settings Section -->
       <div class="control-section">
         <label>Animation Settings:</label>
@@ -55,7 +55,6 @@
           </label>
         </div>
       </div>
-
       <!-- Model Transform Section -->
       <div class="control-section">
         <label>Model Position:</label>
@@ -73,7 +72,6 @@
           <input type="range" id="scaleSlider" min="0.1" max="3.0" step="0.1" value="1.0" style="width: 100%;">
         </div>
       </div>
-
       <!-- Expressions Section -->
       <div class="control-section">
         <label for="expressionSelect">Expressions:</label>
@@ -81,7 +79,6 @@
           <option value="">Select Expression...</option>
         </select>
       </div>
-
       <!-- Motions Section -->
       <div class="control-section">
         <label for="motionSelect">Motions:</label>
@@ -89,7 +86,6 @@
           <option value="">Select Motion...</option>
         </select>
       </div>
-
       <!-- Parameters Section -->
       <div class="control-section">
         <label>Parameters:</label>
@@ -100,4 +96,5 @@
     </div>
   </article>
 </body>
+
 </html>

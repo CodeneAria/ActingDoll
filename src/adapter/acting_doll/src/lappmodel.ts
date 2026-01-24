@@ -34,6 +34,7 @@ import { csmString } from '@framework/type/csmstring';
 import { csmVector } from '@framework/type/csmvector';
 import {
   CSM_ASSERT,
+  CubismLogVerbose,
   CubismLogDebug,
   CubismLogError,
   CubismLogInfo
@@ -79,7 +80,6 @@ enum LoadStep {
  * モデル生成、機能コンポーネント生成、更新処理とレンダリングの呼び出しを行う。
  */
 export class LAppModel extends CubismUserModel {
-  protected _headIdle: CubismBreath; // 頭部アイドルモーション
   /**
    * model3.jsonが置かれたディレクトリとファイルパスからモデルを生成する
    * @param dir
@@ -112,8 +112,7 @@ export class LAppModel extends CubismUserModel {
       })
       .catch(error => {
         // model3.json読み込みでエラーが発生した時点で描画は不可能なので、setupせずエラーをcatchして何もしない
-        CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_LOAD_FILE,
-          `${this._modelHomeDir}${fileName}`));
+        CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_LOAD_FILE, `${this._modelHomeDir}${fileName}`));
       });
   }
 
@@ -138,8 +137,7 @@ export class LAppModel extends CubismUserModel {
           if (response.ok) {
             return response.arrayBuffer();
           } else if (response.status >= 400) {
-            CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_LOAD_FILE,
-              `${this._modelHomeDir}${modelFileName}`));
+            CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_LOAD_FILE, `${this._modelHomeDir}${modelFileName}`));
             return new ArrayBuffer(0);
           }
         })
@@ -450,7 +448,10 @@ export class LAppModel extends CubismUserModel {
         this._updating = false;
         this._initialized = true;
 
-        this.createRenderer();
+        this.createRenderer(
+          this._subdelegate.getCanvas().width,
+          this._subdelegate.getCanvas().height
+        );
         this.setupTextures();
         this.getRenderer().startUp(this._subdelegate.getGlManager().getGl());
       }
@@ -515,7 +516,10 @@ export class LAppModel extends CubismUserModel {
    */
   public reloadRenderer(): void {
     this.deleteRenderer();
-    this.createRenderer();
+    this.createRenderer(
+      this._subdelegate.getCanvas().width,
+      this._subdelegate.getCanvas().height
+    );
     this.setupTextures();
   }
 
@@ -1000,7 +1004,7 @@ export class LAppModel extends CubismUserModel {
       if (i == no) {
         const name: string = this._expressions._keyValues[i].first;
         this.setExpression(name);
-        CubismLogDebug(LAppMultilingual.getMessage(MessageKey.WS_EXPRESSION_SETTING, name));
+        CubismLogDebug(LAppMultilingual.getMessage(MessageKey.EXPRESSION_SET, name));
         return;
       }
     }
@@ -1030,7 +1034,7 @@ export class LAppModel extends CubismUserModel {
       }
       return modelFileName;
     } else {
-      return '[Unknown]';
+      return LAppMultilingual.getMessage(MessageKey.UNKNOWN);
     }
   }
 
@@ -1175,7 +1179,10 @@ export class LAppModel extends CubismUserModel {
             this._updating = false;
             this._initialized = true;
 
-            this.createRenderer();
+            this.createRenderer(
+              this._subdelegate.getCanvas().width,
+              this._subdelegate.getCanvas().height
+            );
             this.setupTextures();
             this.getRenderer().startUp(
               this._subdelegate.getGlManager().getGl()
@@ -1376,4 +1383,5 @@ export class LAppModel extends CubismUserModel {
   _wavFileHandler: LAppWavFileHandler; //wavファイルハンドラ
   _consistency: boolean; // MOC3整合性チェック管理用
   _cubismParameterId: any; // デフォルトパラメータID
+  _headIdle: CubismBreath; // 頭部アイドルモーション
 }
