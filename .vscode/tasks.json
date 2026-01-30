@@ -79,7 +79,7 @@
                 "8766",
                 "--host",
                 "localhost",
-                "--no-auth"
+                "--disable-auth"
             ],
             "detail": "WebSocketのサーバーを起動する"
         }
