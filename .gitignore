@@ -216,6 +216,7 @@ src/Cubism/Core
 src/Cubism/Resources
 src/adapter/public
 src/adapter/acting_doll/dist
+src/adapter/acting_doll/public
 src/Cubism/Framework
 src/adapter/allowed
 CubismSdkForWeb*
