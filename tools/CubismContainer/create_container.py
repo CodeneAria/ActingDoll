@@ -29,7 +29,7 @@ def run_command(cmd, shell=True, capture_output=False, check=False):
         return e
 
 
-def remove_if_empty(work_dir, directory, max_depth=2):
+def remove_directory_and_empty_parents(work_dir, directory, max_depth=2):
     """Remove directory if it exists and is empty, recursively up to work_dir.
 
     Args:
@@ -159,7 +159,7 @@ def main(work_dir, config_path):
 
     print(f"# Copying Core files to {temp_core_dir}")
     try:
-        remove_if_empty(work_dir, temp_core_dir)
+        remove_directory_and_empty_parents(work_dir, temp_core_dir)
         shutil.copytree(archive_core_path, temp_core_dir)
     except Exception as e:
         print(f"[Error] Failed to copy Core files: {e}", file=sys.stderr)
@@ -190,7 +190,7 @@ def main(work_dir, config_path):
     finally:
         # Clean up temporary Core files
         print("# Cleaning up temporary Core files...")
-        remove_if_empty(work_dir, temp_core_dir)
+        remove_directory_and_empty_parents(work_dir, temp_core_dir)
 
     # Run container
     print("# Creating Docker container...")
@@ -216,7 +216,7 @@ def main(work_dir, config_path):
     # Copy Framework files from container
     print("# Copying Framework files from Docker container...")
     try:
-        remove_if_empty(work_dir, framework_dir)
+        remove_directory_and_empty_parents(work_dir, framework_dir)
         frame_copy_cmd = [
             "docker", "cp",
             DOCKER_CONTAINER_NAME + ":/root/workspace/Cubism/" + GIT_FRAMEWORK_DIR_NAME,
