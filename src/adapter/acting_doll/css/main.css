@@ -1,0 +1,20 @@
+html,
+body {
+    overflow: hidden;
+    margin: 0;
+}
+
+html {
+    overscroll-behavior-x: none;
+    touch-action: none;
+}
+
+body {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+body>canvas:only-child {
+    width: 100vw;
+    height: 100vh;
+}
