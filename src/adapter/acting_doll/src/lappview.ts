@@ -139,8 +139,9 @@ export class LAppView {
       const x: number = width * 0.5;
       const y: number = height * 0.5;
 
-      const fwidth = textureInfo.width * 2.0;
       const fheight = height * 0.95;
+      const ratio = fheight / textureInfo.height;
+      const fwidth = textureInfo.width * ratio;
       this._back = new LAppSprite(x, y, fwidth, fheight, textureInfo.id);
       this._back.setSubdelegate(this._subdelegate);
     };
@@ -227,7 +228,7 @@ export class LAppView {
     const y: number = this.transformViewY(posY);
 
     if (LAppDefine.DebugTouchLogEnable) {
-      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.VIEW_TOUCHES_ENDED, x.toString(), y.toString()));
+      LAppPal.printMessage(`[APP]touchesEnded x: ${x} y: ${y}`);
     }
     lapplive2dmanager.onTap(x, y);
 
@@ -235,12 +236,8 @@ export class LAppView {
     if (this._gear.isHit(posX, posY)) {
       // WebSocketでサーバーに通知（LAppDelegateから取得）
       const websocketClient = LAppDelegate.getInstance().getWebSocketClient();
-      if (websocketClient && websocketClient.isConnected()) {
-        websocketClient.sendCustomMessage('sprite_hit', {
-          sprite: 'gear',
-          position: { x: posX, y: posY },
-          viewPosition: { x, y }
-        });
+      if (websocketClient) {
+        websocketClient.sendHit('gear', posX, posY, x, y);
       }
       lapplive2dmanager.nextScene();
     }

@@ -18,5 +18,5 @@ Live2D Cubism SDKのVersionを上げたい場合の対処になります。
 1. **タグ更新**と**Live2D Cubism Coreの更新**を実行後、DockerImage/Containerを作成しなおしてください
   - 作り直したDockerImage/ContainerにCubismWebSamplesのサンプルコードがあるため
 
-- 最新に置き換える
+2. 最新に置き換える
   - package.json

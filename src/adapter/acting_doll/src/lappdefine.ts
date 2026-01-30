@@ -35,6 +35,9 @@ export const ViewLogicalMaxTop = 2.0;
 // 相対パス
 export const ResourcesPath = './Resources/';
 
+// シェーダー相対パス
+export const ShaderPath = './Framework/Shaders/WebGL/';
+
 // モデルの後ろにある背景の画像ファイル
 export const BackImageName = 'back_class_normal.png';
 
@@ -61,6 +64,7 @@ export const ModelConfigs: ModelConfig[] = [
   { name: 'Mao', isCustom: false, initX: 0, initY: 0, initScale: 1.0 },
   { name: 'Mark', isCustom: false, initX: 0, initY: 0, initScale: 1.0 },
   { name: 'Natori', isCustom: false, initX: 0, initY: 0, initScale: 1.0 },
+  { name: 'Ren', isCustom: false, initX: 0, initY: 0, initScale: 1.0 },
   { name: 'Rice', isCustom: false, initX: 0, initY: 0, initScale: 1.0 },
   { name: 'Wanko', isCustom: false, initX: 0, initY: 0, initScale: 1.0 }
 ];

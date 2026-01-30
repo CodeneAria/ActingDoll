@@ -14,6 +14,7 @@ import shutil
 def run_command(cmd, shell=True, capture_output=False, check=False):
     """Run a shell command and return the result."""
     try:
+        # print(f"  [CMD] {' '.join(cmd) if isinstance(cmd, list) else cmd}")
         result = subprocess.run(
             cmd,
             shell=shell,
@@ -79,6 +80,7 @@ def main(work_dir, config_path):
     ARCHIVE_CORE_DIR = config['cubism']['archive_core_dir']
     MODELS_DIR = config['cubism']['models_dir']
     ADAPTER_DIR = config['custom']['adapter_dir']
+    FRAMEWORK_DIR = config['cubism']['framework_dir']
 
     # Authentication settings
     AUTH_TOKEN = config['authentication']['token']
@@ -89,6 +91,7 @@ def main(work_dir, config_path):
     adapter_dir = Path(ADAPTER_DIR).resolve().absolute()
     archive_core_path = Path(ARCHIVE_CORE_DIR).resolve().absolute()
     models_path = Path(MODELS_DIR).resolve().absolute()
+    framework_dir = Path(FRAMEWORK_DIR).resolve().absolute()
     args_core_dir = "./._volume/Core"
     temp_core_dir = Path(work_dir / args_core_dir).resolve().absolute()
 
@@ -209,6 +212,23 @@ def main(work_dir, config_path):
         print(f"[Error] Failed to start Docker container", file=sys.stderr)
         print(result.stderr, file=sys.stderr)
         sys.exit(1)
+
+    # Copy Framework files from container
+    print("# Copying Framework files from Docker container...")
+    try:
+        remove_if_empty(work_dir, framework_dir)
+        frame_copy_cmd = [
+            "docker", "cp",
+            DOCKER_CONTAINER_NAME + ":/root/workspace/Cubism/" + GIT_FRAMEWORK_DIR_NAME,
+            str(framework_dir)
+        ]
+        result = run_command(frame_copy_cmd, shell=False, check=True)
+        if result.returncode != 0:
+            print(
+                f"[Error] Failed to copy Framework files from Docker container", file=sys.stderr)
+    except subprocess.CalledProcessError as e:
+        print(
+            f"[Error] Failed to copy Framework files from Docker container", file=sys.stderr)
 
     ps_filter_cmd = (
         f'docker ps --filter "ancestor={DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}" '

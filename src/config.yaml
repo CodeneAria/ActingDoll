@@ -3,7 +3,7 @@ docker:
   # Docker image settings
   image:
     name: "img_node"
-    version: "latest"
+    version: "5-r.5-beta.3"
 
   # Docker container settings
   container:
@@ -27,12 +27,13 @@ authentication:
 cubism:
   # Git repository and tag for Cubism Framework
   git_framework_repo: "https://github.com/Live2D/CubismWebFramework.git"
-  git_framework_tag: "5-r.5-beta.2"
+  git_framework_tag: "5-r.5-beta.3"
   git_framework_dir_name: "Framework"
+  framework_dir: "src/Cubism/Framework"
 
   # Git repository and tag for Cubism Web Samples
   git_sample_repo: "https://github.com/Live2D/CubismWebSamples.git"
-  git_sample_tag: "5-r.5-beta.2"
+  git_sample_tag: "5-r.5-beta.3"
   git_sample_dir_name: "Samples"
 
   # Path to archive directory

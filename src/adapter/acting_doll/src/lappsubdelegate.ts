@@ -184,7 +184,7 @@ export class LAppSubdelegate {
     const vertexShaderId = gl.createShader(gl.VERTEX_SHADER);
 
     if (vertexShaderId == null) {
-      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.SUBDELEGATE_VERTEX_SHADER_FAILED));
+      LAppPal.printMessage('failed to create vertexShader');
       return null;
     }
 
@@ -206,7 +206,7 @@ export class LAppSubdelegate {
     const fragmentShaderId = gl.createShader(gl.FRAGMENT_SHADER);
 
     if (fragmentShaderId == null) {
-      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.SUBDELEGATE_FRAGMENT_SHADER_FAILED));
+      LAppPal.printMessage('failed to create fragmentShader');
       return null;
     }
 
@@ -286,7 +286,7 @@ export class LAppSubdelegate {
    */
   public onPointBegan(pageX: number, pageY: number): void {
     if (!this._view) {
-      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.SUBDELEGATE_VIEW_NOT_FOUND));
+      LAppPal.printMessage('view notfound');
       return;
     }
     this._captured = true;
@@ -318,7 +318,7 @@ export class LAppSubdelegate {
     this._captured = false;
 
     if (!this._view) {
-      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.SUBDELEGATE_VIEW_NOT_FOUND));
+      LAppPal.printMessage('view notfound');
       return;
     }
 
@@ -335,7 +335,7 @@ export class LAppSubdelegate {
     this._captured = false;
 
     if (!this._view) {
-      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.SUBDELEGATE_VIEW_NOT_FOUND));
+      LAppPal.printMessage('view notfound');
       return;
     }
 

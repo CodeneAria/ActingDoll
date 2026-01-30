@@ -28,10 +28,7 @@ import {
   CubismMotionQueueEntryHandle,
   InvalidMotionQueueEntryHandleValue
 } from '@framework/motion/cubismmotionqueuemanager';
-import { csmMap } from '@framework/type/csmmap';
 import { csmRect } from '@framework/type/csmrectf';
-import { csmString } from '@framework/type/csmstring';
-import { csmVector } from '@framework/type/csmvector';
 import {
   CSM_ASSERT,
   CubismLogVerbose,
@@ -112,7 +109,7 @@ export class LAppModel extends CubismUserModel {
       })
       .catch(error => {
         // model3.json読み込みでエラーが発生した時点で描画は不可能なので、setupせずエラーをcatchして何もしない
-        CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_LOAD_FILE, `${this._modelHomeDir}${fileName}`));
+        CubismLogError(`Failed to load file ${this._modelHomeDir}${fileName}`);
       });
   }
 
@@ -137,7 +134,9 @@ export class LAppModel extends CubismUserModel {
           if (response.ok) {
             return response.arrayBuffer();
           } else if (response.status >= 400) {
-            CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_LOAD_FILE, `${this._modelHomeDir}${modelFileName}`));
+            CubismLogError(
+              `Failed to load file ${this._modelHomeDir}${modelFileName}`
+            );
             return new ArrayBuffer(0);
           }
         })
@@ -151,7 +150,7 @@ export class LAppModel extends CubismUserModel {
 
       this._state = LoadStep.WaitLoadModel;
     } else {
-      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.MODEL_DATA_NOT_EXIST));
+      LAppPal.printMessage('Model data does not exist.');
     }
 
     // Expression
@@ -169,7 +168,9 @@ export class LAppModel extends CubismUserModel {
               if (response.ok) {
                 return response.arrayBuffer();
               } else if (response.status >= 400) {
-                CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_LOAD_FILE, `${this._modelHomeDir}${expressionFileName}`));
+                CubismLogError(
+                  `Failed to load file ${this._modelHomeDir}${expressionFileName}`
+                );
                 // ファイルが存在しなくてもresponseはnullを返却しないため、空のArrayBufferで対応する
                 return new ArrayBuffer(0);
               }
@@ -181,14 +182,12 @@ export class LAppModel extends CubismUserModel {
                 expressionName
               );
 
-              if (this._expressions.getValue(expressionName) != null) {
-                ACubismMotion.delete(
-                  this._expressions.getValue(expressionName)
-                );
-                this._expressions.setValue(expressionName, null);
+              if (this._expressions.get(expressionName) != null) {
+                ACubismMotion.delete(this._expressions.get(expressionName));
+                this._expressions.set(expressionName, null);
               }
 
-              this._expressions.setValue(expressionName, motion);
+              this._expressions.set(expressionName, motion);
 
               this._expressionCount++;
 
@@ -219,7 +218,9 @@ export class LAppModel extends CubismUserModel {
             if (response.ok) {
               return response.arrayBuffer();
             } else if (response.status >= 400) {
-              CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_LOAD_FILE, `${this._modelHomeDir}${physicsFileName}`));
+              CubismLogError(
+                `Failed to load file ${this._modelHomeDir}${physicsFileName}`
+              );
               return new ArrayBuffer(0);
             }
           })
@@ -250,7 +251,9 @@ export class LAppModel extends CubismUserModel {
             if (response.ok) {
               return response.arrayBuffer();
             } else if (response.status >= 400) {
-              CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_LOAD_FILE, `${this._modelHomeDir}${poseFileName}`));
+              CubismLogError(
+                `Failed to load file ${this._modelHomeDir}${poseFileName}`
+              );
               return new ArrayBuffer(0);
             }
           })
@@ -286,7 +289,6 @@ export class LAppModel extends CubismUserModel {
     const setupBreath = (): void => {
       this._breath = CubismBreath.create();
 
-      const breathParameters: csmVector<BreathParameterData> = new csmVector();
       let parameter_id = CubismFramework.getIdManager().getId(
         this._cubismParameterId.ParamBreath !== undefined ? this._cubismParameterId.ParamBreath : CubismDefaultParameterId.ParamBreath
       );
@@ -297,7 +299,7 @@ export class LAppModel extends CubismUserModel {
       let breath_peak = (Math.abs(breath_min) + Math.abs(breath_max)) / 2;
       let breath_cycle = 3.2345;
       let breath_weight = 1;
-      breathParameters.pushBack(
+      const breathParameters: Array<BreathParameterData> = [
         new BreathParameterData(
           parameter_id,   // 呼吸をひもづけるパラメータID
           breath_offset,  // 呼吸を正弦波としたときの、波のオフセット
@@ -305,7 +307,7 @@ export class LAppModel extends CubismUserModel {
           breath_cycle,   // 呼吸を正弦波としたときの、波の周期
           breath_weight   // パラメータへの重み
         )
-      );
+      ];
 
       this._breath.setParameters(breathParameters);
 
@@ -316,20 +318,11 @@ export class LAppModel extends CubismUserModel {
     // HeadIdle (アイドリングモーション時の頭の動き)
     const setupHeadIdle = (): void => {
       this._headIdle = CubismBreath.create();
-
-      const headIdleParameters: csmVector<BreathParameterData> = new csmVector();
-      headIdleParameters.pushBack(
-        new BreathParameterData(this._idParamAngleX, 0.0, 15.0, 6.5345, 0.5)
-      );
-      headIdleParameters.pushBack(
-        new BreathParameterData(this._idParamAngleY, 0.0, 8.0, 3.5345, 0.5)
-      );
-      headIdleParameters.pushBack(
+      const headIdleParameters: Array<BreathParameterData> = [
+        new BreathParameterData(this._idParamAngleX, 0.0, 15.0, 6.5345, 0.5),
+        new BreathParameterData(this._idParamAngleY, 0.0, 8.0, 3.5345, 0.5),
         new BreathParameterData(this._idParamAngleZ, 0.0, 10.0, 5.5345, 0.5)
-      );
-      headIdleParameters.pushBack(
-        new BreathParameterData(this._idParamBodyAngleX, 0.0, 4.0, 15.5345, 0.5)
-      );
+      ];
 
       this._headIdle.setParameters(headIdleParameters);
       this._state = LoadStep.LoadUserData;
@@ -348,7 +341,9 @@ export class LAppModel extends CubismUserModel {
             if (response.ok) {
               return response.arrayBuffer();
             } else if (response.status >= 400) {
-              CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_LOAD_FILE, `${this._modelHomeDir}${userDataFile}`));
+              CubismLogError(
+                `Failed to load file ${this._modelHomeDir}${userDataFile}`
+              );
               return new ArrayBuffer(0);
             }
           })
@@ -375,10 +370,9 @@ export class LAppModel extends CubismUserModel {
       const eyeBlinkIdCount: number =
         this._modelSetting.getEyeBlinkParameterCount();
 
+      this._eyeBlinkIds.length = eyeBlinkIdCount;
       for (let i = 0; i < eyeBlinkIdCount; ++i) {
-        this._eyeBlinkIds.pushBack(
-          this._modelSetting.getEyeBlinkParameterId(i)
-        );
+        this._eyeBlinkIds[i] = this._modelSetting.getEyeBlinkParameterId(i);
       }
 
       this._state = LoadStep.SetupLipSyncIds;
@@ -391,8 +385,9 @@ export class LAppModel extends CubismUserModel {
     const setupLipSyncIds = (): void => {
       const lipSyncIdCount = this._modelSetting.getLipSyncParameterCount();
 
+      this._lipSyncIds.length = lipSyncIdCount;
       for (let i = 0; i < lipSyncIdCount; ++i) {
-        this._lipSyncIds.pushBack(this._modelSetting.getLipSyncParameterId(i));
+        this._lipSyncIds[i] = this._modelSetting.getLipSyncParameterId(i);
       }
       this._state = LoadStep.SetupLayout;
 
@@ -402,10 +397,10 @@ export class LAppModel extends CubismUserModel {
 
     // Layout
     const setupLayout = (): void => {
-      const layout: csmMap<string, number> = new csmMap<string, number>();
+      const layout: Map<string, number> = new Map<string, number>();
 
       if (this._modelSetting == null || this._modelMatrix == null) {
-        CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_SETUP_LAYOUT));
+        CubismLogError('Failed to setupLayout().');
         return;
       }
 
@@ -454,6 +449,7 @@ export class LAppModel extends CubismUserModel {
         );
         this.setupTextures();
         this.getRenderer().startUp(this._subdelegate.getGlManager().getGl());
+        this.getRenderer().loadShaders(LAppDefine.ShaderPath);
       }
     };
   }
@@ -476,7 +472,7 @@ export class LAppModel extends CubismUserModel {
       ) {
         // テクスチャ名が空文字だった場合はロード・バインド処理をスキップ
         if (this._modelSetting.getTextureFileName(modelTextureNumber) == '') {
-          CubismLogInfo(LAppMultilingual.getMessage(MessageKey.TEXTURE_FILENAME_NULL));
+          console.log('getTextureFileName null');
           continue;
         }
 
@@ -613,8 +609,8 @@ export class LAppModel extends CubismUserModel {
       this._wavFileHandler.update(deltaTimeSeconds);
       value = this._wavFileHandler.getRms();
 
-      for (let i = 0; i < this._lipSyncIds.getSize(); ++i) {
-        this._model.addParameterValueById(this._lipSyncIds.at(i), value, 0.8);
+      for (let i = 0; i < this._lipSyncIds.length; ++i) {
+        this._model.addParameterValueById(this._lipSyncIds[i], value, 0.8);
       }
     }
 
@@ -797,9 +793,9 @@ export class LAppModel extends CubismUserModel {
     }
 
     // 目パチのパラメータIDを取得
-    for (let i = 0; i < this._eyeBlinkIds.getSize(); i++) {
-      const paramId = this._eyeBlinkIds.at(i);
-      eyeBlinkParams.add(paramId.getString().s);
+    for (let i = 0; i < this._eyeBlinkIds.length; i++) {
+      const paramId = this._eyeBlinkIds[i];
+      eyeBlinkParams.add(paramId.getString());
     }
 
     return eyeBlinkParams;
@@ -833,8 +829,10 @@ export class LAppModel extends CubismUserModel {
       return InvalidMotionQueueEntryHandleValue;
     } else {
       const motionFileName = this._modelSetting.getMotionFileName(group, no);
+
+      // ex) idle_0
       const name = `${group}_${no}`;
-      let motion: CubismMotion = this._motions.getValue(name) as CubismMotion;
+      let motion: CubismMotion = this._motions.get(name) as CubismMotion;
       let autoDelete = false;
 
       CubismLogDebug(LAppMultilingual.getMessage(MessageKey.START_MOTION, group, `${no}`));
@@ -942,10 +940,10 @@ export class LAppModel extends CubismUserModel {
    * @param expressionId 表情モーションのID
    */
   public setExpression(expressionId: string): string {
-    const motion: ACubismMotion = this._expressions.getValue(expressionId);
+    const motion: ACubismMotion = this._expressions.get(expressionId);
 
     if (this._debugMode) {
-      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.EXPRESSION_SET, expressionId));
+      LAppPal.printMessage(`[APP]expression: [${expressionId}]`);
     }
 
     if (motion != null) {
@@ -961,7 +959,7 @@ export class LAppModel extends CubismUserModel {
       }
     } else {
       if (this._debugMode) {
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.EXPRESSION_IS_NULL, expressionId));
+        LAppPal.printMessage(`[APP]expression[${expressionId}] is null`);
       }
     }
     return this._currentExpressionId;
@@ -994,15 +992,17 @@ export class LAppModel extends CubismUserModel {
    * ランダムに選ばれた表情モーションをセットする
    */
   public setRandomExpression(): void {
-    if (this._expressions.getSize() == 0) {
+    if (this._expressions.size == 0) {
       return;
     }
 
-    const no: number = Math.floor(Math.random() * this._expressions.getSize());
+    const no: number = Math.floor(Math.random() * this._expressions.size);
 
-    for (let i = 0; i < this._expressions.getSize(); i++) {
+    for (let i = 0; i < this._expressions.size; i++) {
       if (i == no) {
-        const name: string = this._expressions._keyValues[i].first;
+        // const name: string = this._expressions._keyValues[i].first;
+        const expressionsArray = [...this._expressions.entries()];
+        const name: string = expressionsArray[i][0];
         this.setExpression(name);
         CubismLogDebug(LAppMultilingual.getMessage(MessageKey.EXPRESSION_SET, name));
         return;
@@ -1071,8 +1071,8 @@ export class LAppModel extends CubismUserModel {
   /**
    * イベントの発火を受け取る
    */
-  public motionEventFired(eventValue: csmString): void {
-    CubismLogInfo(LAppMultilingual.getMessage(MessageKey.EVENT_FIRED, eventValue.s));
+  public motionEventFired(eventValue: string): void {
+    CubismLogInfo('{0} is fired on LAppModel!!', eventValue);
   }
 
   /**
@@ -1102,12 +1102,10 @@ export class LAppModel extends CubismUserModel {
         if (this.isHit(drawId, x, y)) {
           // WebSocketでサーバーに通知（LAppDelegateから取得）
           const websocketClient = LAppDelegate.getInstance().getWebSocketClient();
-          if (websocketClient && websocketClient.isConnected()) {
-            websocketClient.sendCustomMessage('model_hit', {
-              moc_name: this._modelSetting.getModelFileName(),
-              sprite: drawId.getString().s,
-              position: { x, y }
-            });
+          if (websocketClient) {
+            websocketClient.sendModelHit(
+              this._modelSetting.getModelFileName(), drawId.getString(), x, y
+            );
           }
           return true;
         }
@@ -1130,7 +1128,9 @@ export class LAppModel extends CubismUserModel {
       // ex) idle_0
       const name = `${group}_${i}`;
       if (this._debugMode) {
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.LOAD_MOTION, motionFileName, name));
+        CubismLogInfo(
+          `[APP]load motion: ${motionFileName} => [${name}]`
+        );
       }
 
       fetch(`${this._modelHomeDir}${motionFileName}`)
@@ -1138,7 +1138,9 @@ export class LAppModel extends CubismUserModel {
           if (response.ok) {
             return response.arrayBuffer();
           } else if (response.status >= 400) {
-            CubismLogError(LAppMultilingual.getMessage(MessageKey.FAILED_TO_LOAD_FILE, `${this._modelHomeDir}${motionFileName}`));
+            CubismLogError(
+              `Failed to load file ${this._modelHomeDir}${motionFileName}`
+            );
             return new ArrayBuffer(0);
           }
         })
@@ -1158,11 +1160,11 @@ export class LAppModel extends CubismUserModel {
           if (tmpMotion != null) {
             tmpMotion.setEffectIds(this._eyeBlinkIds, this._lipSyncIds);
 
-            if (this._motions.getValue(name) != null) {
-              ACubismMotion.delete(this._motions.getValue(name));
+            if (this._motions.get(name) != null) {
+              ACubismMotion.delete(this._motions.get(name));
             }
 
-            this._motions.setValue(name, tmpMotion);
+            this._motions.set(name, tmpMotion);
 
             this._motionCount++;
           } else {
@@ -1187,6 +1189,7 @@ export class LAppModel extends CubismUserModel {
             this.getRenderer().startUp(
               this._subdelegate.getGlManager().getGl()
             );
+            this.getRenderer().loadShaders(LAppDefine.ShaderPath);
           }
         });
     }
@@ -1220,7 +1223,7 @@ export class LAppModel extends CubismUserModel {
       this._subdelegate.getFrameBuffer(),
       viewport
     );
-    this.getRenderer().drawModel();
+    this.getRenderer().drawModel(LAppDefine.ShaderPath);
   }
 
   /**
@@ -1254,14 +1257,14 @@ export class LAppModel extends CubismUserModel {
       this._consistency = CubismMoc.hasMocConsistency(arrayBuffer);
 
       if (!this._consistency) {
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.INCONSISTENT_MOC3));
+        CubismLogInfo('Inconsistent MOC3.');
       } else {
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.CONSISTENT_MOC3));
+        CubismLogInfo('Consistent MOC3.');
       }
 
       return this._consistency;
     } else {
-      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.MODEL_DATA_NOT_EXIST));
+      LAppPal.printMessage('Model data does not exist.');
     }
   }
 
@@ -1290,17 +1293,17 @@ export class LAppModel extends CubismUserModel {
     this._modelHomeDir = null;
     this._userTimeSeconds = 0.0;
 
-    this._eyeBlinkIds = new csmVector<CubismIdHandle>();
-    this._lipSyncIds = new csmVector<CubismIdHandle>();
+    this._eyeBlinkIds = new Array<CubismIdHandle>();
+    this._lipSyncIds = new Array<CubismIdHandle>();
 
-    this._motions = new csmMap<string, ACubismMotion>();
-    this._expressions = new csmMap<string, ACubismMotion>();
+    this._motions = new Map<string, ACubismMotion>();
+    this._expressions = new Map<string, ACubismMotion>();
     this._currentExpressionId = null;
     this._currentMotionGroup = null;
     this._currentMotionNo = null;
 
-    this._hitArea = new csmVector<csmRect>();
-    this._userArea = new csmVector<csmRect>();
+    this._hitArea = new Array<csmRect>();
+    this._userArea = new Array<csmRect>();
 
     if (is_custom) {
       this._cubismParameterId = CubismDefaultParameterId_custom;
@@ -1349,7 +1352,7 @@ export class LAppModel extends CubismUserModel {
   _modelHomeDir: string; // モデルセッティングが置かれたディレクトリ
   _userTimeSeconds: number; // デルタ時間の積算値[秒]
 
-  _eyeBlinkIds: csmVector<CubismIdHandle>; // モデルに設定された瞬き機能用パラメータID
+  _eyeBlinkIds: Array<CubismIdHandle>; // モデルに設定された瞬き機能用パラメータID
   _eyeBlinkEnabled: boolean = true; // 自動目パチの有効/無効
   _breathEnabled: boolean = true; // 呼吸の有効/無効
   _idleMotionEnabled: boolean = false; // アイドリングモーションの有効/無効
@@ -1357,16 +1360,16 @@ export class LAppModel extends CubismUserModel {
   _physicsEnabled: boolean = true; // 物理演算の有効/無効
   _manuallyControlledParams: Set<number> = new Set(); // 手動制御中のパラメータインデックス
   _hasManuallyControlledParams: boolean = false; // 手動制御中のパラメータがあるか
-  _lipSyncIds: csmVector<CubismIdHandle>; // モデルに設定されたリップシンク機能用パラメータID
+  _lipSyncIds: Array<CubismIdHandle>; // モデルに設定されたリップシンク機能用パラメータID
 
-  _motions: csmMap<string, ACubismMotion>; // 読み込まれているモーションのリスト
-  _expressions: csmMap<string, ACubismMotion>; // 読み込まれている表情のリスト
+  _motions: Map<string, ACubismMotion>; // 読み込まれているモーションのリスト
+  _expressions: Map<string, ACubismMotion>; // 読み込まれている表情のリスト
   _currentExpressionId: string | null; // 現在設定されている表情ID
   _currentMotionGroup: string | null; // 現在再生中のモーショングループ名
   _currentMotionNo: number | null; // 現在再生中のモーション番号
 
-  _hitArea: csmVector<csmRect>; // 当たり判定用矩形リスト
-  _userArea: csmVector<csmRect>; // ユーザー定義矩形リスト
+  _hitArea: Array<csmRect>;
+  _userArea: Array<csmRect>;
 
   _idParamAngleX: CubismIdHandle; // パラメータID: ParamAngleX
   _idParamAngleY: CubismIdHandle; // パラメータID: ParamAngleY
