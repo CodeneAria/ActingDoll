@@ -8,6 +8,7 @@
 import * as LAppDefine from './lappdefine';
 import { LAppGlManager } from './lappglmanager';
 import { LAppLive2DManager } from './lapplive2dmanager';
+import { LAppPal } from './lapppal';
 import { LAppTextureManager } from './lapptexturemanager';
 import { LAppUI } from './lappui';
 import { LAppView } from './lappview';
@@ -87,6 +88,13 @@ export class LAppSubdelegate {
 
     // AppViewの初期化
     this._view.initialize(this);
+
+    // フレームバッファサイズの設定
+    this._live2dManager.setOffscreenSize(
+      this._canvas.width,
+      this._canvas.height
+    );
+
     this._view.initializeSprite();
 
     this._live2dManager.initialize(this);
@@ -176,7 +184,7 @@ export class LAppSubdelegate {
     const vertexShaderId = gl.createShader(gl.VERTEX_SHADER);
 
     if (vertexShaderId == null) {
-      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.SUBDELEGATE_VERTEX_SHADER_FAILED));
+      LAppPal.printMessage('failed to create vertexShader');
       return null;
     }
 
@@ -198,7 +206,7 @@ export class LAppSubdelegate {
     const fragmentShaderId = gl.createShader(gl.FRAGMENT_SHADER);
 
     if (fragmentShaderId == null) {
-      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.SUBDELEGATE_FRAGMENT_SHADER_FAILED));
+      LAppPal.printMessage('failed to create fragmentShader');
       return null;
     }
 
@@ -245,6 +253,10 @@ export class LAppSubdelegate {
     return this._glManager;
   }
 
+  public getGl(): WebGLRenderingContext | WebGL2RenderingContext {
+    return this._glManager.getGl();
+  }
+
   public getLive2DManager(): LAppLive2DManager {
     return this._live2dManager;
   }
@@ -274,7 +286,7 @@ export class LAppSubdelegate {
    */
   public onPointBegan(pageX: number, pageY: number): void {
     if (!this._view) {
-      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.SUBDELEGATE_VIEW_NOT_FOUND));
+      LAppPal.printMessage('view notfound');
       return;
     }
     this._captured = true;
@@ -306,7 +318,7 @@ export class LAppSubdelegate {
     this._captured = false;
 
     if (!this._view) {
-      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.SUBDELEGATE_VIEW_NOT_FOUND));
+      LAppPal.printMessage('view notfound');
       return;
     }
 
@@ -323,7 +335,7 @@ export class LAppSubdelegate {
     this._captured = false;
 
     if (!this._view) {
-      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.SUBDELEGATE_VIEW_NOT_FOUND));
+      LAppPal.printMessage('view notfound');
       return;
     }
 

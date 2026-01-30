@@ -7,10 +7,11 @@
 
 import { CubismMatrix44 } from '@framework/math/cubismmatrix44';
 import { ACubismMotion } from '@framework/motion/acubismmotion';
-import { csmVector } from '@framework/type/csmvector';
+import { CubismWebGLOffscreenManager } from '@framework/rendering/cubismoffscreenmanager';
 
 import * as LAppDefine from './lappdefine';
 import { LAppModel } from './lappmodel';
+import { LAppPal } from './lapppal';
 import { LAppSubdelegate } from './lappsubdelegate';
 import { CubismLogDebug, CubismLogInfo } from '@framework/utils/cubismdebug';
 import { LAppMultilingual, MessageKey } from './lappmultilingual';
@@ -24,7 +25,14 @@ export class LAppLive2DManager {
    * 現在のシーンで保持しているすべてのモデルを解放する
    */
   private releaseAllModel(): void {
-    this._models.clear();
+    this._models.length = 0;
+  }
+
+  public setOffscreenSize(width: number, height: number): void {
+    for (let i = 0; i < this._models.length; i++) {
+      const model: LAppModel = this._models[i];
+      model?.setRenderTargetSize(width, height);
+    }
   }
 
   /**
@@ -34,7 +42,7 @@ export class LAppLive2DManager {
    * @param y 画面のY座標
    */
   public onDrag(x: number, y: number): void {
-    const model: LAppModel = this._models.at(0);
+    const model: LAppModel = this._models[0];
     if (model) {
       model.setDragging(x, y);
     }
@@ -48,19 +56,21 @@ export class LAppLive2DManager {
    */
   public onTap(x: number, y: number): void {
     if (LAppDefine.DebugLogEnable) {
-      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.TAP_POINT, x.toFixed(2), y.toFixed(2)));
+      LAppPal.printMessage(
+        `[APP]tap point: {x: ${x.toFixed(2)} y: ${y.toFixed(2)}}`
+      );
     }
 
-    const model: LAppModel = this._models.at(0);
+    const model: LAppModel = this._models[0];
 
     if (model.hitTest(LAppDefine.HitAreaNameHead, x, y)) {
       if (LAppDefine.DebugLogEnable) {
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.HIT_AREA, LAppDefine.HitAreaNameHead));
+        LAppPal.printMessage(`[APP]hit area: [${LAppDefine.HitAreaNameHead}]`);
       }
       model.setRandomExpression();
     } else if (model.hitTest(LAppDefine.HitAreaNameBody, x, y)) {
       if (LAppDefine.DebugLogEnable) {
-        CubismLogInfo(LAppMultilingual.getMessage(MessageKey.HIT_AREA, LAppDefine.HitAreaNameBody));
+        LAppPal.printMessage(`[APP]hit area: [${LAppDefine.HitAreaNameBody}]`);
       }
       model.startRandomMotion(
         LAppDefine.MotionGroupTapBody,
@@ -76,10 +86,14 @@ export class LAppLive2DManager {
    * モデルの更新処理及び描画処理を行う
    */
   public onUpdate(): void {
+    // 全てのモデルの描画処理開始前に、フレームごとのリセットフラグをクリアする
+    const gl = this._subdelegate.getGl();
+    CubismWebGLOffscreenManager.getInstance().beginFrameProcess(gl);
+
     const { width, height } = this._subdelegate.getCanvas();
 
     const projection: CubismMatrix44 = new CubismMatrix44();
-    const model: LAppModel = this._models.at(0);
+    const model: LAppModel = this._models[0];
 
     if (model.getModel()) {
       if (model.getModel().getCanvasWidth() > 1.0 && width < height) {
@@ -98,6 +112,11 @@ export class LAppLive2DManager {
 
     model.update();
     model.draw(projection); // 参照渡しなのでprojectionは変質する。
+
+    // モデルで使用するオフスクリーン管理の終了処理
+    CubismWebGLOffscreenManager.getInstance().endFrameProcess(gl);
+    // もし余っているオフスクリーンのリソースを解放したい場合行う処理
+    CubismWebGLOffscreenManager.getInstance().releaseStaleRenderTextures(gl);
   }
 
   /**
@@ -124,7 +143,7 @@ export class LAppLive2DManager {
     this._sceneIndex = index;
 
     if (LAppDefine.DebugLogEnable) {
-      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.MODEL_INDEX, this._sceneIndex));
+      LAppPal.printMessage(`[APP]model index: ${this._sceneIndex}`);
     }
 
     // ModelConfigsからモデル設定を取得
@@ -136,7 +155,7 @@ export class LAppLive2DManager {
     const instance = new LAppModel(modelConfig.isCustom);
     instance.setSubdelegate(this._subdelegate);
     instance.loadAssets(modelPath, modelJsonName, modelConfig);
-    this._models.pushBack(instance);
+    this._models.push(instance);
   }
 
   public setViewMatrix(m: CubismMatrix44) {
@@ -159,7 +178,7 @@ export class LAppLive2DManager {
   public constructor() {
     this._subdelegate = null;
     this._viewMatrix = new CubismMatrix44();
-    this._models = new csmVector<LAppModel>();
+    this._models = new Array<LAppModel>();
     this._sceneIndex = 0;
   }
 
@@ -183,8 +202,8 @@ export class LAppLive2DManager {
    * @return モデルのインスタンス
    */
   public getModel(no: number): LAppModel {
-    if (no < this._models.getSize()) {
-      return this._models.at(no);
+    if (no < this._models.length) {
+      return this._models[no];
     }
     return null;
   }
@@ -195,7 +214,7 @@ export class LAppLive2DManager {
   private _subdelegate: LAppSubdelegate;
 
   _viewMatrix: CubismMatrix44; // モデル描画に用いるview行列
-  _models: csmVector<LAppModel>; // モデルインスタンスのコンテナ
+  _models: Array<LAppModel>; // モデルインスタンスのコンテナ
   private _sceneIndex: number; // 表示するシーンのインデックス値
 
   // モーション再生開始のコールバック関数

@@ -72,10 +72,14 @@
         {
             "label": "Debug:Server:Websocket(Port8766)",
             "type": "shell",
-            "command": "${workspaceFolder}/src/adapter/server/websocket_server.py",
+            "command": "python",
             "args": [
-                "--port", "8766",
-                "--host", "localhost"
+                "${workspaceFolder}/src/adapter/server/websocket_server.py",
+                "--port",
+                "8766",
+                "--host",
+                "localhost",
+                "--disable-auth"
             ],
             "detail": "WebSocketのサーバーを起動する"
         }

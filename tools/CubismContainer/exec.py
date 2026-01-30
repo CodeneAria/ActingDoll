@@ -74,8 +74,8 @@ def main(work_dir, config_path):
         # Run the command and show output in real-time
         subprocess.run(npm_cmd, shell=True, check=True)
     except subprocess.CalledProcessError as e:
-        print(f"[Error] executing shell: {e}", file=sys.stderr)
-        sys.exit(1)
+        #print(f"[Error] executing shell: {e}", file=sys.stderr)
+        pass
     except KeyboardInterrupt:
         print("\n# Shutting down...")
         sys.exit(0)

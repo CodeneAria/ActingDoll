@@ -10,7 +10,9 @@
     "sourceMap": true,
     "baseUrl": "./",
     "paths": {
-      "@framework/*": ["../../Cubism/Framework/src/*"]
+      "@framework/*": [
+        "../../Cubism/Framework/src/*"
+      ]
     },
     "noImplicitAny": true,
     "useUnknownInCatchVariables": true

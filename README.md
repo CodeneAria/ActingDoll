@@ -17,6 +17,8 @@ ActingDollは、[Model Context Protocol (MCP)](https://modelcontextprotocol.io/)
 
 ## インストール
 
+[記載中]
+
 ```bash
 pip install acting-doll
 ```

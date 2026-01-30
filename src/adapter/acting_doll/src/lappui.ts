@@ -433,7 +433,7 @@ export class LAppUI {
         // Create sliders for each parameter
         for (let i = 0; i < parameterCount; i++) {
             const parameterId = cubismModel.getParameterId(i);
-            const parameterName = parameterId.getString().s;
+            const parameterName = parameterId.getString();
             const minValue = cubismModel.getParameterMinimumValue(i);
             const maxValue = cubismModel.getParameterMaximumValue(i);
             const defaultValue = cubismModel.getParameterDefaultValue(i);
@@ -538,7 +538,7 @@ export class LAppUI {
 
         for (let i = 0; i < parameterCount; i++) {
             const parameterId = cubismModel.getParameterId(i);
-            const parameterName = parameterId.getString().s;
+            const parameterName = parameterId.getString();
             const currentValue = cubismModel.getParameterValueByIndex(i);
 
             const valueSpan = this._parameterValues.get(parameterName);

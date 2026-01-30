@@ -10,6 +10,7 @@ import { CubismViewMatrix } from '@framework/math/cubismviewmatrix';
 
 import * as LAppDefine from './lappdefine';
 import { LAppDelegate } from './lappdelegate';
+import { LAppPal } from './lapppal';
 import { LAppSprite } from './lappsprite';
 import { TextureInfo } from './lapptexturemanager';
 import { TouchManager } from './touchmanager';
@@ -138,8 +139,9 @@ export class LAppView {
       const x: number = width * 0.5;
       const y: number = height * 0.5;
 
-      const fwidth = textureInfo.width * 2.0;
       const fheight = height * 0.95;
+      const ratio = fheight / textureInfo.height;
+      const fwidth = textureInfo.width * ratio;
       this._back = new LAppSprite(x, y, fwidth, fheight, textureInfo.id);
       this._back.setSubdelegate(this._subdelegate);
     };
@@ -226,7 +228,7 @@ export class LAppView {
     const y: number = this.transformViewY(posY);
 
     if (LAppDefine.DebugTouchLogEnable) {
-      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.VIEW_TOUCHES_ENDED, x.toString(), y.toString()));
+      LAppPal.printMessage(`[APP]touchesEnded x: ${x} y: ${y}`);
     }
     lapplive2dmanager.onTap(x, y);
 
@@ -234,12 +236,8 @@ export class LAppView {
     if (this._gear.isHit(posX, posY)) {
       // WebSocketでサーバーに通知（LAppDelegateから取得）
       const websocketClient = LAppDelegate.getInstance().getWebSocketClient();
-      if (websocketClient && websocketClient.isConnected()) {
-        websocketClient.sendCustomMessage('sprite_hit', {
-          sprite: 'gear',
-          position: { x: posX, y: posY },
-          viewPosition: { x, y }
-        });
+      if (websocketClient) {
+        websocketClient.sendHit('gear', posX, posY, x, y);
       }
       lapplive2dmanager.nextScene();
     }
@@ -350,6 +348,7 @@ export class LAppView {
     // スクリーンを再設定
     this._viewMatrix.setScreenRect(left, right, bottom, top);
     this._viewMatrix.scale(LAppDefine.ViewScale * scale, LAppDefine.ViewScale * scale);
+    this._currentScale = scale;
 
     // 位置を復元
     const newX = (this._viewMatrix.getScreenLeft() + this._viewMatrix.getScreenRight()) / 2;
@@ -361,6 +360,10 @@ export class LAppView {
     return this._viewMatrix;
   }
 
+  public getViewScale(): number {
+    return this._currentScale;
+  }
+
   _touchManager: TouchManager; // タッチマネージャー
   _deviceToScreen: CubismMatrix44; // デバイスからスクリーンへの行列
   _viewMatrix: CubismViewMatrix; // viewMatrix
@@ -369,5 +372,6 @@ export class LAppView {
   _gear: LAppSprite; // ギア画像
   _changeModel: boolean; // モデル切り替えフラグ
   _isClick: boolean; // クリック中
+  _currentScale: number; // 現在のスケール値
   private _subdelegate: LAppSubdelegate;
 }

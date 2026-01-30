@@ -1435,6 +1435,11 @@ def parse_args():
         action='store_true',
         help='対話型コンソールを無効化（ログのみ出力）'
     )
+    parser.add_argument(
+        '--disable-auth',
+        action='store_false',
+        help='認証を無効化（セキュリティリスクに注意）'
+    )
     return parser.parse_args()
 
 
@@ -1458,7 +1463,7 @@ async def main():
     port = args.port if args.port is not None else security_config.default_port
 
     # セキュリティ情報をログ出力
-    if security_config.require_auth:
+    if security_config.require_auth and args.disable_auth:
         if security_config.auth_token:
             logger.info("認証が有効です（トークン認証）")
         else:

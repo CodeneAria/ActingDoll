@@ -14,6 +14,7 @@ import shutil
 def run_command(cmd, shell=True, capture_output=False, check=False):
     """Run a shell command and return the result."""
     try:
+        # print(f"  [CMD] {' '.join(cmd) if isinstance(cmd, list) else cmd}")
         result = subprocess.run(
             cmd,
             shell=shell,
@@ -26,6 +27,28 @@ def run_command(cmd, shell=True, capture_output=False, check=False):
         if check:
             raise
         return e
+
+
+def remove_directory_and_empty_parents(work_dir, directory, max_depth=2):
+    """Remove directory if it exists and is empty, recursively up to work_dir.
+
+    Args:
+        work_dir: Root directory to stop at
+        directory: Target directory to remove
+        max_depth: Maximum number of parent directories to check (default: 2)
+    """
+    if directory.exists():
+        shutil.rmtree(directory)
+    current = Path(directory).parent
+    work_path = Path(work_dir)
+    depth = 0
+    while current.exists() and current != work_path and depth < max_depth:
+        if not any(current.iterdir()):
+            shutil.rmtree(current)
+            current = current.parent
+            depth += 1
+        else:
+            break
 
 
 def main(work_dir, config_path):
@@ -57,6 +80,7 @@ def main(work_dir, config_path):
     ARCHIVE_CORE_DIR = config['cubism']['archive_core_dir']
     MODELS_DIR = config['cubism']['models_dir']
     ADAPTER_DIR = config['custom']['adapter_dir']
+    FRAMEWORK_DIR = config['cubism']['framework_dir']
 
     # Authentication settings
     AUTH_TOKEN = config['authentication']['token']
@@ -67,7 +91,9 @@ def main(work_dir, config_path):
     adapter_dir = Path(ADAPTER_DIR).resolve().absolute()
     archive_core_path = Path(ARCHIVE_CORE_DIR).resolve().absolute()
     models_path = Path(MODELS_DIR).resolve().absolute()
-    temp_core_dir = Path(work_dir / "volume" / "Core").resolve().absolute()
+    framework_dir = Path(FRAMEWORK_DIR).resolve().absolute()
+    args_core_dir = "./._volume/Core"
+    temp_core_dir = Path(work_dir / args_core_dir).resolve().absolute()
 
     # Display settings
     print("=" * 50)
@@ -133,8 +159,7 @@ def main(work_dir, config_path):
 
     print(f"# Copying Core files to {temp_core_dir}")
     try:
-        if temp_core_dir.exists():
-            shutil.rmtree(temp_core_dir)
+        remove_directory_and_empty_parents(work_dir, temp_core_dir)
         shutil.copytree(archive_core_path, temp_core_dir)
     except Exception as e:
         print(f"[Error] Failed to copy Core files: {e}", file=sys.stderr)
@@ -149,21 +174,26 @@ def main(work_dir, config_path):
             "--build-arg", f"GIT_SAMPLE_REPO={GIT_SAMPLE_REPO}",
             "--build-arg", f"GIT_SAMPLE_TAG={GIT_SAMPLE_TAG}",
             "--build-arg", f"GIT_SAMPLE_DIR_NAME={GIT_SAMPLE_DIR_NAME}",
+            "--build-arg", f"CORE_ARCHIVE_DIR={args_core_dir}",
             "-t", f"{DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}",
             "-f", str(dockerfile_path),
             "."
         ]
-        run_command(build_cmd, shell=False, check=True)
+        result = run_command(build_cmd, shell=False, check=True)
+        if result.returncode != 0:
+            print(f"[Error] Failed to create Docker image", file=sys.stderr)
+            print(result.stderr, file=sys.stderr)
+            sys.exit(1)
     except subprocess.CalledProcessError as e:
         print(f"[Error] Failed to build Docker image", file=sys.stderr)
         sys.exit(1)
     finally:
         # Clean up temporary Core files
         print("# Cleaning up temporary Core files...")
-        if temp_core_dir.exists():
-            shutil.rmtree(temp_core_dir)
+        remove_directory_and_empty_parents(work_dir, temp_core_dir)
 
     # Run container
+    print("# Creating Docker container...")
     run_cmd = [
         "docker", "container", "run",
         "--name", DOCKER_CONTAINER_NAME,
@@ -183,15 +213,35 @@ def main(work_dir, config_path):
         print(result.stderr, file=sys.stderr)
         sys.exit(1)
 
+    # Copy Framework files from container
+    print("# Copying Framework files from Docker container...")
+    try:
+        remove_directory_and_empty_parents(work_dir, framework_dir)
+        frame_copy_cmd = [
+            "docker", "cp",
+            DOCKER_CONTAINER_NAME + ":/root/workspace/Cubism/" + GIT_FRAMEWORK_DIR_NAME,
+            str(framework_dir)
+        ]
+        result = run_command(frame_copy_cmd, shell=False, check=True)
+        if result.returncode != 0:
+            print(
+                f"[Error] Failed to copy Framework files from Docker container", file=sys.stderr)
+    except subprocess.CalledProcessError as e:
+        print(
+            f"[Error] Failed to copy Framework files from Docker container", file=sys.stderr)
+
     ps_filter_cmd = (
         f'docker ps --filter "ancestor={DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}" '
         f'--format "table {{{{.ID}}}}\\t{{{{.Image}}}}\\t{{{{.Status}}}}\\t{{{{.Names}}}}\\t{{{{.Ports}}}}"'
     )
-    result = run_command(ps_filter_cmd, shell=False, capture_output=True)
+    print("-" * 25)
+    result = run_command(ps_filter_cmd, shell=True, capture_output=False)
+    print("\n" + ("=" * 50))
     if result.returncode != 0:
         print("\n[Error] Container setup failed! --")
+        sys.exit(1)
     else:
-        print("\n# -- Container setup completed successfully! --")
+        print("# -- Container setup completed successfully! --")
 
 
 if __name__ == "__main__":

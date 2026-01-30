@@ -647,6 +647,37 @@ export class WebSocketClient {
   }
 
   /**
+   * ヒットイベントメッセージを送信
+   * @param sprite スプライト名
+   * @param posX スプライトのX座標
+   * @param posY スプライトのY座標
+   * @param x ビューのX座標
+   * @param y ビューのY座標
+   */
+  public sendHit(sprite: string, posX: number, posY: number, x: number, y: number): void {
+    this.sendCustomMessage('sprite_hit', {
+      sprite: sprite,
+      position: { x: posX, y: posY },
+      viewPosition: { x, y }
+    });
+  }
+
+  /**
+   * モデルヒットイベントメッセージを送信
+   * @param model_name モデル名
+   * @param sprite スプライト名
+   * @param x ビューのX座標
+   * @param y ビューのY座標
+   */
+  public sendModelHit(model_name: string, sprite: string, x: number, y: number): void {
+    this.sendCustomMessage('model_hit', {
+      moc_name: model_name,
+      sprite: sprite,
+      position: { x, y }
+    });
+  }
+
+  /**
    * 認証メッセージを送信
    * @param token 認証トークン
    */
