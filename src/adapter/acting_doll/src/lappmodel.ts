@@ -734,11 +734,11 @@ export class LAppModel extends CubismUserModel {
 
     // 物理演算の出力先パラメータを直接取得
     try {
-      const outputs = (this._physics as any)._physicsRig?.outputs?._ptr;
+      const outputs = (this._physics as any)._physicsRig?.outputs;
       if (outputs) {
         for (let i = 0; i < outputs.length; i++) {
           const output = outputs[i];
-          const paramName = output?.destination?.id?._id?.s;
+          const paramName = output?.destination?.id?._id;
           if (paramName) {
             physicsParams.add(paramName);
           }
@@ -764,13 +764,13 @@ export class LAppModel extends CubismUserModel {
 
     // 呼吸のパラメータを取得
     try {
-      const breathData = (this._breath as any)._breathParameters?._ptr;
+      const breathData = (this._breath as any)._breathParameters;
       if (breathData) {
         for (let i = 0; i < breathData.length; i++) {
           const param = breathData[i];
           const paramId = param?.parameterId;
           if (paramId) {
-            breathParams.add(paramId.getString().s);
+            breathParams.add(paramId.getString());
           }
         }
       }
