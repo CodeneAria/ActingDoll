@@ -321,7 +321,8 @@ export class LAppModel extends CubismUserModel {
       const headIdleParameters: Array<BreathParameterData> = [
         new BreathParameterData(this._idParamAngleX, 0.0, 15.0, 6.5345, 0.5),
         new BreathParameterData(this._idParamAngleY, 0.0, 8.0, 3.5345, 0.5),
-        new BreathParameterData(this._idParamAngleZ, 0.0, 10.0, 5.5345, 0.5)
+        new BreathParameterData(this._idParamAngleZ, 0.0, 10.0, 5.5345, 0.5),
+        new BreathParameterData(this._idParamBodyAngleX, 0.0, 4.0, 15.5345, 0.5)
       ];
 
       this._headIdle.setParameters(headIdleParameters);
