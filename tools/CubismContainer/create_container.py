@@ -190,6 +190,7 @@ def main(work_dir, config_path):
         remove_if_empty(work_dir, temp_core_dir)
 
     # Run container
+    print("# Creating Docker container...")
     run_cmd = [
         "docker", "container", "run",
         "--name", DOCKER_CONTAINER_NAME,
@@ -213,11 +214,14 @@ def main(work_dir, config_path):
         f'docker ps --filter "ancestor={DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}" '
         f'--format "table {{{{.ID}}}}\\t{{{{.Image}}}}\\t{{{{.Status}}}}\\t{{{{.Names}}}}\\t{{{{.Ports}}}}"'
     )
-    result = run_command(ps_filter_cmd, shell=False, capture_output=True)
+    print("-" * 25)
+    result = run_command(ps_filter_cmd, shell=True, capture_output=False)
+    print("\n" + ("=" * 50))
     if result.returncode != 0:
         print("\n[Error] Container setup failed! --")
+        sys.exit(1)
     else:
-        print("\n# -- Container setup completed successfully! --")
+        print("# -- Container setup completed successfully! --")
 
 
 if __name__ == "__main__":

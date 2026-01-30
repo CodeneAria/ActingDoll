@@ -55,4 +55,4 @@ echo "WebSocket server started successfully (PID: ${WEBSOCKET_PID})"
 # Start Node.js Application
 ###################################
 cd ${NODE_DIR}
-npm run start -- --port ${PORT_HTTP_NUMBER}
+npm run start -- --port ${PORT_HTTP_NUMBER} --host ${HOST_ADDRESS}

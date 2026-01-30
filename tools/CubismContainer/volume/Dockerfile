@@ -3,11 +3,11 @@ FROM node:25.2.1-alpine3.23
 ARG CORE_ARCHIVE_DIR="./volume/Core"
 
 ARG GIT_FRAMEWORK_REPO="https://github.com/Live2D/CubismWebFramework.git"
-ARG GIT_FRAMEWORK_TAG="5-r.5-beta.2"
+ARG GIT_FRAMEWORK_TAG="5-r.5-beta.3"
 ARG GIT_FRAMEWORK_DIR_NAME="Framework"
 
 ARG GIT_SAMPLE_REPO="https://github.com/Live2D/CubismWebSamples.git"
-ARG GIT_SAMPLE_TAG="5-r.5-beta.2"
+ARG GIT_SAMPLE_TAG="5-r.5-beta.3"
 ARG GIT_SAMPLE_DIR_NAME="Samples"
 
 # Install git
