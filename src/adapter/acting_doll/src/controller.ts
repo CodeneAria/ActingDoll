@@ -21,15 +21,15 @@ class Live2DController {
   private clients: string[] = [];
   private models: string[] = [];
   private expressions: string[] = [];
-  private motions: { [key: string]: number } = {};
-  private parameters: Array<{ id: string; value: number }> = [];
+  private motions: { [key: string]: any[] } = {};
+  private parameters: Array<{ Id: string; Name: string }> = [];
   private selectedClientId: string = '';
   private selectedModel: string = '';
   private myClientId: string = '';
 
   constructor() {
     // WebSocketクライアントを初期化
-    this.wsClient = new WebSocketClient(LAppDefine.WebSocketUrl + LAppDefine.WebSocketAddress + ":" + LAppDefine.WebSocketPort);
+    this.wsClient = new WebSocketClient(LAppDefine.WebSocketUrl + location.hostname + ":" + LAppDefine.WebSocketPort);
 
     // メッセージハンドラを登録
     this.setupMessageHandlers();
@@ -172,11 +172,37 @@ class Live2DController {
       <select id="select-model" style="width: 300px; margin-left: 10px;">
         <option value="">モデルを選択...</option>
       </select>
+    </div>
+    <div class="expression-section">
+      <h3>表情操作</h3>
+      <button id="btn-model-expressions">表情一覧取得 (get_expressions)</button>
+      <button id="btn-get-expression">現在の表情取得 (get_expression)</button>
       <div style="margin-top: 10px;">
-        <button id="btn-model-motions">モーション一覧取得 (get_motions)</button>
-        <button id="btn-model-parameters">パラメータ一覧取得 (get_parameters)</button>
+        <select id="select-expression" style="width: 300px;">
+          <option value="">表情を選択...</option>
+        </select>
+        <button id="btn-set-expression">表情設定</button>
       </div>
-      <div id="model-info" style="margin-top: 10px;"></div>
+    </div>
+    <div class="motion-section">
+      <h3>モーション操作</h3>
+      <button id="btn-model-motions">モーション一覧取得 (get_motions)</button>
+      <button id="btn-get-motion">現在のモーション取得</button>
+      <div style="margin-top: 10px;">
+        <select id="select-motion-group" style="width: 200px;">
+          <option value="">グループを選択...</option>
+        </select>
+        <select id="select-motion-no" style="width: 100px;">
+          <option value="">番号...</option>
+        </select>
+        <select id="select-motion-priority" style="width: 150px;">
+          <option value="0">None(0)</option>
+          <option value="1">Idle(1)</option>
+          <option value="2" selected>Normal(2)</option>
+          <option value="3">Force(3)</option>
+        </select>
+        <button id="btn-set-motion">モーション設定</button>
+      </div>
     </div>
     <div class="client-commands-section">
       <h3>アニメーション設定</h3>
@@ -206,38 +232,9 @@ class Live2DController {
         <button id="btn-set-physics-disabled">物理演算/無効 (set_physics disabled)</button>
       </div>
     </div>
-    <div class="expression-section">
-      <h2>表情操作</h2>
-      <button id="btn-model-expressions">表情一覧取得 (get_expressions)</button>
-      <button id="btn-get-expression">現在の表情取得 (get_expression)</button>
-      <div style="margin-top: 10px;">
-        <select id="select-expression" style="width: 300px;">
-          <option value="">表情を選択...</option>
-        </select>
-        <button id="btn-set-expression">表情設定</button>
-      </div>
-    </div>
-    <div class="motion-section">
-      <h3>モーション操作</h3>
-      <button id="btn-get-motion">現在のモーション取得</button>
-      <div style="margin-top: 10px;">
-        <select id="select-motion-group" style="width: 200px;">
-          <option value="">グループを選択...</option>
-        </select>
-        <select id="select-motion-no" style="width: 100px;">
-          <option value="">番号...</option>
-        </select>
-        <select id="select-motion-priority" style="width: 150px;">
-          <option value="0">None(0)</option>
-          <option value="1">Idle(1)</option>
-          <option value="2" selected>Normal(2)</option>
-          <option value="3">Force(3)</option>
-        </select>
-        <button id="btn-set-motion">モーション設定</button>
-      </div>
-    </div>
     <div class="parameter-section">
       <h3>パラメータ操作</h3>
+      <button id="btn-model-parameters">パラメータ一覧取得 (get_parameters)</button>
       <div id="parameter-list" style="margin-top: 10px; max-height: 300px; overflow-y: auto;"></div>
       <button id="btn-set-parameters" style="margin-top: 10px;">パラメータ設定</button>
     </div>
@@ -325,6 +322,7 @@ class Live2DController {
       const target = e.target as HTMLSelectElement;
       this.selectedClientId = target.value;
       this.showMessage(`クライアント選択: ${this.selectedClientId}`);
+      this.updateModelInfo();
     });
 
     // モデル関連
@@ -336,6 +334,11 @@ class Live2DController {
       const target = e.target as HTMLSelectElement;
       this.selectedModel = target.value;
       this.showMessage(`モデル選択: ${this.selectedModel}`);
+      if ("" !== this.selectedModel) {
+        this.sendCommand(`model get_expressions ${this.selectedModel}`);
+        this.sendCommand(`model get_motions ${this.selectedModel}`);
+        this.sendCommand(`model get_parameters ${this.selectedModel}`);
+      }
     });
 
     document.getElementById('btn-model-expressions')?.addEventListener('click', () => {
@@ -424,7 +427,7 @@ class Live2DController {
       this.parameters.forEach((param, index) => {
         const input = document.getElementById(`param-value-${index}`) as HTMLInputElement;
         if (input && input.value) {
-          params.push(`${param.id}=${input.value}`);
+          params.push(`${param.Id}=${input.value}`);
         }
       });
 
@@ -612,46 +615,39 @@ class Live2DController {
       return;
     }
 
+    const command = response.command || "応答";
+    const client_id = response.client_id || "unknown";
     const data = response.data || {};
     if (JSON.stringify(data).length > 2) {
-      this.showMessage(`応答: ${JSON.stringify(data)}`);
+      this.showMessage(`[${client_id}] ${command}: ${JSON.stringify(data)}`);
     } else {
       this.showMessage(`受信: ${JSON.stringify(response)}`);
     }
 
     // listコマンドの応答
-    if (data.clients) {
+    if (command === 'list' && data.clients) {
       this.updateClientList(data.clients);
     }
 
     // model listの応答
-    if (data.models) {
-      this.updateModelList(data.models);
-    }
-
-    // model get_expressionsの応答
-    if (data.expressions) {
-      this.updateExpressionList(data.expressions);
-    }
-
-    // model get_motionsの応答
-    if (data.motions) {
-      this.updateMotionList(data.motions);
-    }
-
-    // model get_parametersの応答
-    if (data.parameters) {
-      this.updateParameterList(data.parameters);
-    }
-
-    // client get_modelの応答
-    if (data.model) {
-      this.selectedModel = data.model;
-      const select = document.getElementById('select-model') as HTMLSelectElement;
-      if (select) {
-        select.value = data.model;
+    if (command === 'model') {
+      const subcommand = response.sub || "";
+      if (subcommand === 'list') {
+        this.updateModelList(data);
+      } else if (subcommand === 'get_expressions') {
+        this.updateExpressionList(data);
+      } else if (subcommand === 'get_motions') {
+        this.updateMotionList(data);
+      } else if (subcommand === 'get_parameters') {
+        this.updateParameterList(data);
+      } else if (subcommand === 'get_model') {
+        this.selectModel(data.model || "");
       }
-      this.showMessage(`クライアントのモデル: ${data.model}`);
+    } else if (command === 'response_model') {
+      this.selectModel(data.model_name || "");
+    } else {
+      // TODO:他の応答コマンドの処理を記載する必要がある
+      // 主にmodel get_系コマンドの応答を処理する
     }
   }
 
@@ -676,7 +672,20 @@ class Live2DController {
       this.selectedClientId = clients[0];
       select.value = clients[0];
       this.showMessage(`クライアント自動選択: ${clients[0]}`);
+      this.updateModelInfo();
     }
+  }
+  private selectModel(modelName: string): void {
+    if ("" === modelName) { return; }
+    const select = document.getElementById('select-model') as HTMLSelectElement;
+    if (select) {
+      select.value = modelName;
+      this.selectedModel = modelName;
+      this.showMessage(`モデル選択: ${modelName}`);
+    }
+    this.sendCommand(`model get_expressions ${modelName}`);
+    this.sendCommand(`model get_motions ${modelName}`);
+    this.sendCommand(`model get_parameters ${modelName}`);
   }
 
   /**
@@ -686,7 +695,7 @@ class Live2DController {
     this.models = models;
     const select = document.getElementById('select-model') as HTMLSelectElement;
     if (!select) return;
-
+    select.disabled = true
     select.innerHTML = '<option value="">モデルを選択...</option>';
     models.forEach((model: string) => {
       const option = document.createElement('option');
@@ -694,62 +703,53 @@ class Live2DController {
       option.textContent = model;
       select.appendChild(option);
     });
-
-    const element = document.getElementById('model-info');
-    if (element) {
-      element.innerHTML = `<div>モデル数: ${models.length}</div>`;
-    }
   }
 
   /**
    * 表情リストを更新
    */
-  private updateExpressionList(expressions: string[]): void {
-    this.expressions = expressions;
+  private updateExpressionList(data: any): void {
+    this.expressions = data.expressions || [];
     const select = document.getElementById('select-expression') as HTMLSelectElement;
     if (!select) return;
 
     select.innerHTML = '<option value="">表情を選択...</option>';
-    expressions.forEach((expr: string) => {
+    this.expressions.forEach((expr: any) => {
+      if ("" === expr.Name) { return; }
       const option = document.createElement('option');
-      option.value = expr;
-      option.textContent = expr;
+      option.value = expr.Name || "";
+      option.textContent = expr.File || "";
       select.appendChild(option);
     });
-
-    const element = document.getElementById('model-info');
-    if (element) {
-      element.innerHTML = `<div>表情リスト: ${expressions.join(', ')}</div>`;
-    }
   }
 
   /**
    * モーションリストを更新
    */
-  private updateMotionList(motions: { [key: string]: number }): void {
-    this.motions = motions;
+  private updateMotionList(data: any): void {
+    this.motions = data.motions || {};
     const groupSelect = document.getElementById('select-motion-group') as HTMLSelectElement;
     const noSelect = document.getElementById('select-motion-no') as HTMLSelectElement;
 
     if (groupSelect) {
       groupSelect.innerHTML = '<option value="">グループを選択...</option>';
-      Object.keys(motions).forEach((group: string) => {
+      Object.keys(this.motions).forEach((group: string) => {
         const option = document.createElement('option');
         option.value = group;
-        option.textContent = `${group} (${motions[group]}件)`;
+        option.textContent = group.toString() + ` (` + this.motions[group].length + `件)`;
         groupSelect.appendChild(option);
       });
 
       // グループ選択時に番号を更新
       groupSelect.addEventListener('change', (e) => {
         const target = e.target as HTMLSelectElement;
-        if (noSelect && target.value && motions[target.value]) {
+        if (noSelect && target.value && this.motions[target.value]) {
           noSelect.innerHTML = '<option value="">番号...</option>';
-          const count = motions[target.value];
+          const count = this.motions[target.value].length;
           for (let i = 0; i < count; i++) {
             const option = document.createElement('option');
             option.value = i.toString();
-            option.textContent = i.toString();
+            option.textContent = this.motions[target.value][i]?.File || i.toString();
             noSelect.appendChild(option);
           }
         }
@@ -759,46 +759,61 @@ class Live2DController {
     if (noSelect) {
       noSelect.innerHTML = '<option value="">番号...</option>';
       // 最初のグループがあれば、その数だけ番号を生成
-      const firstGroup = Object.keys(motions)[0];
+      const firstGroup = Object.keys(this.motions)[0];
       if (firstGroup) {
-        const count = motions[firstGroup];
+        const count = this.motions[firstGroup].length;
         for (let i = 0; i < count; i++) {
           const option = document.createElement('option');
           option.value = i.toString();
-          option.textContent = i.toString();
+          option.textContent = this.motions[firstGroup][i]?.File || i.toString();
           noSelect.appendChild(option);
         }
       }
-    }
-
-    const element = document.getElementById('model-info');
-    if (element) {
-      element.innerHTML = `<div>モーショングループ: ${Object.keys(motions).join(', ')}</div>`;
     }
   }
 
   /**
    * パラメータリストを更新
    */
-  private updateParameterList(parameters: Array<{ id: string; value: number }>): void {
-    this.parameters = parameters;
+  private updateParameterList(data: any): void {
+    this.parameters = data.parameters || [];
     const element = document.getElementById('parameter-list');
     if (!element) return;
 
-    let html = '<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px;">';
-    parameters.forEach((param, index) => {
-      html += `
-        <div style="display: flex; align-items: center; gap: 5px;">
-          <label style="font-size: 12px; min-width: 120px;">${param.id}:</label>
-          <input type="number" id="param-value-${index}"
-                 value="${param.value}"
-                 step="0.1"
-                 style="width: 80px; padding: 2px;" />
-        </div>
-      `;
+    const elm_div = document.createElement('div');
+    elm_div.style.display = 'grid';
+    elm_div.style.gridTemplateColumns = '1fr 1fr 1fr';
+    elm_div.style.gap = '5px';
+    this.parameters.forEach((param, index) => {
+      const item_div = document.createElement('div');
+      item_div.style.display = 'flex';
+      item_div.style.alignItems = 'center';
+      item_div.style.gap = '5px';
+      const item_label = document.createElement('label');
+      item_label.style.fontSize = '12px';
+      item_label.style.minWidth = '120px';
+      item_label.textContent = `${param.Name}:`;
+      const item_input = document.createElement('input');
+      item_input.type = 'number';
+      item_input.id = `param-value-${index}`;
+      item_input.value = `${param.Id}`;
+      item_input.step = '0.1';
+      item_input.style.width = '80px';
+      item_input.style.padding = '2px';
+      item_div.appendChild(item_label);
+      item_div.appendChild(item_input);
+      elm_div.appendChild(item_div);
     });
-    html += '</div>';
-    element.innerHTML = html;
+    element.innerHTML = elm_div.outerHTML;
+  }
+
+  /**
+   * モデル情報を更新
+   */
+  private updateModelInfo(): void {
+    if (this.selectedClientId) {
+      this.sendCommand(`client ${this.selectedClientId} get_model`);
+    }
   }
 
   /**

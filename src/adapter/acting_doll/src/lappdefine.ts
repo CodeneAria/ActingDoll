@@ -111,7 +111,6 @@ export const ModelScaleDefault = 1.0;
 
 // WebSocket設定
 export const WebSocketUrl = 'ws://';
-export const WebSocketAddress = 'localhost';
 export const WebSocketPort = '8765';
 export const WebSocketAutoConnect = true;
 export const WebSocketReconnectAttempts = 5;

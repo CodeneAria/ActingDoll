@@ -194,7 +194,7 @@ async def handle_client(websocket: ServerConnection):
             try:
                 # JSON形式で受信
                 data = json.loads(message)
-                logger.info(f"受信 from {client_id}: {data}")
+                logger.debug(f"Received from {client_id}: {data}")
 
                 # メッセージタイプに応じて処理
                 msg_type = data.get("type", "message")
@@ -307,10 +307,11 @@ async def model_command(command: str, args: str, client_id: str) -> dict:
     # 1. model list - 利用可能なモデル一覧を取得
     if command == "list":
         models = model_manager.get_models()
-        logger.info(f"利用可能なモデル: {models}")
+        logger.debug(f"利用可能なモデル: {models}")
         return {
             "type": "command_response",
-            "command": "list",
+            "command": "model",
+            "sub": command,
             "from": client_id,
             "data": models
         }
@@ -320,7 +321,8 @@ async def model_command(command: str, args: str, client_id: str) -> dict:
         if not args:
             return {
                 "type": "command_response",
-                "command": "get_expressions",
+                "command": "model",
+                "sub": command,
                 "from": client_id,
                 "error": "モデル名が必要です"
             }
@@ -332,7 +334,8 @@ async def model_command(command: str, args: str, client_id: str) -> dict:
             logger.info(f"expressions一覧: {expression_names}")
             return {
                 "type": "command_response",
-                "command": "get_expressions",
+                "command": "model",
+                "sub": command,
                 "from": client_id,
                 "data": {
                     "model_name": args,
@@ -341,7 +344,8 @@ async def model_command(command: str, args: str, client_id: str) -> dict:
             }
         return {
             "type": "command_response",
-            "command": "get_expressions",
+            "command": "model",
+            "sub": command,
             "from": client_id,
             "error": f"モデル '{args}' が見つかりません"
         }
@@ -351,7 +355,8 @@ async def model_command(command: str, args: str, client_id: str) -> dict:
         if not args:
             return {
                 "type": "command_response",
-                "command": "get_motions",
+                "command": "model",
+                "sub": command,
                 "from": client_id,
                 "error": "モデル名が必要です"
             }
@@ -365,7 +370,8 @@ async def model_command(command: str, args: str, client_id: str) -> dict:
             logger.info(f"motions一覧: {motion_summary}")
             return {
                 "type": "command_response",
-                "command": "get_motions",
+                "command": "model",
+                "sub": command,
                 "from": client_id,
                 "data": {
                     "model_name": args,
@@ -374,7 +380,8 @@ async def model_command(command: str, args: str, client_id: str) -> dict:
             }
         return {
             "type": "command_response",
-            "command": "get_motions",
+            "command": "model",
+            "sub": command,
             "from": client_id,
             "error": f"モデル '{args}' が見つかりません"
         }
@@ -384,7 +391,8 @@ async def model_command(command: str, args: str, client_id: str) -> dict:
         if not args:
             return {
                 "type": "command_response",
-                "command": "get_parameters",
+                "command": "model",
+                "sub": command,
                 "from": client_id,
                 "error": "モデル名が必要です"
             }
@@ -402,7 +410,8 @@ async def model_command(command: str, args: str, client_id: str) -> dict:
                 f"parameters一覧 ({len(param_summary)}件): {[p['Id'] for p in param_summary]}")
             return {
                 "type": "command_response",
-                "command": "get_parameters",
+                "command": "model",
+                "sub": command,
                 "from": client_id,
                 "data": {
                     "model_name": args,
@@ -411,15 +420,20 @@ async def model_command(command: str, args: str, client_id: str) -> dict:
             }
         return {
             "type": "command_response",
-            "command": "get_parameters",
+            "command": "model",
+            "sub": command,
             "from": client_id,
-            "error": f"モデル '{args}' のパラメータ情報が見つかりません"
+            "data": {
+                "model_name": args,
+                "parameters": []
+            }
         }
 
     else:
         return {
             "type": "command_response",
-            "command": command,
+            "command": "model",
+            "sub": command,
             "from": client_id,
             "error": f"不明なコマンド: {command}"
         }
