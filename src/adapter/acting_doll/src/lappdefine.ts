@@ -59,14 +59,14 @@ export interface ModelConfig {
 
 // モデル設定配列
 export const ModelConfigs: ModelConfig[] = [
-  { name: 'Haru', isCustom: false, initX: 0, initY: 0, initScale: 1.0 },
-  { name: 'Hiyori', isCustom: false, initX: 0, initY: 0, initScale: 1.0 },
-  { name: 'Mao', isCustom: false, initX: 0, initY: 0, initScale: 1.0 },
-  { name: 'Mark', isCustom: false, initX: 0, initY: 0, initScale: 1.0 },
-  { name: 'Natori', isCustom: false, initX: 0, initY: 0, initScale: 1.0 },
-  { name: 'Ren', isCustom: false, initX: 0, initY: 0, initScale: 1.0 },
-  { name: 'Rice', isCustom: false, initX: 0, initY: 0, initScale: 1.0 },
-  { name: 'Wanko', isCustom: false, initX: 0, initY: 0, initScale: 1.0 }
+  { name: 'Haru', isCustom: false, initX: 0.4, initY: -0.4, initScale: 1.4 },
+  { name: 'Hiyori', isCustom: false, initX: 0.4, initY: -0.4, initScale: 1.4 },
+  { name: 'Mao', isCustom: false, initX: 0.4, initY: -0.4, initScale: 1.4 },
+  { name: 'Mark', isCustom: false, initX: 0.4, initY: -0.4, initScale: 1.4 },
+  { name: 'Natori', isCustom: false, initX: 0.4, initY: -0.4, initScale: 1.4 },
+  { name: 'Ren', isCustom: false, initX: 0.4, initY: -0.4, initScale: 1.4 },
+  { name: 'Rice', isCustom: false, initX: 0.4, initY: -0.4, initScale: 1.4 },
+  { name: 'Wanko', isCustom: false, initX: 0.4, initY: -0.4, initScale: 1.4 }
 ];
 
 // 外部定義ファイル（json）と合わせる

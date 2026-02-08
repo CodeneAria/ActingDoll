@@ -21,7 +21,9 @@
             "label": "Docker:01_Build",
             "type": "shell",
             "command": "${workspaceFolder}/tools/CubismContainer/build.py",
-            "args": [],
+            "args": [
+                "--add_mcp"
+            ],
             "detail": "モデルデータをビルドして dist フォルダに出力する"
         },
         {
@@ -36,7 +38,8 @@
             "type": "shell",
             "command": "${workspaceFolder}/tools/CubismContainer/build.py",
             "args": [
-                "-p"
+                "--production",
+                "--add_mcp"
             ],
             "detail": "モデルデータを本番用にビルドして dist フォルダに出力する"
         },

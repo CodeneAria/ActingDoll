@@ -4,7 +4,13 @@ MCPを使ってLLMにLive2Dを動かすための命令を生成してもらう�
 
 ## 概要
 
-ActingDollは、[Model Context Protocol (MCP)](https://modelcontextprotocol.io/)を利用して、LLM（大規模言語モデル）がLive2Dモデルを制御するためのサーバーです。Live2Dは「Live2D Cubism SDK」で起動したWebサーバーを使用します。
+ActingDollは、[Model Context Protocol (MCP)](https://modelcontextprotocol.io/)を利用して、LLM（大規模言語モデル）がLive2Dモデルを制御するための統合サーバーです。Live2DクライアントとWebSocket通信し、同時にMCP経由でLLMからの制御も受け付けます。
+
+## アーキテクチャ
+
+- **統合サーバー**: WebSocketサーバーとMCPサーバーを1つのプロセスで実行
+- **3つの動作モード**: WebSocketのみ、MCPのみ、両方同時実行
+- **共通のコマンド処理**: WebSocketとMCPで同じロジックを使用
 
 ## 機能
 
@@ -14,16 +20,9 @@ ActingDollは、[Model Context Protocol (MCP)](https://modelcontextprotocol.io/)
 - **モデル情報取得**: 利用可能なパラメータ、表情、モーションの一覧を取得
 - **ポーズリセット**: モデルをデフォルトの状態に戻す
 - **視線設定**: モデルの視線を設定
+- **クライアント管理**: 接続中のLive2Dクライアントの一覧と状態取得
 
 ## インストール
-
-[記載中]
-
-```bash
-pip install acting-doll
-```
-
-または、開発用にインストールする場合：
 
 ```bash
 git clone https://github.com/CodeneAria/ActingDoll.git
@@ -33,22 +32,43 @@ pip install -e ".[dev]"
 
 ## 使用方法
 
-### Live2D Cubism SDK Webサーバーの準備
+### 1. サーバーの起動
 
-まず、Live2D Cubism SDKを使用してWebサーバーを起動してください。サーバーはデフォルトで `http://localhost:5000` で起動することを想定しています。
+#### WebSocketサーバーのみ（Live2Dクライアントと通信）
 
-### MCP設定
+```bash
+python src/adapter/server/websocket_server.py --mode websocket --port 8766 --disable-auth
+```
 
-お使いのMCPクライアント（Claude Desktop、VS Codeなど）の設定ファイルに以下を追加してください：
+#### MCPサーバーのみ（LLMから制御）
+
+```bash
+python src/adapter/server/websocket_server.py --mode mcp
+```
+
+#### 両方同時（推奨）
+
+```bash
+python src/adapter/server/websocket_server.py --mode both --port 8766 --disable-auth
+```
+
+### 2. Claude Desktopでの設定
+
+Claude Desktopの設定ファイル（`claude_desktop_config.json`）に以下を追加：
 
 ```json
 {
   "mcpServers": {
     "acting-doll": {
-      "command": "acting-doll",
-      "env": {
-        "LIVE2D_SERVER_URL": "http://localhost:5000"
-      }
+      "command": "python",
+      "args": [
+        "src/adapter/server/websocket_server.py",
+        "--mode",
+        "mcp",
+        "--model-dir",
+        "src/Cubism/Resources"
+      ],
+      "env": {}
     }
   }
 }

@@ -81,6 +81,8 @@ def main(work_dir, config_path):
     MODELS_DIR = config['cubism']['models_dir']
     ADAPTER_DIR = config['custom']['adapter_dir']
     FRAMEWORK_DIR = config['cubism']['framework_dir']
+    INNER_SERVER_PORT = 5000
+    INNER_WEBSOCKET_PORT = 8765
 
     # Authentication settings
     AUTH_TOKEN = config['authentication']['token']
@@ -200,8 +202,8 @@ def main(work_dir, config_path):
         "-dit",
         "-v", f"{adapter_dir}:/root/workspace/adapter",
         "-v", f"{models_path}:/root/workspace/Cubism/Resources",
-        "-p", f"{SERVER_PORT}:5000",
-        "-p", f"{WEBSOCKET_PORT}:8765",
+        "-p", f"{SERVER_PORT}:{INNER_SERVER_PORT}",
+        "-p", f"{WEBSOCKET_PORT}:{INNER_WEBSOCKET_PORT}",
         "-e", f"WEBSOCKET_AUTH_TOKEN={AUTH_TOKEN}",
         "-e", f"WEBSOCKET_REQUIRE_AUTH={REQUIRE_AUTH}",
         "-e", f"WEBSOCKET_ALLOWED_DIRS={ALLOWED_DIRS}",

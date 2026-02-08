@@ -22,12 +22,22 @@ export WEBSOCKET_REQUIRE_AUTH=${WEBSOCKET_REQUIRE_AUTH:-"false"}
 cd ${SERVER_DIR}
 
 # 既存のwebsocket_serverプロセスを停止
-pkill -f "websocket_server.py" || true
-sleep 1
-
+pip show acting-doll-server
+ret=$?
 # WebSocketサーバーを起動
-python3 websocket_server.py --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --no-console &
-WEBSOCKET_PID=$!
+if [ ${ret} -ne 0 ]; then
+    echo "starting websocket_server.py directly"
+    pkill -f "websocket_server.py" || true
+    sleep 1
+    python3 websocket_server.py --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --no-console &
+    WEBSOCKET_PID=$!
+else
+    echo "starting acting-doll-server command"
+    pkill -f "acting-doll-server" || true
+    sleep 1
+    acting-doll-server --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --no-console &
+    WEBSOCKET_PID=$!
+fi
 
 # WebSocketサーバーが正常に起動したか確認
 MAX_RETRIES=20
@@ -49,7 +59,7 @@ if [ ${PORT_READY} -eq 0 ]; then
     exit 1
 fi
 
-echo "WebSocket server started successfully (PID: ${WEBSOCKET_PID})"
+echo "'acting-doll-server' started successfully (PID: ${WEBSOCKET_PID})"
 
 ###################################
 # Start Node.js Application

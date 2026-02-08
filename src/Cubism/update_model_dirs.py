@@ -6,6 +6,8 @@ import os
 import re
 from pathlib import Path
 
+MODEL_POSITION = (0.4, -0.4, 1.4)  # (horizontal, vertical, initScale)
+
 
 def find_model_directories(models_dir: Path) -> list[str]:
     """
@@ -61,7 +63,10 @@ def update_lappdefine_ts(file_path: Path, model_dirs: list[str]) -> bool:
         for dir_name in model_dirs:
             # デフォルトはカスタムフラグfalse、初期位置(0,0)、スケール1.5
             model_entries.append(
-                f"  {{ name: '{dir_name}', isCustom: false, initX: 0, initY: 0, initScale: 1.0 }}"
+                f"  {{ name: '{dir_name}', isCustom: false, "
+                f"initX: {MODEL_POSITION[0]}, "
+                f"initY: {MODEL_POSITION[1]}, "
+                f"initScale: {MODEL_POSITION[2]} }}"
             )
         new_array_content = '\n' + ',\n'.join(model_entries) + '\n'
     else:
@@ -70,7 +75,8 @@ def update_lappdefine_ts(file_path: Path, model_dirs: list[str]) -> bool:
     replacement = f'\\g<1>{new_array_content}\\g<2>'
 
     # 置換を実行
-    new_content, count = re.subn(pattern, replacement, content, flags=re.DOTALL)
+    new_content, count = re.subn(
+        pattern, replacement, content, flags=re.DOTALL)
 
     if count == 0:
         print("警告: ModelConfigs配列が見つかりませんでした")
@@ -90,7 +96,8 @@ def main(work_dir, config_path):
 
     # パスを設定
     models_dir = work_dir / "Cubism" / "Resources"
-    lappdefine_path = work_dir /  "adapter" / "acting_doll"  / "src" / "lappdefine.ts"
+    lappdefine_path = work_dir / "adapter" / \
+        "acting_doll" / "src" / "lappdefine.ts"
 
     print("=" * 60)
     print("ModelConfigs自動更新スクリプト")
