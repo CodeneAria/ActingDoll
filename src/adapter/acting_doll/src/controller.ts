@@ -5,10 +5,7 @@
 
 import { WebSocketClient, CommandResponse } from './websocketclient';
 import * as LAppDefine from './lappdefine';
-import {
-  CubismLogError,
-  CubismLogInfo
-} from '@framework/utils/cubismdebug';
+import { CubismLogError, CubismLogInfo } from '@framework/utils/cubismdebug';
 import { LAppMultilingual, MessageKey } from './lappmultilingual';
 import { LAppPal } from './lapppal';
 
@@ -29,7 +26,7 @@ class Live2DController {
 
   constructor() {
     // WebSocketクライアントを初期化
-    this.wsClient = new WebSocketClient(LAppDefine.WebSocketUrl + location.hostname + ":" + LAppDefine.WebSocketPort);
+    this.wsClient = new WebSocketClient(LAppDefine.WebSocketUrl + location.hostname + ':' + LAppDefine.WebSocketPort);
 
     // メッセージハンドラを登録
     this.setupMessageHandlers();
@@ -317,7 +314,6 @@ class Live2DController {
       }
     });
 
-
     document.getElementById('select-client')?.addEventListener('change', (e) => {
       const target = e.target as HTMLSelectElement;
       this.selectedClientId = target.value;
@@ -334,7 +330,7 @@ class Live2DController {
       const target = e.target as HTMLSelectElement;
       this.selectedModel = target.value;
       this.showMessage(`モデル選択: ${this.selectedModel}`);
-      if ("" !== this.selectedModel) {
+      if ('' !== this.selectedModel) {
         this.sendCommand(`model get_expressions ${this.selectedModel}`);
         this.sendCommand(`model get_motions ${this.selectedModel}`);
         this.sendCommand(`model get_parameters ${this.selectedModel}`);
@@ -615,8 +611,8 @@ class Live2DController {
       return;
     }
 
-    const command = response.command || "応答";
-    const client_id = response.client_id || "unknown";
+    const command = response.command || '応答';
+    const client_id = response.client_id || 'unknown';
     const data = response.data || {};
     if (JSON.stringify(data).length > 2) {
       this.showMessage(`[${client_id}] ${command}: ${JSON.stringify(data)}`);
@@ -631,7 +627,7 @@ class Live2DController {
 
     // model listの応答
     if (command === 'model') {
-      const subcommand = response.sub || "";
+      const subcommand = response.sub || '';
       if (subcommand === 'list') {
         this.updateModelList(data);
       } else if (subcommand === 'get_expressions') {
@@ -641,10 +637,10 @@ class Live2DController {
       } else if (subcommand === 'get_parameters') {
         this.updateParameterList(data);
       } else if (subcommand === 'get_model') {
-        this.selectModel(data.model || "");
+        this.selectModel(data.model || '');
       }
     } else if (command === 'response_model') {
-      this.selectModel(data.model_name || "");
+      this.selectModel(data.model_name || '');
     } else {
       // TODO:他の応答コマンドの処理を記載する必要がある
       // 主にmodel get_系コマンドの応答を処理する
@@ -676,7 +672,7 @@ class Live2DController {
     }
   }
   private selectModel(modelName: string): void {
-    if ("" === modelName) { return; }
+    if ('' === modelName) { return; }
     const select = document.getElementById('select-model') as HTMLSelectElement;
     if (select) {
       select.value = modelName;
@@ -695,7 +691,7 @@ class Live2DController {
     this.models = models;
     const select = document.getElementById('select-model') as HTMLSelectElement;
     if (!select) return;
-    select.disabled = true
+    select.disabled = true;
     select.innerHTML = '<option value="">モデルを選択...</option>';
     models.forEach((model: string) => {
       const option = document.createElement('option');
@@ -715,10 +711,10 @@ class Live2DController {
 
     select.innerHTML = '<option value="">表情を選択...</option>';
     this.expressions.forEach((expr: any) => {
-      if ("" === expr.Name) { return; }
+      if ('' === expr.Name) { return; }
       const option = document.createElement('option');
-      option.value = expr.Name || "";
-      option.textContent = expr.File || "";
+      option.value = expr.Name || '';
+      option.textContent = expr.File || '';
       select.appendChild(option);
     });
   }

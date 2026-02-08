@@ -289,16 +289,16 @@ export class LAppModel extends CubismUserModel {
     const setupBreath = (): void => {
       this._breath = CubismBreath.create();
 
-      let parameter_id = CubismFramework.getIdManager().getId(
+      const parameter_id = CubismFramework.getIdManager().getId(
         this._cubismParameterId.ParamBreath !== undefined ? this._cubismParameterId.ParamBreath : CubismDefaultParameterId.ParamBreath
       );
       const paramIndex = this._model.getParameterIndex(parameter_id);
-      let breath_min = this._model.getParameterMinimumValue(paramIndex);
-      let breath_max = this._model.getParameterMaximumValue(paramIndex);
-      let breath_offset = (breath_min + breath_max) / 2; // 中央値
-      let breath_peak = (Math.abs(breath_min) + Math.abs(breath_max)) / 2;
-      let breath_cycle = 3.2345;
-      let breath_weight = 1;
+      const breath_min = this._model.getParameterMinimumValue(paramIndex);
+      const breath_max = this._model.getParameterMaximumValue(paramIndex);
+      const breath_offset = (breath_min + breath_max) / 2; // 中央値
+      const breath_peak = (Math.abs(breath_min) + Math.abs(breath_max)) / 2;
+      const breath_cycle = 3.2345;
+      const breath_weight = 1;
       const breathParameters: Array<BreathParameterData> = [
         new BreathParameterData(
           parameter_id,   // 呼吸をひもづけるパラメータID

@@ -50,11 +50,11 @@ export const PowerImageName = 'CloseNormal.png';
 // モデル定義---------------------------------------------
 // モデル設定の型定義
 export interface ModelConfig {
-  name: string;          // モデル名（ディレクトリ名とmodel3.jsonの名前を一致させること）
-  isCustom: boolean;     // カスタムパラメータIDを使用するか
-  initX: number;         // 初期位置 X軸
-  initY: number;         // 初期位置 Y軸
-  initScale: number;     // 初期スケール
+  name: string; // モデル名（ディレクトリ名とmodel3.jsonの名前を一致させること）
+  isCustom: boolean; // カスタムパラメータIDを使用するか
+  initX: number; // 初期位置 X軸
+  initY: number; // 初期位置 Y軸
+  initScale: number; // 初期スケール
 }
 
 // モデル設定配列

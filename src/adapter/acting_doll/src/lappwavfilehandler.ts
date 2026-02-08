@@ -268,7 +268,7 @@ export class LAppWavFileHandler {
         }
 
         // ファイル名
-        this._wavFileInfo._fileName = "streamed data";
+        this._wavFileInfo._fileName = 'streamed data';
 
         try {
           // シグネチャ "RIFF"

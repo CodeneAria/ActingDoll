@@ -220,3 +220,4 @@ src/adapter/acting_doll/public
 src/Cubism/Framework
 src/adapter/allowed
 CubismSdkForWeb*
+package-lock.json

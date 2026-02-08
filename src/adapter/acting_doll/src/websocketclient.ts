@@ -447,7 +447,7 @@ export class WebSocketClient {
    * 接続状態を取得
    */
   public isConnected(): boolean {
-    return this.websocket !== null && this.websocket.readyState === WebSocket.OPEN;
+    return (this.websocket !== null && this.websocket.readyState === WebSocket.OPEN);
   }
 
   /**
@@ -472,7 +472,6 @@ export class WebSocketClient {
   public getClientId(): string | null {
     return this.clientId;
   }
-
 
   /**
    * エコーメッセージを送信

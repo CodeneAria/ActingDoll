@@ -268,7 +268,7 @@ export class LAppDelegate {
    */
   private initializeWebSocket(): void {
     if (LAppDefine.WebSocketAutoConnect) {
-      this._websocketClient = new WebSocketClient(LAppDefine.WebSocketUrl + location.hostname + ":" + LAppDefine.WebSocketPort);
+      this._websocketClient = new WebSocketClient(LAppDefine.WebSocketUrl + location.hostname + ':' + LAppDefine.WebSocketPort);
 
       // メッセージハンドラを登録
       this._websocketClient.onMessage('welcome', (data) => {
