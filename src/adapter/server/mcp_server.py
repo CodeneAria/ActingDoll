@@ -20,11 +20,8 @@ try:
 except ImportError:
     MCP_AVAILABLE = False
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s](MCP) %(message)s'
-)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("MCP")
+logger.setLevel(logging.WARNING)
 
 
 class MCPServerHandler:
@@ -45,6 +42,7 @@ class MCPServerHandler:
         self.model_command = model_command
         self.client_command = client_command
         self.process_command = process_command
+        self.uvicorn_server = None
         self._setup_handlers()
 
     def _setup_handlers(self):
@@ -282,16 +280,33 @@ class MCPServerHandler:
         app = Starlette(
             routes=[
                 Route("/sse", endpoint=handle_sse),
-                Route("/messages", endpoint=handle_messages, methods=["POST"]),
+                Route("/messages", endpoint=handle_messages,
+                      methods=["POST"]),
             ]
         )
 
         # Uvicorn サーバーで起動
+        # ログフォーマットをカスタマイズ
+        log_config = uvicorn.config.LOGGING_CONFIG
+        log_config["formatters"]["default"]["fmt"] = \
+            "%(levelname)s: [MCP/Uvicorn]\t%(asctime)s\t%(message)s"
+        log_config["formatters"]["access"]["fmt"] =\
+            '%(levelname)s: [MCP/Access]\t%(asctime)s\t%(client_addr)s - "%(request_line)s" %(status_code)s'
+
         config = uvicorn.Config(
             app,
             host=host,
             port=port,
-            log_level="info"
+            log_level="warning",
+            log_config=log_config
         )
-        server = uvicorn.Server(config)
-        await server.serve()
+        self.uvicorn_server = uvicorn.Server(config)
+        await self.uvicorn_server.serve()
+
+    async def stop(self):
+        """MCPサーバーを停止"""
+        if self.uvicorn_server:
+            logger.info("MCPサーバーを停止しています...")
+            self.uvicorn_server.should_exit = True
+        else:
+            logger.warning("MCPサーバーは起動していません")

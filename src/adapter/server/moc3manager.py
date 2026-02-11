@@ -8,16 +8,15 @@ import json
 import logging
 
 # ロギング設定
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("MOC")
+logger.setLevel(logging.INFO)
+
 
 class ModelManager:
     """
     Live2Dモデルの情報を管理するクラス
     """
+
     def __init__(self, models_dir: str = "./../Cubism/Resources"):
         self.models_dir = Path(models_dir)
         self.models: Dict[str, dict] = {}
@@ -38,8 +37,9 @@ class ModelManager:
             logger.warning(f"モデルディレクトリが見つかりません: {self.models_dir}")
             return
         else:
-            logger.info(f"モデルディレクトリ: {self.models_dir}")
-
+            logger.info(f"モデル読み取り開始")
+            logger.debug(f"  モデルディレクトリ: {self.models_dir}")
+        model_count = 0
         for model_dir in self.models_dir.iterdir():
             if model_dir.is_dir():
                 model_name = model_dir.name
@@ -75,9 +75,12 @@ class ModelManager:
                             self.physics3_data[model_name] = physics3_data
                     except Exception as e:
                         is_success = False
-                        logger.error(f"  => physics3.json読み込み失敗 {model_name}: {e}")
+                        logger.error(
+                            f"  => physics3.json読み込み失敗 {model_name}: {e}")
                 if is_success:
-                    logger.info(f"  => モデル読み込み成功: {model_name}")
+                    logger.debug(f"  => モデル読み込み成功: {model_name}")
+                    model_count += 1
+        logger.info(f"モデル読み取り完了: [{model_count}] モデルが読み込まれました")
 
     def get_models(self) -> List[str]:
         """
@@ -91,7 +94,8 @@ class ModelManager:
         """
         target_model = model_name
         if target_model and target_model in self.models:
-            motions = self.models[target_model].get('FileReferences', {}).get('Motions', {})
+            motions = self.models[target_model].get(
+                'FileReferences', {}).get('Motions', {})
             return list(motions.keys())
         return []
 
@@ -101,7 +105,8 @@ class ModelManager:
         """
         target_model = model_name
         if target_model and target_model in self.models:
-            motions = self.models[target_model].get('FileReferences', {}).get('Motions', {})
+            motions = self.models[target_model].get(
+                'FileReferences', {}).get('Motions', {})
             return motions.get(motion_group, [])
         return []
 
@@ -157,7 +162,8 @@ class ModelManager:
         """
         motions = self.get_motions(self.current_motion_group)
         if motions:
-            self.current_motion_index = (self.current_motion_index + 1) % len(motions)
+            self.current_motion_index = (
+                self.current_motion_index + 1) % len(motions)
             return self.get_current_motion()
         return None
 
@@ -167,7 +173,8 @@ class ModelManager:
         """
         motions = self.get_motions(self.current_motion_group)
         if motions:
-            self.current_motion_index = (self.current_motion_index - 1) % len(motions)
+            self.current_motion_index = (
+                self.current_motion_index - 1) % len(motions)
             return self.get_current_motion()
         return None
 

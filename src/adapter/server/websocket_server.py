@@ -9,18 +9,20 @@ import logging
 import os
 import base64
 from datetime import datetime
-from typing import Set, Optional, Any
+from typing import Set, Optional
 import moc3manager
 import websockets
 from websockets.server import ServerConnection
 from security_config import SecurityConfig
 
+str_format = '%(levelname)s: [%(name)s]\t%(asctime)s\t%(message)s'
+
 # ロギング設定
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s [%(levelname)s](WS) %(message)s'
+    format=str_format
 )
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("ADS")
 
 # MCP Server Handler
 try:
@@ -40,6 +42,9 @@ authenticated_clients: Set[ServerConnection] = set()
 model_manager = None
 # グローバルなセキュリティ設定（後で初期化）
 security_config: Optional[SecurityConfig] = None
+# グローバルなタスク（後で初期化）
+mcp_server_task: Optional[asyncio.Task] = None
+websocket_server_task: Optional[asyncio.Task] = None
 
 
 def print_server_console():
@@ -1338,6 +1343,12 @@ async def server_console():
 
             if command == "quit":
                 logger.info("サーバーを停止します...")
+                # MCPサーバーを停止
+                global mcp_server_task
+                if mcp_server_task:
+                    # mcp_server_task.cancel()
+                    # TODO: MCPサーバーの停止処理を実装
+                    pass
                 break
 
             elif command == "send" and len(parts) > 1:
@@ -1489,83 +1500,100 @@ async def run():
     # コマンドライン引数をパース
     args = parse_args()
 
-    # モデルマネージャーを初期化
-    model_manager = moc3manager.ModelManager(args.model_dir)
-
     # MCPモードチェック
     if args.mode in ['mcp', 'both'] and not MCPServerHandler:
         logger.error("MCPモードが指定されましたが、MCPモジュールがインストールされていません。")
         logger.error("pip install mcp を実行してください。")
         return
+    # ホストとポートの設定
+    host = args.host if args.host is not None else security_config.default_host
+    port = args.port if args.port is not None else security_config.default_port
 
-    # MCPのみモード
-    if args.mode == 'mcp':
-        logger.info("MCPサーバーモードで起動します")
+    #################################################
+    # 関数定義
+    #################################################
+    async def run_websocket():
+        # セキュリティ情報をログ出力
+        if security_config.require_auth and args.disable_auth:
+            if security_config.auth_token:
+                logger.info("トークン認証が有効です")
+            else:
+                logger.warning(
+                    "警告: 認証が必須ですが、WEBSOCKET_AUTH_TOKENが設定されていません。接続は全て拒否されます。")
+        else:
+            logger.warning("警告: 認証が無効です。本番環境では認証を有効にすることを推奨します。")
+
+        if security_config.allowed_file_dirs:
+            logger.info(
+                f"アクセスホワイトリスト: {[str(d) for d in security_config.allowed_file_dirs]}")
+        else:
+            logger.info("アクセスホワイトリスト: 未設定（ファイル読み取りコマンド無効）")
+        try:
+            async with websockets.serve(handle_client, host, port):
+                if not args.no_console:
+                    logger.info("WebSocketサーバーが起動しました\t"
+                                f"ws://{host}:{port}")
+                    await server_console()
+                else:
+                    logger.info("WebSocketサーバーが起動しました（コンソールなし）\t"
+                                f"ws://{host}:{port}")
+                    await send_periodic_messages()
+        except Exception as e:
+            logger.error(f"WebSocketサーバーエラー: {e}")
+
+    async def run_mcp():
         if not MCPServerHandler:
             logger.error("MCPサーバーハンドラーが利用できません")
             return
         mcp_server = MCPServerHandler(
             model_command, client_command, process_command)
-        await mcp_server.run(host=args.host, port=args.mcp_port)
-        return
+        try:
+            logger.info("MCPサーバーが起動しました")
+            await mcp_server.run(host=args.host, port=args.mcp_port)
+        except asyncio.CancelledError:
+            logger.warning("MCPサーバーを停止中...")
+            mcp_server.stop()
+        except Exception as e:
+            logger.error(f"MCPサーバーエラー: {e}")
 
-    # WebSocketサーバーの設定
-    host = args.host if args.host is not None else security_config.default_host
-    port = args.port if args.port is not None else security_config.default_port
+    #################################################
+    # モデルマネージャー
+    #################################################
+    # モデルマネージャーを初期化
+    model_manager = moc3manager.ModelManager(args.model_dir)
 
-    # セキュリティ情報をログ出力
-    if security_config.require_auth and args.disable_auth:
-        if security_config.auth_token:
-            logger.info("認証が有効です（トークン認証）")
-        else:
-            logger.warning(
-                "警告: 認証が必須ですが、WEBSOCKET_AUTH_TOKENが設定されていません。接続は全て拒否されます。")
-    else:
-        logger.warning("警告: 認証が無効です。本番環境では認証を有効にすることを推奨します。")
-
-    if security_config.allowed_file_dirs:
-        logger.info(
-            f"ファイルアクセスホワイトリスト: {[str(d) for d in security_config.allowed_file_dirs]}")
-    else:
-        logger.info("ファイルアクセスホワイトリスト: 未設定（ファイル読み取りコマンド無効）")
-
-    logger.info(f"WebSocketサーバー: ws://{host}:{port}")
+    #################################################
+    # モードセレクト
+    #################################################
+    global mcp_server_task, websocket_server_task
 
     # 両方モード: WebSocketとMCPを並行実行
     if args.mode == 'both':
-        logger.info("WebSocket + MCPサーバーモードで起動します")
+        mcp_server_task = asyncio.create_task(run_mcp())
+        websocket_server_task = asyncio.create_task(run_websocket())
+        try:
+            await asyncio.gather(websocket_server_task, mcp_server_task)
+        except asyncio.CancelledError:
+            logger.info("タスクを停止しました")
+        return
 
-        async def run_websocket():
-            async with websockets.serve(handle_client, host, port):
-                if not args.no_console:
-                    logger.info("WebSocketサーバーが起動しました")
-                    await server_console()
-                else:
-                    logger.info("WebSocketサーバーが起動しました（コンソールなし）")
-                    await send_periodic_messages()
-
-        async def run_mcp():
-            if not MCPServerHandler:
-                logger.error("MCPサーバーハンドラーが利用できません")
-                return
-            mcp_server = MCPServerHandler(
-                model_command, client_command, process_command)
-            await mcp_server.run(host=args.host, port=args.mcp_port)
-
-        # 両方を並行実行
-        await asyncio.gather(run_websocket(), run_mcp())
+    # MCPのみモード
+    if args.mode == 'mcp':
+        mcp_server_task = asyncio.create_task(run_mcp())
+        try:
+            await asyncio.gather(mcp_server_task)
+        except asyncio.CancelledError:
+            logger.info("タスクを停止しました")
         return
 
     # WebSocketのみモード
-    async with websockets.serve(handle_client, host, port):
-        if not args.no_console:
-            logger.info("サーバーが起動しました。Ctrl+Cで停止します。")
-            console_task = asyncio.create_task(server_console())
-            await console_task
-        else:
-            logger.info("サーバーが起動しました。コンソールなしで動作中")
-            console_task = asyncio.create_task(send_periodic_messages())
-            await console_task
+    if args.mode == 'websocket':
+        websocket_server_task = asyncio.create_task(run_websocket())
+        try:
+            await asyncio.gather(websocket_server_task)
+        except asyncio.CancelledError:
+            logger.info("タスクを停止しました")
+        return
 
 
 def main():
@@ -1579,4 +1607,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        logger.error(f"致命的なエラーで終了しました: {e}")

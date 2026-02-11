@@ -7,6 +7,8 @@ import os
 from pathlib import Path
 from typing import Optional
 
+logger = logging.getLogger("SEC")
+
 
 class SecurityConfig:
     """WebSocketサーバーのセキュリティ設定"""
@@ -16,7 +18,8 @@ class SecurityConfig:
         self.auth_token: Optional[str] = os.environ.get('WEBSOCKET_AUTH_TOKEN')
 
         # 認証を必須とするかどうか（デフォルト: True）
-        self.require_auth: bool = os.environ.get('WEBSOCKET_REQUIRE_AUTH', 'true').lower() == 'true'
+        self.require_auth: bool = os.environ.get(
+            'WEBSOCKET_REQUIRE_AUTH', 'true').lower() == 'true'
 
         # 許可されたファイルディレクトリ（ホワイトリスト）
         allowed_dirs_env = os.environ.get('WEBSOCKET_ALLOWED_DIRS', '')
@@ -29,7 +32,6 @@ class SecurityConfig:
                         resolved_path = Path(d.strip()).resolve(strict=False)
                         self.allowed_file_dirs.append(resolved_path)
                     except Exception as e:
-                        logger = logging.getLogger(__name__)
                         logger.warning(f"ホワイトリストのディレクトリ '{d}' の解決に失敗: {e}")
         else:
             # デフォルト: 空（ファイル読み取り無効）
@@ -42,13 +44,12 @@ class SecurityConfig:
         try:
             port = int(os.environ.get('WEBSOCKET_PORT', '8765'))
             if not (1 <= port <= 65535):
-                logger = logging.getLogger(__name__)
                 logger.warning(f"無効なポート番号 {port}。デフォルト 8765 を使用します。")
                 port = 8765
             self.default_port: int = port
         except ValueError:
-            logger = logging.getLogger(__name__)
-            logger.warning(f"無効なポート番号 '{os.environ.get('WEBSOCKET_PORT')}'。デフォルト 8765 を使用します。")
+            logger.warning(
+                f"無効なポート番号 '{os.environ.get('WEBSOCKET_PORT')}'。デフォルト 8765 を使用します。")
             self.default_port: int = 8765
 
     def is_file_allowed(self, file_path: str) -> bool:
