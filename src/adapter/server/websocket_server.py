@@ -18,7 +18,7 @@ from security_config import SecurityConfig
 # ロギング設定
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    format='%(asctime)s [%(levelname)s](WS) %(message)s'
 )
 logger = logging.getLogger(__name__)
 
@@ -1459,6 +1459,12 @@ def parse_args():
         help='サーバーのポート (デフォルト: 環境変数"WEBSOCKET_PORT"または8765)'
     )
     parser.add_argument(
+        '--mcp-port',
+        type=int,
+        default=3001,
+        help='MCPサーバーのポート (デフォルト: 3001)'
+    )
+    parser.add_argument(
         '--no-console',
         action='store_true',
         help='対話型コンソールを無効化（ログのみ出力）'
@@ -1500,7 +1506,7 @@ async def run():
             return
         mcp_server = MCPServerHandler(
             model_command, client_command, process_command)
-        await mcp_server.run()
+        await mcp_server.run(host=args.host, port=args.mcp_port)
         return
 
     # WebSocketサーバーの設定
@@ -1528,13 +1534,15 @@ async def run():
     # 両方モード: WebSocketとMCPを並行実行
     if args.mode == 'both':
         logger.info("WebSocket + MCPサーバーモードで起動します")
-        if not args.no_console:
-            logger.info("MCPサーバーが stdio を使用するため、サーバーコンソールは無効化されます")
 
         async def run_websocket():
             async with websockets.serve(handle_client, host, port):
-                logger.info("WebSocketサーバーが起動しました（コンソールなし）")
-                await send_periodic_messages()
+                if not args.no_console:
+                    logger.info("WebSocketサーバーが起動しました")
+                    await server_console()
+                else:
+                    logger.info("WebSocketサーバーが起動しました（コンソールなし）")
+                    await send_periodic_messages()
 
         async def run_mcp():
             if not MCPServerHandler:
@@ -1542,7 +1550,7 @@ async def run():
                 return
             mcp_server = MCPServerHandler(
                 model_command, client_command, process_command)
-            await mcp_server.run()
+            await mcp_server.run(host=args.host, port=args.mcp_port)
 
         # 両方を並行実行
         await asyncio.gather(run_websocket(), run_mcp())
@@ -1567,7 +1575,7 @@ def main():
     try:
         asyncio.run(run())
     except KeyboardInterrupt:
-        logger.info("\nサーバーを停止しました")
+        logger.info("サーバーを停止しました")
 
 
 if __name__ == "__main__":

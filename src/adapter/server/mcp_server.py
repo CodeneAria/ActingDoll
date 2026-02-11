@@ -10,12 +10,20 @@ from typing import Any
 # MCP imports
 try:
     from mcp.server import Server
-    from mcp.server.stdio import stdio_server
+    from mcp.server.sse import SseServerTransport
     from mcp.types import TextContent, Tool
+    from starlette.applications import Starlette
+    from starlette.routing import Route
+    from starlette.requests import Request
+    import uvicorn
     MCP_AVAILABLE = True
 except ImportError:
     MCP_AVAILABLE = False
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s](MCP) %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 
@@ -245,12 +253,45 @@ class MCPServerHandler:
         state = "enabled" if enabled else "disabled"
         return await self.client_command("set_breath", state, client_id, "mcp")
 
-    async def run(self):
-        """MCPサーバーを起動"""
-        logger.info("MCP Server starting...")
-        async with stdio_server() as (read_stream, write_stream):
-            await self.server.run(
-                read_stream,
-                write_stream,
-                self.server.create_initialization_options(),
+    async def run(self, host: str = "0.0.0.0", port: int = 3001):
+        """MCPサーバーをSSE (HTTP) 経由で起動"""
+        logger.info(f"MCP Server starting on http://{host}:{port}/sse")
+
+        # SSEトランスポートを作成
+        sse = SseServerTransport("/messages")
+
+        async def handle_sse(request: Request):
+            """SSE接続エンドポイント"""
+            async with sse.connect_sse(
+                request.scope, request.receive, request._send
+            ) as streams:
+                await self.server.run(
+                    streams[0], streams[1],
+                    self.server.create_initialization_options()
+                )
+            return None
+
+        async def handle_messages(request: Request):
+            """メッセージ送信エンドポイント"""
+            await sse.handle_post_message(
+                request.scope, request.receive, request._send
             )
+            return None
+
+        # Starlette アプリケーションを作成
+        app = Starlette(
+            routes=[
+                Route("/sse", endpoint=handle_sse),
+                Route("/messages", endpoint=handle_messages, methods=["POST"]),
+            ]
+        )
+
+        # Uvicorn サーバーで起動
+        config = uvicorn.Config(
+            app,
+            host=host,
+            port=port,
+            log_level="info"
+        )
+        server = uvicorn.Server(config)
+        await server.serve()
