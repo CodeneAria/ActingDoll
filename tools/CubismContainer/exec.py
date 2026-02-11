@@ -48,7 +48,7 @@ def main(work_dir, config_path):
     print("=" * 50)
     print("[Docker Containers Running]")
     ps_filter_cmd = (
-        f'docker ps --filter "ancestor={DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}" '
+        f'docker ps -a --filter "ancestor={DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}" '
         f'--format "table {{{{.ID}}}}\\t{{{{.Image}}}}\\t{{{{.Status}}}}\\t{{{{.Names}}}}\\t{{{{.Ports}}}}"'
     )
     run_command(ps_filter_cmd)
@@ -74,7 +74,7 @@ def main(work_dir, config_path):
         # Run the command and show output in real-time
         subprocess.run(npm_cmd, shell=True, check=True)
     except subprocess.CalledProcessError as e:
-        #print(f"[Error] executing shell: {e}", file=sys.stderr)
+        # print(f"[Error] executing shell: {e}", file=sys.stderr)
         pass
     except KeyboardInterrupt:
         print("\n# Shutting down...")

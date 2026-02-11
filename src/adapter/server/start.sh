@@ -6,9 +6,11 @@
 SERVER_DIR="/root/workspace/adapter/server"
 NODE_DIR="/root/workspace/adapter/acting_doll"
 # 外部アクセスを許可する場合は 0.0.0.0 を指定してください（認証必須）
-HOST_ADDRESS="0.0.0.0"
-PORT_WEBSOCKET_NUMBER="8765"
-PORT_HTTP_NUMBER="5000"
+HOST_ADDRESS=${HOST_ADDRESS:-"0.0.0.0"}
+
+PORT_WEBSOCKET_NUMBER=${PORT_WEBSOCKET_NUMBER:-"8765"}
+PORT_HTTP_NUMBER=${PORT_HTTP_NUMBER:-"5000"}
+PORT_MCP_NUMBER=${PORT_MCP_NUMBER:-"3001"}
 
 # セキュリティ設定: デフォルトでlocalhostにバインド
 # 本番環境では環境変数で認証トークンとホワイトリストを設定してください:
@@ -29,13 +31,13 @@ if [ ${ret} -ne 0 ]; then
     echo "starting websocket_server.py directly"
     pkill -f "websocket_server.py" || true
     sleep 1
-    python3 websocket_server.py --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --no-console &
+    python3 websocket_server.py --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --mcp-port ${PORT_MCP_NUMBER} --no-console &
     WEBSOCKET_PID=$!
 else
     echo "starting acting-doll-server command"
     pkill -f "acting-doll-server" || true
     sleep 1
-    acting-doll-server --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --no-console &
+    acting-doll-server --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --mcp-port ${PORT_MCP_NUMBER} --no-console &
     WEBSOCKET_PID=$!
 fi
 

@@ -40,6 +40,10 @@ def main(work_dir, config_path):
         print(f"Error: Failed to load configuration: {e}", file=sys.stderr)
         sys.exit(1)
 
+    INNER_SERVER_PORT = 5000
+    INNER_WEBSOCKET_PORT = 8765
+    INNER_MCP_PORT = 3001
+
     DOCKER_IMAGE_NAME = config['docker']['image']['name']
     DOCKER_IMAGE_VER = config['docker']['image']['version']
     DOCKER_CONTAINER_NAME = config['docker']['container']['name']
@@ -55,7 +59,7 @@ def main(work_dir, config_path):
     print("=" * 50)
     print("[Start Cubism SDK for Web]")
     ps_filter_cmd = (
-        f'docker ps --filter "ancestor={DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}" '
+        f'docker ps -a --filter "ancestor={DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}" '
         f'--format "table {{{{.ID}}}}\\t{{{{.Image}}}}\\t{{{{.Status}}}}\\t{{{{.Names}}}}\\t{{{{.Ports}}}}"'
     )
     run_command(ps_filter_cmd)
@@ -79,6 +83,9 @@ def main(work_dir, config_path):
         f'-e WEBSOCKET_REQUIRE_AUTH={REQUIRE_AUTH} '
         f'-e WEBSOCKET_ALLOWED_DIRS={ALLOWED_DIRS} '
         f'{DOCKER_CONTAINER_NAME} /bin/sh -c "'
+        f"export PORT_WEBSOCKET_NUMBER={INNER_WEBSOCKET_PORT};"
+        f"export PORT_HTTP_NUMBER={INNER_SERVER_PORT};"
+        f"export PORT_MCP_NUMBER={INNER_MCP_PORT};"
         f'cd {server_dir} && /bin/sh start.sh"'
     )
 

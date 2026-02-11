@@ -10,6 +10,7 @@ docker:
     name: "server_acting_doll"
     port_cubism: "5000"
     port_websocket: "8765"
+    port_mcp: "3001"
 
   # Dockerfile name
   dockerfile: "tools/CubismContainer/volume/Dockerfile"

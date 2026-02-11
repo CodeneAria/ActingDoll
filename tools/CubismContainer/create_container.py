@@ -71,6 +71,7 @@ def main(work_dir, config_path):
     DOCKER_CONTAINER_NAME = config['docker']['container']['name']
     SERVER_PORT = config['docker']['container']['port_cubism']
     WEBSOCKET_PORT = config['docker']['container']['port_websocket']
+    MCP_PORT = config['docker']['container']['port_mcp']
     GIT_FRAMEWORK_REPO = config['cubism']['git_framework_repo']
     GIT_FRAMEWORK_TAG = config['cubism']['git_framework_tag']
     GIT_FRAMEWORK_DIR_NAME = config['cubism']['git_framework_dir_name']
@@ -81,8 +82,10 @@ def main(work_dir, config_path):
     MODELS_DIR = config['cubism']['models_dir']
     ADAPTER_DIR = config['custom']['adapter_dir']
     FRAMEWORK_DIR = config['cubism']['framework_dir']
+
     INNER_SERVER_PORT = 5000
     INNER_WEBSOCKET_PORT = 8765
+    INNER_MCP_PORT = 3001
 
     # Authentication settings
     AUTH_TOKEN = config['authentication']['token']
@@ -118,6 +121,7 @@ def main(work_dir, config_path):
     print(f"    container  : {DOCKER_CONTAINER_NAME}")
     print(f"      port(HTTP)      : {SERVER_PORT}")
     print(f"      port(Websocket) : {WEBSOCKET_PORT}")
+    print(f"      port(MCP)       : {MCP_PORT}")
     print("=" * 50)
 
     # Check Cubism Core files
@@ -204,6 +208,7 @@ def main(work_dir, config_path):
         "-v", f"{models_path}:/root/workspace/Cubism/Resources",
         "-p", f"{SERVER_PORT}:{INNER_SERVER_PORT}",
         "-p", f"{WEBSOCKET_PORT}:{INNER_WEBSOCKET_PORT}",
+        "-p", f"{MCP_PORT}:{INNER_MCP_PORT}",
         "-e", f"WEBSOCKET_AUTH_TOKEN={AUTH_TOKEN}",
         "-e", f"WEBSOCKET_REQUIRE_AUTH={REQUIRE_AUTH}",
         "-e", f"WEBSOCKET_ALLOWED_DIRS={ALLOWED_DIRS}",
@@ -233,7 +238,7 @@ def main(work_dir, config_path):
             f"[Error] Failed to copy Framework files from Docker container", file=sys.stderr)
 
     ps_filter_cmd = (
-        f'docker ps --filter "ancestor={DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}" '
+        f'docker ps -a --filter "ancestor={DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}" '
         f'--format "table {{{{.ID}}}}\\t{{{{.Image}}}}\\t{{{{.Status}}}}\\t{{{{.Names}}}}\\t{{{{.Ports}}}}"'
     )
     print("-" * 25)

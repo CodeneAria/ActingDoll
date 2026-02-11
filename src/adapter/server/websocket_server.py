@@ -1548,7 +1548,8 @@ async def run():
         mcp_server = MCPServerHandler(
             model_command, client_command, process_command)
         try:
-            logger.info("MCPサーバーが起動しました")
+            logger.info(
+                f"MCPサーバーが起動しました\thttp://{args.host}:{args.mcp_port}/sse")
             await mcp_server.run(host=args.host, port=args.mcp_port)
         except asyncio.CancelledError:
             logger.warning("MCPサーバーを停止中...")

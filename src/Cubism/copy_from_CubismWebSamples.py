@@ -46,7 +46,7 @@ def main(work_dir, config_path):
     MODELS_DIR = config['cubism']['models_dir']
 
     models_path = Path(MODELS_DIR).parent.resolve().absolute()
-    samples_resources_dir="/root/workspace/Cubism/Samples/Samples/Resources"
+    samples_resources_dir = "/root/workspace/Cubism/Samples/Samples/Resources"
 
     print("=" * 50)
     print("[Copy model resources from Cubism SDK for Web container]")
@@ -58,7 +58,7 @@ def main(work_dir, config_path):
     print("=" * 50)
     print("[Docker Containers Running]")
     ps_filter_cmd = (
-        f'docker ps --filter "ancestor={DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}" '
+        f'docker ps -a --filter "ancestor={DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}" '
         f'--format "table {{{{.ID}}}}\\t{{{{.Image}}}}\\t{{{{.Status}}}}\\t{{{{.Names}}}}\\t{{{{.Ports}}}}"'
     )
     run_command(ps_filter_cmd)
