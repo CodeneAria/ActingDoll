@@ -31,7 +31,6 @@ import {
 import { csmRect } from '@framework/type/csmrectf';
 import {
   CSM_ASSERT,
-  CubismLogVerbose,
   CubismLogDebug,
   CubismLogError,
   CubismLogInfo

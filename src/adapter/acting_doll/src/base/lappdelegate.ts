@@ -9,11 +9,8 @@ import { CubismFramework, Option } from '@framework/live2dcubismframework';
 import * as LAppDefine from './lappdefine';
 import { LAppPal } from './lapppal';
 import { LAppSubdelegate } from './lappsubdelegate';
-import {
-  CubismLogDebug, CubismLogError, CubismLogInfo
-} from '@framework/utils/cubismdebug';
+import { CubismLogError } from '@framework/utils/cubismdebug';
 import { WebSocketClient } from './../addons/websocketclient';
-import { LAppMultilingual, MessageKey } from './../addons/lappmultilingual';
 
 export let s_instance: LAppDelegate = null;
 
