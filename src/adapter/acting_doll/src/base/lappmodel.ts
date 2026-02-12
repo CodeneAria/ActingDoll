@@ -103,6 +103,7 @@ export class LAppModel extends CubismUserModel {
             ui.resetModelPosition();
             ui.moveModel(model_config.initX, model_config.initY, false);
             ui.setModelScale(model_config.initScale);
+            ui.updateModelPositionAxis();
           }
         }
       })

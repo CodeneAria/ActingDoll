@@ -210,14 +210,24 @@ export class WebSocketClient {
                 pos_x = parseFloat(viewMatrix.getTranslateX().toFixed(3));
                 pos_y = parseFloat(viewMatrix.getTranslateY().toFixed(3));
               }
-              scale = viewMatrix.getScaleX();
+              scale = parseFloat(viewMatrix.getScaleX().toFixed(2));
             }
+            const model_name = model.getModelName();
+            const eye_blink = model.getEyeBlinkEnabled();
+            const breath = model.getBreathEnabled();
+            const idle_motion = model.getIdleMotionEnabled();
+            const drag_follow = model.getDragFollowEnabled();
+            const physics = model.getPhysicsEnabled();
+            const expression = model.getCurrentExpression() || '';
+            const motionInfo_group = motionInfo ? motionInfo.group : '';
+            const motionInfo_no = motionInfo ? motionInfo.no : 0;
+            const motionInfo_priority = motionInfo ? motionInfo.priority : 0;
             this.sendModelInfo(
-              model.getModelName(), model.getEyeBlinkEnabled(),
-              model.getBreathEnabled(), model.getIdleMotionEnabled(),
-              model.getDragFollowEnabled(), model.getPhysicsEnabled(),
-              model.getCurrentExpression() || '',
-              motionInfo.group || '', motionInfo.no || 0, motionInfo.priority || 0,
+              model_name, eye_blink,
+              breath, idle_motion,
+              drag_follow, physics,
+              expression,
+              motionInfo_group, motionInfo_no, motionInfo_priority,
               pos_x, pos_y, scale,
               data.from || '');
           }
@@ -472,7 +482,7 @@ export class WebSocketClient {
         const view = subdelegate.getView();
         if (view) {
           const viewMatrix = view.getViewMatrix();
-          const scale = viewMatrix.getScaleX();
+          const scale: number = parseFloat(viewMatrix.getScaleX().toFixed(2));
           this.sendResponseScale(scale, data.from || '');
         }
       }

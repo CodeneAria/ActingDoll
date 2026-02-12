@@ -646,6 +646,12 @@ class Live2DController {
       }
     } else if (command === 'response_model_name') {
       this.selectModel(data.model_name || '');
+    } else if (command === 'response_position') {
+      this.updatePosition(data);
+    } else if (command === 'response_scale') {
+      this.updateScale(data);
+    } else if (command === 'response_model_info') {
+      this.updateModelInfo(data);
     } else {
       // TODO:他の応答コマンドの処理を記載する必要がある
       // 主にmodel get_系コマンドの応答を処理する
@@ -687,6 +693,10 @@ class Live2DController {
     this.sendCommand(`model get_expressions ${modelName}`);
     this.sendCommand(`model get_motions ${modelName}`);
     this.sendCommand(`model get_parameters ${modelName}`);
+
+    if (this.selectedClientId) {
+      this.sendCommand(`client ${this.selectedClientId} get_model_info`);
+    }
   }
 
   /**
@@ -815,6 +825,36 @@ class Live2DController {
     if (this.selectedClientId) {
       this.sendCommand(`client ${this.selectedClientId} get_model_name`);
     }
+  }
+  /**
+   * 位置情報を更新
+   * @param data 入力データ
+   */
+  private updatePosition(data: any): void {
+    const selectX = document.getElementById('input-position-x') as HTMLSelectElement;
+    const selectY = document.getElementById('input-position-y') as HTMLSelectElement;
+    if (!selectX || !selectY) return;
+
+    selectX.value = data.x !== undefined ? data.x.toString() : '0';
+    selectY.value = data.y !== undefined ? data.y.toString() : '0';
+  }
+  /**
+   * スケール情報を更新
+   * @param data 入力データ
+   */
+  private updateScale(data: any): void {
+    const selectScale = document.getElementById('input-scale') as HTMLSelectElement;
+    if (!selectScale) return;
+    selectScale.value = data.scale !== undefined ? data.scale.toString() : '1.0';
+  }
+
+  /**
+   * モデル情報を更新
+   * @param data 入力データ
+   */
+  private updateModelInfo(data: any): void {
+    this.updatePosition(data.position || {});
+    this.updateScale(data || {});
   }
 
   /**

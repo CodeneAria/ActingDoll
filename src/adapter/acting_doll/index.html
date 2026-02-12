@@ -58,7 +58,7 @@
       </div>
       <!-- Model Transform Section -->
       <div class="control-section">
-        <label>Model Position:</label>
+        <label><span class="value-label">Model Position: </span><span id="modelPositionAxis" class="value-color">(0, 0)</span></label>
         <div style="margin-top: 8px; display: flex; flex-direction: column; align-items: center; gap: 4px;">
           <button id="moveUp" style="padding: 8px 16px; min-width: 60px;">▲</button>
           <div style="display: flex; gap: 4px;">
@@ -69,7 +69,7 @@
           <button id="moveDown" style="padding: 8px 16px; min-width: 60px;">▼</button>
         </div>
         <div style="margin-top: 12px;">
-          <label for="scaleSlider" style="display: block; margin-bottom: 4px;">Model Scale: <span id="scaleValue">1.0</span></label>
+          <label for="scaleSlider" style="display: block; margin-bottom: 4px;"><span class="value-label">Model Scale: </span><span id="scaleValue" class="value-color">1.0</span></label>
           <input type="range" id="scaleSlider" min="0.1" max="3.0" step="0.1" value="1.0" style="width: 100%;">
         </div>
       </div>

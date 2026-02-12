@@ -34,6 +34,7 @@ export class LAppUI {
   private _resetPositionButton!: HTMLButtonElement;
   private _scaleSlider!: HTMLInputElement;
   private _scaleValue!: HTMLSpanElement;
+  private _modelPositionAxis!: HTMLSpanElement;
   private _parameterSliders: Map<string, HTMLInputElement> = new Map();
   private _parameterValues: Map<string, HTMLSpanElement> = new Map();
   private _manualControlParams: Set<number> = new Set();
@@ -63,6 +64,7 @@ export class LAppUI {
     this._resetPositionButton = document.getElementById('resetPosition') as HTMLButtonElement;
     this._scaleSlider = document.getElementById('scaleSlider') as HTMLInputElement;
     this._scaleValue = document.getElementById('scaleValue') as HTMLSpanElement;
+    this._modelPositionAxis = document.getElementById('modelPositionAxis') as HTMLSpanElement;
 
     // スケールスライダーの設定
     if (this._scaleSlider) {
@@ -853,6 +855,27 @@ export class LAppUI {
             viewMatrix.getTranslateX().toFixed(2),
             viewMatrix.getTranslateY().toFixed(2))
         );
+        this.updateModelPositionAxis();
+      }
+    }
+  }
+
+  /**
+   * モデルの位置表示を更新
+   */
+  public updateModelPositionAxis(): void {
+    if (this._modelPositionAxis) {
+      const delegate = LAppDelegate.getInstance();
+      const subdelegate = delegate.getSubdelegate(0);
+      if (!subdelegate) { return; }
+      const view = subdelegate.getView();
+      if (view) {
+        const viewMatrix = view.getViewMatrix();
+        if (viewMatrix) {
+          this._modelPositionAxis.textContent =
+            `(${viewMatrix.getTranslateX().toFixed(2)},` +
+            ` ${viewMatrix.getTranslateY().toFixed(2)})`;
+        }
       }
     }
   }
@@ -873,6 +896,7 @@ export class LAppUI {
       view.resetViewMatrix();
       // スケールもリセット
       this.updateScaleSlider(LAppDefine.ModelScaleDefault);
+      this.updateModelPositionAxis();
     }
   }
 
