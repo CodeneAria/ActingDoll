@@ -399,7 +399,7 @@ export class LAppDelegate {
         }
       });
 
-      this._websocketClient.onMessage('request_model_info', (data: any) => {
+      this._websocketClient.onMessage('request_model_name', (data: any) => {
         const subdelegate = this.getSubdelegate(0);
         if (subdelegate) {
           const live2DManager = subdelegate.getLive2DManager();
@@ -407,7 +407,40 @@ export class LAppDelegate {
             const model = live2DManager.getModel(0);
             if (model) {
               const modelName = model.getModelName();
-              this._websocketClient.sendModelInfo(modelName, data.from || '');
+              this._websocketClient.sendModelName(modelName, data.from || '');
+            }
+          }
+        }
+      });
+
+      this._websocketClient.onMessage('request_model_info', (data: any) => {
+        const subdelegate = this.getSubdelegate(0);
+        if (subdelegate) {
+          const live2DManager = subdelegate.getLive2DManager();
+          if (live2DManager) {
+            const model = live2DManager.getModel(0);
+            if (model) {
+              const motionInfo = model.getCurrentMotion();
+              const view = subdelegate.getView();
+              let pos_x: number = 0;
+              let pos_y: number = 0;
+              let scale: number = 1;
+              if (view) {
+                const viewMatrix = view.getViewMatrix();
+                if (viewMatrix) {
+                  pos_x = parseFloat(viewMatrix.getTranslateX().toFixed(3));
+                  pos_y = parseFloat(viewMatrix.getTranslateY().toFixed(3));
+                }
+                scale = viewMatrix.getScaleX();
+              }
+              this._websocketClient.sendModelInfo(
+                model.getModelName(), model.getEyeBlinkEnabled(),
+                model.getBreathEnabled(), model.getIdleMotionEnabled(),
+                model.getDragFollowEnabled(), model.getPhysicsEnabled(),
+                model.getCurrentExpression() || '',
+                motionInfo.group || '', motionInfo.no || 0, motionInfo.priority || 0,
+                pos_x, pos_y, scale,
+                data.from || '');
             }
           }
         }

@@ -53,11 +53,21 @@ class MCPServerHandler:
             """利用可能なツール一覧を返す"""
             return [
                 Tool(
+                    # list
+                    name="list_clients",
+                    description="接続中のクライアント一覧を取得します",
+                    inputSchema={"type": "object", "properties": {}},
+                ),
+                Tool(
+                    # model list
                     name="get_model_list",
                     description="利用可能なLive2Dモデルの一覧を取得します",
                     inputSchema={"type": "object", "properties": {}},
                 ),
                 Tool(
+                    # model get_expressions <name>
+                    # model get_motions <name>
+                    # model get_parameters <name>
                     name="get_model_info",
                     description="指定したモデルの詳細情報（expressions、motions、parameters）を取得します",
                     inputSchema={
@@ -69,6 +79,7 @@ class MCPServerHandler:
                     },
                 ),
                 Tool(
+                    # client <client_id> set_expression [expression_name]
                     name="set_expression",
                     description="クライアントのモデルの表情を設定します",
                     inputSchema={
@@ -81,6 +92,7 @@ class MCPServerHandler:
                     },
                 ),
                 Tool(
+                    # client <client_id> set_motion [group_name] [no] [priority(0-3, default:2)]
                     name="set_motion",
                     description="クライアントのモデルのモーションを再生します",
                     inputSchema={
@@ -95,6 +107,7 @@ class MCPServerHandler:
                     },
                 ),
                 Tool(
+                    # client <client_id> set_parameter ID01=VALUE01 ID02=VALUE02 ...
                     name="set_parameter",
                     description="クライアントのモデルのパラメータを設定します",
                     inputSchema={
@@ -111,22 +124,7 @@ class MCPServerHandler:
                     },
                 ),
                 Tool(
-                    name="list_clients",
-                    description="接続中のクライアント一覧を取得します",
-                    inputSchema={"type": "object", "properties": {}},
-                ),
-                Tool(
-                    name="get_client_state",
-                    description="クライアントの現在の状態（モデル、表情、モーション等）を取得します",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {
-                            "client_id": {"type": "string", "description": "クライアントID"},
-                        },
-                        "required": ["client_id"],
-                    },
-                ),
-                Tool(
+                    # client <client_id> set_eye_blink [enabled|disabled]
                     name="set_eye_blink",
                     description="まばたき機能の有効/無効を設定します",
                     inputSchema={
@@ -139,6 +137,7 @@ class MCPServerHandler:
                     },
                 ),
                 Tool(
+                    # client <client_id> set_breath [enabled|disabled]
                     name="set_breath",
                     description="呼吸エフェクトの有効/無効を設定します",
                     inputSchema={
@@ -150,6 +149,49 @@ class MCPServerHandler:
                         "required": ["client_id", "enabled"],
                     },
                 ),
+                Tool(
+                    # client <client_id> get_model
+                    # client <client_id> get_expression
+                    # client <client_id> get_motion
+                    # client <client_id> get_eye_blink
+                    # client <client_id> get_breath
+                    # client <client_id> get_idle_motion
+                    # client <client_id> get_drag_follow
+                    # client <client_id> get_physics
+                    # client <client_id> get_position
+                    # client <client_id> get_scale
+                    name="get_client_state",
+                    description="クライアントの現在の状態（モデル、表情、モーション等）を取得します",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "client_id": {"type": "string", "description": "クライアントID"},
+                        },
+                        "required": ["client_id"],
+                    },
+                ),
+                Tool(
+                    # notify <message>
+                    name="notify",
+                    description="状態を通知します",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "message": {"type": "string", "description": "通知メッセージ"},
+                        },
+                        "required": ["message"],
+                    },
+                ),
+                # send <client_id> <message>
+                #
+                # client <client_id> set_idle_motion [enabled|disabled]
+                # client <client_id> set_physics [enabled|disabled]
+                # client <client_id> set_lipsync [base64_wav_data]
+                # client <client_id> set_lipsync_from_file [filename]
+                # client <client_id> set_position [x] [y] <relative>
+                # client <client_id> set_scale [size]
+                # client <client_id> set_drag_follow [enabled|disabled]
+                #
             ]
 
         @self.server.call_tool()
@@ -185,6 +227,8 @@ class MCPServerHandler:
             return await self._set_eye_blink(arguments["client_id"], arguments["enabled"])
         elif name == "set_breath":
             return await self._set_breath(arguments["client_id"], arguments["enabled"])
+        elif name == "notify":
+            return await self._notify(arguments["message"])
         else:
             return {"error": f"Unknown tool: {name}"}
 
@@ -231,6 +275,11 @@ class MCPServerHandler:
         motion = await self.client_command("get_motion", "", client_id, "mcp")
         eye_blink = await self.client_command("get_eye_blink", "", client_id, "mcp")
         breath = await self.client_command("get_breath", "", client_id, "mcp")
+        idle_motion = await self.client_command("get_idle_motion", "", client_id, "mcp")
+        drag_follow = await self.client_command("get_drag_follow", "", client_id, "mcp")
+        physics = await self.client_command("get_physics", "", client_id, "mcp")
+        position = await self.client_command("get_position", "", client_id, "mcp")
+        scale = await self.client_command("get_scale", "", client_id, "mcp")
 
         return {
             "client_id": client_id,
@@ -239,6 +288,11 @@ class MCPServerHandler:
             "motion": motion.get("data"),
             "eye_blink": eye_blink.get("data"),
             "breath": breath.get("data"),
+            "idle_motion": idle_motion.get("data"),
+            "drag_follow": drag_follow.get("data"),
+            "physics": physics.get("data"),
+            "position": position.get("data"),
+            "scale": scale.get("data"),
         }
 
     async def _set_eye_blink(self, client_id: str, enabled: bool) -> dict:
@@ -250,6 +304,11 @@ class MCPServerHandler:
         """呼吸を設定"""
         state = "enabled" if enabled else "disabled"
         return await self.client_command("set_breath", state, client_id, "mcp")
+
+    async def _notify(self, message: str) -> dict:
+        """状態を通知"""
+        await self.process_command(f"notify {message}", "mcp")
+        return {"status": "notified"}
 
     async def run(self, host: str = "0.0.0.0", port: int = 3001):
         """MCPサーバーをSSE (HTTP) 経由で起動"""

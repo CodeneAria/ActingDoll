@@ -165,7 +165,7 @@ class Live2DController {
     </div>
     <div class="model-section">
       <h3>モデル操作</h3>
-      <button id="btn-client-get-model">モデル取得 (get_model)</button>
+      <button id="btn-client-get-model">モデル取得 (get_model_name)</button>
       <select id="select-model" style="width: 300px; margin-left: 10px;">
         <option value="">モデルを選択...</option>
       </select>
@@ -204,29 +204,34 @@ class Live2DController {
     <div class="client-commands-section">
       <h3>アニメーション設定</h3>
       <div style="margin-top: 8px;">
-        <button id="btn-get-eye-blink">目パチ/状態取得 (get_eye_blink)</button>
-        <button id="btn-set-eye-blink-enabled">目パチ/有効 (set_eye_blink enabled)</button>
-        <button id="btn-set-eye-blink-disabled">目パチ/無効 (set_eye_blink disabled)</button>
+        <h4>目パチ(get_eye_blink/set_eye_blink)</h4>
+        <button id="btn-get-eye-blink">状態取得</button>
+        <button id="btn-set-eye-blink-enabled">有効</button>
+        <button id="btn-set-eye-blink-disabled">無効</button>
       </div>
       <div style="margin-top: 8px;">
-        <button id="btn-get-breath">呼吸/状態取得 (get_breath)</button>
-        <button id="btn-set-breath-enabled">呼吸/有効 (set_breath enabled)</button>
-        <button id="btn-set-breath-disabled">呼吸/無効 (set_breath disabled)</button>
+        <h4>呼吸(get_breath/set_breath)</h4>
+        <button id="btn-get-breath">状態取得</button>
+        <button id="btn-set-breath-enabled">有効</button>
+        <button id="btn-set-breath-disabled">無効</button>
       </div>
       <div style="margin-top: 8px;">
-        <button id="btn-get-idle-motion">アイドリングモーション/状態取得 (get_idle_motion)</button>
-        <button id="btn-set-idle-motion-enabled">アイドリングモーション/有効 (set_idle_motion enabled)</button>
-        <button id="btn-set-idle-motion-disabled">アイドリングモーション/無効 (set_idle_motion disabled)</button>
+        <h4>アイドリングモーション(get_idle_motion/set_idle_motion)</h4>
+        <button id="btn-get-idle-motion">状態取得</button>
+        <button id="btn-set-idle-motion-enabled">有効</button>
+        <button id="btn-set-idle-motion-disabled">無効</button>
       </div>
       <div style="margin-top: 8px;">
-        <button id="btn-get-drag-follow">ドラッグ追従/状態取得 (get_drag_follow)</button>
-        <button id="btn-set-drag-follow-enabled">ドラッグ追従/有効 (set_drag_follow enabled)</button>
-        <button id="btn-set-drag-follow-disabled">ドラッグ追従/無効 (set_drag_follow disabled)</button>
+        <h4>ドラッグ追従(get_drag_follow/set_drag_follow)</h4>
+        <button id="btn-get-drag-follow">状態取得</button>
+        <button id="btn-set-drag-follow-enabled">有効</button>
+        <button id="btn-set-drag-follow-disabled">無効</button>
       </div>
       <div style="margin-top: 8px;">
-        <button id="btn-get-physics">物理演算/状態取得 (get_physics)</button>
-        <button id="btn-set-physics-enabled">物理演算/有効 (set_physics enabled)</button>
-        <button id="btn-set-physics-disabled">物理演算/無効 (set_physics disabled)</button>
+        <h4>物理演算(get_physics/set_physics)</h4>
+        <button id="btn-get-physics">状態取得</button>
+        <button id="btn-set-physics-enabled">有効</button>
+        <button id="btn-set-physics-disabled">無効</button>
       </div>
     </div>
     <div class="parameter-section">
@@ -318,7 +323,7 @@ class Live2DController {
       const target = e.target as HTMLSelectElement;
       this.selectedClientId = target.value;
       this.showMessage(`クライアント選択: ${this.selectedClientId}`);
-      this.updateModelInfo();
+      this.updateModelName();
     });
 
     // モデル関連
@@ -364,7 +369,7 @@ class Live2DController {
     // クライアントコマンド - モデル取得
     document.getElementById('btn-client-get-model')?.addEventListener('click', () => {
       if (this.selectedClientId) {
-        this.sendCommand(`client ${this.selectedClientId} get_model`);
+        this.sendCommand(`client ${this.selectedClientId} get_model_name`);
       } else {
         this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_SELECT_CLIENT));
       }
@@ -636,10 +641,10 @@ class Live2DController {
         this.updateMotionList(data);
       } else if (subcommand === 'get_parameters') {
         this.updateParameterList(data);
-      } else if (subcommand === 'get_model') {
+      } else if (subcommand === 'get_model_name') {
         this.selectModel(data.model || '');
       }
-    } else if (command === 'response_model') {
+    } else if (command === 'response_model_name') {
       this.selectModel(data.model_name || '');
     } else {
       // TODO:他の応答コマンドの処理を記載する必要がある
@@ -668,7 +673,7 @@ class Live2DController {
       this.selectedClientId = clients[0];
       select.value = clients[0];
       this.showMessage(`クライアント自動選択: ${clients[0]}`);
-      this.updateModelInfo();
+      this.updateModelName();
     }
   }
   private selectModel(modelName: string): void {
@@ -806,9 +811,9 @@ class Live2DController {
   /**
    * モデル情報を更新
    */
-  private updateModelInfo(): void {
+  private updateModelName(): void {
     if (this.selectedClientId) {
-      this.sendCommand(`client ${this.selectedClientId} get_model`);
+      this.sendCommand(`client ${this.selectedClientId} get_model_name`);
     }
   }
 

@@ -19,73 +19,6 @@ export interface WebSocketMessage {
   [key: string]: any;
 }
 
-/**
- * エコーメッセージ
- */
-export interface EchoMessage extends WebSocketMessage {
-  type: 'echo';
-  text: string;
-}
-
-/**
- * ブロードキャストメッセージ
- */
-export interface BroadcastMessage extends WebSocketMessage {
-  type: 'broadcast';
-  content: string;
-}
-
-/**
- * コマンドメッセージ
- */
-export interface CommandMessage extends WebSocketMessage {
-  type: 'command';
-  command: string;
-}
-
-/**
- * ウェルカムレスポンス
- */
-export interface WelcomeResponse extends WebSocketMessage {
-  type: 'welcome';
-  message: string;
-  client_id: string;
-}
-
-/**
- * エコーレスポンス
- */
-export interface EchoResponse extends WebSocketMessage {
-  type: 'echo_response';
-  original: any;
-}
-
-/**
- * ブロードキャストレスポンス
- */
-export interface BroadcastResponse extends WebSocketMessage {
-  type: 'broadcast_message';
-  from: string;
-  content: string;
-}
-
-/**
- * クライアント接続通知
- */
-export interface ClientConnectedMessage extends WebSocketMessage {
-  type: 'client_connected';
-  client_id: string;
-  total_clients: number;
-}
-
-/**
- * クライアント切断通知
- */
-export interface ClientDisconnectedMessage extends WebSocketMessage {
-  type: 'client_disconnected';
-  client_id: string;
-  total_clients: number;
-}
 
 /**
  * コマンドレスポンス
@@ -97,189 +30,6 @@ export interface CommandResponse extends WebSocketMessage {
   error?: string;
 }
 
-/**
- * エラーメッセージ
- */
-export interface ErrorMessage extends WebSocketMessage {
-  type: 'error';
-  message: string;
-}
-
-/**
- * 目パチ設定メッセージ
- */
-export interface SetEyeBlinkMessage extends WebSocketMessage {
-  type: 'set_eye_blink';
-  enabled: boolean;
-  client_id: string;
-}
-
-/**
- * 呼吸設定メッセージ
- */
-export interface SetBreathMessage extends WebSocketMessage {
-  type: 'set_breath';
-  enabled: boolean;
-  client_id: string;
-}
-
-/**
- * アイドリングモーション設定メッセージ
- */
-export interface SetIdleMotionMessage extends WebSocketMessage {
-  type: 'set_idle_motion';
-  enabled: boolean;
-  client_id: string;
-}
-
-/**
- * ドラッグ追従設定メッセージ
- */
-export interface SetDragFollowMessage extends WebSocketMessage {
-  type: 'set_drag_follow';
-  enabled: boolean;
-  client_id: string;
-}
-
-/**
- * 物理演算設定メッセージ
- */
-export interface SetPhysicsMessage extends WebSocketMessage {
-  type: 'set_physics';
-  enabled: boolean;
-  client_id: string;
-}
-
-/**
- * 表情設定メッセージ
- */
-export interface SetExpressionMessage extends WebSocketMessage {
-  type: 'set_expression';
-  expression: string;
-  client_id: string;
-}
-
-/**
- * モーション設定メッセージ
- */
-export interface SetMotionMessage extends WebSocketMessage {
-  type: 'set_motion';
-  group: string;
-  no?: number;
-  priority?: number;
-  client_id: string;
-}
-
-/**
- * パラメータ設定メッセージ
- */
-export interface SetParameterMessage extends WebSocketMessage {
-  type: 'set_parameter';
-  name: string;
-  value: number;
-  client_id: string;
-}
-
-/**
- * モデル情報リクエストメッセージ
- */
-export interface RequestModelInfoMessage extends WebSocketMessage {
-  type: 'request_model_info';
-}
-
-/**
- * 目パチ情報リクエストメッセージ
- */
-export interface RequestEyeBlinkMessage extends WebSocketMessage {
-  type: 'request_eye_blink';
-}
-
-/**
- * 呼吸情報リクエストメッセージ
- */
-export interface RequestBreathMessage extends WebSocketMessage {
-  type: 'request_breath';
-}
-
-/**
- * アイドリングモーション情報リクエストメッセージ
- */
-export interface RequestIdleMotionMessage extends WebSocketMessage {
-  type: 'request_idle_motion';
-}
-
-/**
- * ドラッグ追従情報リクエストメッセージ
- */
-export interface RequestDragFollowMessage extends WebSocketMessage {
-  type: 'request_drag_follow';
-}
-
-/**
- * 表情情報リクエストメッセージ
- */
-export interface RequestExpressionMessage extends WebSocketMessage {
-  type: 'request_expression';
-}
-
-/**
- * モーション情報リクエストメッセージ
- */
-export interface RequestMotionMessage extends WebSocketMessage {
-  type: 'request_motion';
-}
-
-/**
- * クライアントレスポンスメッセージ
- */
-export interface ClientResponseMessage extends WebSocketMessage {
-  type: 'client';
-  command: string;
-  args: any;
-}
-
-/**
- * Wavファイル送信メッセージ
- */
-export interface SetLipSyncMessage extends WebSocketMessage {
-  type: 'set_lipsync';
-  wav_data: string; // base64エンコードされたWavデータ
-  client_id: string;
-}
-
-/**
- * 位置情報リクエストメッセージ
- */
-export interface RequestPositionMessage extends WebSocketMessage {
-  type: 'request_position';
-}
-
-/**
- * 位置設定メッセージ
- */
-export interface SetPositionMessage extends WebSocketMessage {
-  type: 'set_position';
-  x: number;
-  y: number;
-  relative: boolean;
-  client_id: string;
-}
-
-/**
- * スケール情報リクエストメッセージ
- */
-export interface RequestScaleMessage extends WebSocketMessage {
-  type: 'request_scale';
-}
-
-/**
- * スケール設定メッセージ
- */
-export interface SetScaleMessage extends WebSocketMessage {
-  type: 'set_scale';
-  scale: number;
-  client_id: string;
-}
 
 /**
  * メッセージハンドラの型
@@ -593,14 +343,43 @@ export class WebSocketClient {
     this.sendClientResponse('response_parameter', { successful, failed }, from);
   }
   /**
-   * 現在のモデル情報を送信
+   * 現在のモデル名を送信
    * @param modelName モデル名
-   * @param modelData モデル情報
    * @param from 送信元クライアントID
    */
-  public sendModelInfo(modelName: string, from: string): void {
-    this.sendClientResponse('response_model', { model_name: modelName }, from);
+  public sendModelName(modelName: string, from: string): void {
+    this.sendClientResponse('response_model_name', { model_name: modelName }, from);
   }
+  /**
+   * 現在のモデル名を送信
+   * @param modelName モデル名
+   * @param from 送信元クライアントID
+   */
+  public sendModelInfo(
+    modelName: string,
+    eye_blink: boolean,
+    breath: boolean,
+    idle_motion: boolean,
+    drag_follow: boolean,
+    physics: boolean,
+    expression: string,
+    motion_group: string,
+    motion_no: number,
+    motion_priority: number,
+    positionX: number,
+    positionY: number,
+    scale: number,
+    from: string): void {
+
+    this.sendClientResponse('response_model_info', {
+      model_name: modelName, eye_blink: eye_blink, breath: breath,
+      idle_motion: idle_motion, drag_follow: drag_follow, physics: physics,
+      expression: expression,
+      motion: { group: motion_group, no: motion_no, priority: motion_priority },
+      position: { x: positionX, y: positionY }, scale: scale
+    }, from);
+  }
+
   /**
    * ダイレクトメッセージ送信完了通知
    * @param from 送信元クライアントID

@@ -64,7 +64,8 @@ def print_server_console():
     print("  model get_parameters <name>     - モデルのparameters一覧を取得")
 
     print("クライアント制御コマンド (WebSocket経由):")
-    print("  client <client_id> get_model")
+    print("  client <client_id> get_model_name")
+    print("  client <client_id> get_model_info")
 
     print("  client <client_id> get_eye_blink")
     print("  client <client_id> set_eye_blink [enabled|disabled]")
@@ -1091,7 +1092,21 @@ async def client_command(command: str, args: dict,
                 "message": "クライアントにモーション情報をリクエストしました"
             }
 
-        elif command == "get_model":  # クライアントにモデル情報要求を送信
+        elif command == "get_model_name":  # クライアントにモデル情報要求を送信
+            await send_to_client(client_id, {
+                "type": "request_model_name",
+                "from": source_client_id,
+                "timestamp": datetime.now().isoformat()
+            })
+            return {
+                "type": "client_request",
+                "command": "get_model_name",
+                "success": True,
+                "from": source_client_id,
+                "client_id": client_id,
+                "message": "クライアントにモデル情報をリクエストしました"
+            }
+        elif command == "get_model_info":  # クライアントにモデル情報要求を送信
             await send_to_client(client_id, {
                 "type": "request_model_info",
                 "from": source_client_id,
@@ -1099,7 +1114,7 @@ async def client_command(command: str, args: dict,
             })
             return {
                 "type": "client_request",
-                "command": "get_model",
+                "command": "get_model_info",
                 "success": True,
                 "from": source_client_id,
                 "client_id": client_id,

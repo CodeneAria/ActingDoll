@@ -53,7 +53,7 @@ def main(work_dir, config_path):
     REQUIRE_AUTH = str(config['authentication']['require_auth']).lower()
     ALLOWED_DIRS = ':'.join(config['authentication']['dirs'])
 
-    server_dir = f"/root/workspace/adapter/server"
+    server_dir = f"/root/workspace/adapter"
 
     # Show running containers
     print("=" * 50)
