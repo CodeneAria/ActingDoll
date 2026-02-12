@@ -177,10 +177,6 @@ const messages: MessageMap = {
     ja: '[WebSocket] WebSocketクライアントを初期化しました',
     en: '[WebSocket] WebSocket client initialized'
   },
-  WS_CLIENT_RELEASED: {
-    ja: '[WebSocket] WebSocketクライアントを解放しました',
-    en: '[WebSocket] WebSocket client released'
-  },
 
   // LAppUI関連
   UI_ELEMENTS_NOT_FOUND: {
@@ -634,7 +630,6 @@ export const MessageKey = {
   WS_PARAM_NOT_FOUND: 'WS_PARAM_NOT_FOUND',
   WS_PARAMS_SET: 'WS_PARAMS_SET',
   WS_CLIENT_INITIALIZED: 'WS_CLIENT_INITIALIZED',
-  WS_CLIENT_RELEASED: 'WS_CLIENT_RELEASED',
   WS_HANDLED: 'WS_HANDLED',
 
   // LAppUI関連

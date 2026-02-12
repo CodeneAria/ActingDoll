@@ -4,8 +4,8 @@
  */
 
 import { CubismLogError, CubismLogInfo } from '@framework/utils/cubismdebug';
-import * as LAppDefine from '../base/lappdefine';
-import { LAppPal } from '../base/lapppal';
+import * as LAppDefine from './../base/lappdefine';
+import { LAppPal } from './../base/lapppal';
 import { WebSocketClient, CommandResponse } from './websocketclient';
 import { LAppMultilingual, MessageKey } from './lappmultilingual';
 

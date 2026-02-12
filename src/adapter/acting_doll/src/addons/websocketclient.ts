@@ -3,9 +3,12 @@
  * ブラウザ環境でのWebSocket通信クライアント
  */
 
-import { CubismLogVerbose, CubismLogError, CubismLogInfo }
+import { CubismLogVerbose, CubismLogError, CubismLogInfo, CubismLogDebug }
   from '@framework/utils/cubismdebug';
 import { LAppMultilingual, MessageKey } from './lappmultilingual';
+import * as LAppDefine from './../base/lappdefine';
+import { LAppPal } from './../base/lapppal';
+import { LAppSubdelegate } from './../base/lappsubdelegate';
 
 /**
  * WebSocketメッセージの基本型
@@ -52,6 +55,445 @@ export class WebSocketClient {
    */
   constructor(uri: string) {
     this.uri = uri;
+  }
+
+  public setOnMessageHandlers(subdelegate: LAppSubdelegate): void {
+    // メッセージハンドラを登録
+    this.onMessage('welcome', (data) => {
+      const clientId = data.client_id || 'unknown';
+      this.setClientId(clientId);
+      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_WELCOME_RECEIVED, clientId));
+    });
+
+    this.onMessage('broadcast_message', (data) => {
+      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_BROADCAST_RECEIVED, data));
+    });
+
+    // 接続を試みる
+    this.connect().catch((error) => {
+      CubismLogError(LAppMultilingual.getMessage(MessageKey.WS_CONNECTION_FAILED, error.toString()));
+    });
+    // ダイレクトメッセージ受信ハンドラー
+    this.onMessage('send', (data: any) => {
+      LAppPal.printMessage(`[send] ${data.message}`);
+      this.sendResponseSend(data.from || '');
+    });
+    // 通知メッセージ受信ハンドラー
+    this.onMessage('notify', (data: any) => {
+      LAppPal.printMessage(`[notify] ${data.message}`);
+      this.sendResponseNotify(data.from || '');
+    });
+
+    // 各リクエストに対するハンドラーを登録して状態を返す
+    this.onMessage('request_eye_blink', (data: any) => {
+      if (subdelegate) {
+        const live2DManager = subdelegate.getLive2DManager();
+        if (live2DManager) {
+          const model = live2DManager.getModel(0);
+          if (model) {
+            const enabled = model.getEyeBlinkEnabled();
+            this.sendEyeBlinkStatus(enabled, data.from || '');
+          }
+        }
+      }
+    });
+
+    this.onMessage('request_breath', (data: any) => {
+      if (subdelegate) {
+        const live2DManager = subdelegate.getLive2DManager();
+        if (live2DManager) {
+          const model = live2DManager.getModel(0);
+          if (model) {
+            const enabled = model.getBreathEnabled();
+            this.sendBreathStatus(enabled, data.from || '');
+          }
+        }
+      }
+    });
+
+    this.onMessage('request_idle_motion', (data: any) => {
+      if (subdelegate) {
+        const live2DManager = subdelegate.getLive2DManager();
+        if (live2DManager) {
+          const model = live2DManager.getModel(0);
+          if (model) {
+            const enabled = model.getIdleMotionEnabled();
+            this.sendIdleMotionStatus(enabled, data.from || '');
+          }
+        }
+      }
+    });
+
+    this.onMessage('request_drag_follow', (data: any) => {
+      if (subdelegate) {
+        const live2DManager = subdelegate.getLive2DManager();
+        if (live2DManager) {
+          const model = live2DManager.getModel(0);
+          if (model) {
+            const enabled = model.getDragFollowEnabled();
+            this.sendDragFollowStatus(enabled, data.from || '');
+          }
+        }
+      }
+    });
+
+    this.onMessage('request_physics', (data: any) => {
+      if (subdelegate) {
+        const live2DManager = subdelegate.getLive2DManager();
+        if (live2DManager) {
+          const model = live2DManager.getModel(0);
+          if (model) {
+            const enabled = model.getPhysicsEnabled();
+            this.sendPhysicsStatus(enabled, data.from || '');
+          }
+        }
+      }
+    });
+
+    this.onMessage('request_expression', (data: any) => {
+      if (subdelegate) {
+        const live2DManager = subdelegate.getLive2DManager();
+        if (live2DManager) {
+          const model = live2DManager.getModel(0);
+          if (model) {
+            const expression = model.getCurrentExpression();
+            this.sendExpressionStatus(expression || '', true, data.from || '');
+          }
+        }
+      }
+    });
+
+    this.onMessage('request_motion', (data: any) => {
+      if (subdelegate) {
+        const live2DManager = subdelegate.getLive2DManager();
+        if (live2DManager) {
+          const model = live2DManager.getModel(0);
+          if (model) {
+            const motionInfo = model.getCurrentMotion();
+            if (motionInfo) {
+              this.sendMotionStatus(motionInfo.group, motionInfo.no, motionInfo.priority, true, data.from || '');
+            } else {
+              this.sendMotionStatus('', 0, 0, false, data.from || '');
+            }
+          }
+        }
+      }
+    });
+
+    this.onMessage('request_model_name', (data: any) => {
+      if (subdelegate) {
+        const live2DManager = subdelegate.getLive2DManager();
+        if (live2DManager) {
+          const model = live2DManager.getModel(0);
+          if (model) {
+            const modelName = model.getModelName();
+            this.sendModelName(modelName, data.from || '');
+          }
+        }
+      }
+    });
+
+    this.onMessage('request_model_info', (data: any) => {
+      if (subdelegate) {
+        const live2DManager = subdelegate.getLive2DManager();
+        if (live2DManager) {
+          const model = live2DManager.getModel(0);
+          if (model) {
+            const motionInfo = model.getCurrentMotion();
+            const view = subdelegate.getView();
+            let pos_x: number = 0;
+            let pos_y: number = 0;
+            let scale: number = 1;
+            if (view) {
+              const viewMatrix = view.getViewMatrix();
+              if (viewMatrix) {
+                pos_x = parseFloat(viewMatrix.getTranslateX().toFixed(3));
+                pos_y = parseFloat(viewMatrix.getTranslateY().toFixed(3));
+              }
+              scale = viewMatrix.getScaleX();
+            }
+            this.sendModelInfo(
+              model.getModelName(), model.getEyeBlinkEnabled(),
+              model.getBreathEnabled(), model.getIdleMotionEnabled(),
+              model.getDragFollowEnabled(), model.getPhysicsEnabled(),
+              model.getCurrentExpression() || '',
+              motionInfo.group || '', motionInfo.no || 0, motionInfo.priority || 0,
+              pos_x, pos_y, scale,
+              data.from || '');
+          }
+        }
+      }
+    });
+
+    // 設定メッセージのハンドラー
+    this.onMessage('set_eye_blink', (data: any) => {
+      if (subdelegate) {
+        const live2DManager = subdelegate.getLive2DManager();
+        if (live2DManager) {
+          const model = live2DManager.getModel(0);
+          if (model) {
+            model.setEyeBlinkEnabled(data.enabled);
+            // Update UI toggle
+            const ui = subdelegate.getUI();
+            if (ui) {
+              ui.updateEyeBlinkToggle(data.enabled);
+            }
+            this.sendEyeBlinkStatus(data.enabled, data.from || '');
+            CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_EYE_BLINK_SET, data.enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
+          }
+        }
+      }
+    });
+
+    this.onMessage('set_breath', (data: any) => {
+      if (subdelegate) {
+        const live2DManager = subdelegate.getLive2DManager();
+        if (live2DManager) {
+          const model = live2DManager.getModel(0);
+          if (model) {
+            model.setBreathEnabled(data.enabled);
+            // Update UI toggle
+            const ui = subdelegate.getUI();
+            if (ui) {
+              ui.updateBreathToggle(data.enabled);
+            }
+            this.sendBreathStatus(data.enabled, data.from || '');
+            CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_BREATH_SET, data.enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
+          }
+        }
+      }
+    });
+
+    this.onMessage('set_idle_motion', (data: any) => {
+      if (subdelegate) {
+        const live2DManager = subdelegate.getLive2DManager();
+        if (live2DManager) {
+          const model = live2DManager.getModel(0);
+          if (model) {
+            model.setIdleMotionEnabled(data.enabled);
+            // Update UI toggle
+            const ui = subdelegate.getUI();
+            if (ui) {
+              ui.updateIdleMotionToggle(data.enabled);
+            }
+            this.sendIdleMotionStatus(data.enabled, data.from || '');
+            CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_IDLE_MOTION_SET, data.enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
+          }
+        }
+      }
+    });
+
+    this.onMessage('set_drag_follow', (data: any) => {
+      if (subdelegate) {
+        const live2DManager = subdelegate.getLive2DManager();
+        if (live2DManager) {
+          const model = live2DManager.getModel(0);
+          if (model) {
+            model.setDragFollowEnabled(data.enabled);
+            // Update UI toggle
+            const ui = subdelegate.getUI();
+            if (ui) {
+              ui.updateDragFollowToggle(data.enabled);
+            }
+            this.sendDragFollowStatus(data.enabled, data.from || '');
+            CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_DRAG_FOLLOW_SET, data.enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
+          }
+        }
+      }
+    });
+
+    this.onMessage('set_physics', (data: any) => {
+      if (subdelegate) {
+        const live2DManager = subdelegate.getLive2DManager();
+        if (live2DManager) {
+          const model = live2DManager.getModel(0);
+          if (model) {
+            model.setPhysicsEnabled(data.enabled);
+            // Update UI toggle
+            const ui = subdelegate.getUI();
+            if (ui) {
+              ui.updatePhysicsToggle(data.enabled);
+            }
+            this.sendPhysicsStatus(data.enabled, data.from || '');
+            CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_PHYSICS_SET, data.enabled ? LAppMultilingual.getMessage(MessageKey.ENABLED) : LAppMultilingual.getMessage(MessageKey.DISABLED)));
+          }
+        }
+      }
+    });
+
+    this.onMessage('set_expression', (data: any) => {
+      if (subdelegate) {
+        const live2DManager = subdelegate.getLive2DManager();
+        if (live2DManager) {
+          const model = live2DManager.getModel(0);
+          if (model && data.expression) {
+            const ret_expression = model.setExpression(data.expression);
+            if (ret_expression === data.expression) {
+              // Update UI select
+              const ui = subdelegate.getUI();
+              if (ui) {
+                ui.updateExpressionSelect(ret_expression);
+              }
+              this.sendExpressionStatus(ret_expression, true, data.from || '');
+              CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_EXPRESSION_SET, data.expression));
+            } else {
+              this.sendExpressionStatus(ret_expression || '', false, data.from || '');
+            }
+          }
+        }
+      }
+    });
+
+    this.onMessage('set_motion', (data: any) => {
+      if (subdelegate) {
+        const live2DManager = subdelegate.getLive2DManager();
+        if (live2DManager) {
+          const model = live2DManager.getModel(0);
+          if (model && data.group !== undefined) {
+            const no = data.no !== undefined ? data.no : 0;
+            const priority = data.priority !== undefined ? data.priority : LAppDefine.PriorityNormal;
+            const result = model.startMotion(data.group, no, priority);
+            if (result === -1) {
+              const motionInfo = model.getCurrentMotion();
+              if (null === motionInfo) {
+                this.sendMotionStatus('', -1, 0, false, data.from || '');
+              } else {
+                this.sendMotionStatus(motionInfo.group, motionInfo.no, motionInfo.priority, false, data.from || '');
+              }
+            } else {
+              // Update UI select
+              const ui = subdelegate.getUI();
+              if (ui) {
+                ui.updateMotionSelect(data.group, no);
+              }
+              this.sendMotionStatus(data.group, no, priority, true, data.from || '');
+              CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_MOTION_SET, data.group, no.toString()));
+            }
+          }
+        }
+      }
+    });
+
+    this.onMessage('set_lipsync', (data: any) => {
+      if (subdelegate) {
+        const live2DManager = subdelegate.getLive2DManager();
+        if (live2DManager) {
+          const model = live2DManager.getModel(0);
+          if (model && data.wav_data) {
+            // base64デコードしてArrayBufferに変換
+            try {
+              const binaryString = atob(data.wav_data);
+              const bytes = new Uint8Array(binaryString.length);
+              for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+              }
+              const arrayBuffer = bytes.buffer;
+
+              // Wavファイルハンドラーでロード
+              model.loadWavFileFromBuffer(arrayBuffer, binaryString.length);
+              this.sendLipSyncWav(data.filename || '', true, data.from || '');
+              CubismLogInfo(LAppMultilingual.getMessage(MessageKey.LIPSYNC_RECEIVED, data.filename || 'unknown'));
+            } catch (error) {
+              CubismLogError(LAppMultilingual.getMessage(MessageKey.LIPSYNC_DECODE_ERROR, error.toString()));
+            }
+          }
+        }
+      }
+    });
+
+    this.onMessage('set_parameter', (data: any) => {
+      if (subdelegate) {
+        const live2DManager = subdelegate.getLive2DManager();
+        if (live2DManager) {
+          const model = live2DManager.getModel(0);
+          if (model && data.parameters) {
+            // 一括設定モード: {"parameters": {"ParamAngleX": 30, "ParamAngleY": -15, ...}}
+            let setCount = 0;
+            let notFoundCount = 0;
+
+            for (const paramName in data.parameters) {
+              const paramValue = data.parameters[paramName];
+              const paramIndex = model.getParameterIndex(paramName);
+              if (paramIndex >= 0) {
+                model.setParameterValueByIndex(paramIndex, paramValue);
+                // Update UI slider
+                const ui = subdelegate.getUI();
+                if (ui) {
+                  ui.updateParameterSlider(paramName, paramValue);
+                }
+                setCount++;
+              } else {
+                CubismLogDebug(LAppMultilingual.getMessage(MessageKey.WS_PARAM_NOT_FOUND, paramName));
+                notFoundCount++;
+              }
+            }
+            this.sendParameterStatus(setCount, notFoundCount, data.from || '');
+            CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_PARAMS_SET, setCount.toString(), notFoundCount.toString()));
+          }
+        }
+      }
+    });
+
+    this.onMessage('request_position', (data: any) => {
+      if (subdelegate) {
+        const view = subdelegate.getView();
+        if (view) {
+          const viewMatrix = view.getViewMatrix();
+          if (viewMatrix) {
+            const x: number = parseFloat(viewMatrix.getTranslateX().toFixed(3));
+            const y: number = parseFloat(viewMatrix.getTranslateY().toFixed(3));
+            this.sendResponsePosition(x, y, data.from || '');
+          }
+        }
+      }
+    });
+
+    this.onMessage('set_position', (data: any) => {
+      if (subdelegate) {
+        const view = subdelegate.getView();
+        if (view && data.x !== undefined && data.y !== undefined) {
+          // Update UI
+          const ui = subdelegate.getUI();
+          if (ui) {
+            ui.moveModel(data.x, data.y, data.relative);
+            const viewMatrix = view.getViewMatrix();
+            if (viewMatrix) {
+              const x: number = parseFloat(viewMatrix.getTranslateX().toFixed(3));
+              const y: number = parseFloat(viewMatrix.getTranslateY().toFixed(3));
+              this.sendResponsePosition(x, y, data.from || '');
+            }
+          }
+        }
+      }
+    });
+
+    this.onMessage('request_scale', (data: any) => {
+      if (subdelegate) {
+        const view = subdelegate.getView();
+        if (view) {
+          const viewMatrix = view.getViewMatrix();
+          const scale = viewMatrix.getScaleX();
+          this.sendResponseScale(scale, data.from || '');
+        }
+      }
+    });
+
+    this.onMessage('set_scale', (data: any) => {
+      if (subdelegate) {
+        const view = subdelegate.getView();
+        if (view && data.scale !== undefined) {
+          view.setViewScale(data.scale);
+          // Update UI
+          const ui = subdelegate.getUI();
+          if (ui) {
+            ui.updateScaleSlider(data.scale);
+            this.sendResponseScale(data.scale, data.from || '');
+          }
+        }
+      }
+    });
+
+    CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_CLIENT_INITIALIZED));
   }
 
   /**
