@@ -3,11 +3,11 @@
  * WebSocket経由でLive2Dモデルを操作するコントローラー
  */
 
-import { WebSocketClient, CommandResponse } from './websocketclient';
-import * as LAppDefine from './lappdefine';
 import { CubismLogError, CubismLogInfo } from '@framework/utils/cubismdebug';
+import * as LAppDefine from '../base/lappdefine';
+import { LAppPal } from '../base/lapppal';
+import { WebSocketClient, CommandResponse } from './websocketclient';
 import { LAppMultilingual, MessageKey } from './lappmultilingual';
-import { LAppPal } from './lapppal';
 
 /**
  * Live2Dコントローラークラス

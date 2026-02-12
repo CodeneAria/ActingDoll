@@ -14,8 +14,8 @@ import {
   CubismLogError,
   CubismLogInfo
 } from '@framework/utils/cubismdebug';
-import { WebSocketClient } from './websocketclient';
-import { LAppMultilingual, MessageKey } from './lappmultilingual';
+import { WebSocketClient } from './../addons/websocketclient';
+import { LAppMultilingual, MessageKey } from './../addons/lappmultilingual';
 
 export let s_instance: LAppDelegate = null;
 

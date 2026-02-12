@@ -11,7 +11,7 @@ import {
   CubismLogInfo,
   CubismLogVerbose
 } from '@framework/utils/cubismdebug';
-import { LAppMultilingual, MessageKey } from './lappmultilingual';
+import { LAppMultilingual, MessageKey } from './../addons/lappmultilingual';
 
 /**
  * UI Controller for Live2D model manipulation

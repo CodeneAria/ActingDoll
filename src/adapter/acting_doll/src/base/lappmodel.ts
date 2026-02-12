@@ -5,7 +5,7 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { CubismDefaultParameterId_custom } from './cubismdefaultparameterid_custom';
+import { CubismDefaultParameterId_custom } from './../addons/cubismdefaultparameterid_custom';
 import { CubismDefaultParameterId } from '@framework/cubismdefaultparameterid';
 import { CubismModelSettingJson } from '@framework/cubismmodelsettingjson';
 import {
@@ -44,7 +44,7 @@ import { LAppWavFileHandler } from './lappwavfilehandler';
 import { CubismMoc } from '@framework/model/cubismmoc';
 import { LAppDelegate } from './lappdelegate';
 import { LAppSubdelegate } from './lappsubdelegate';
-import { LAppMultilingual, MessageKey } from './lappmultilingual';
+import { LAppMultilingual, MessageKey } from './../addons/lappmultilingual';
 
 enum LoadStep {
   LoadAssets,

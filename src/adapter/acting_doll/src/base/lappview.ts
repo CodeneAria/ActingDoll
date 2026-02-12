@@ -15,8 +15,6 @@ import { LAppSprite } from './lappsprite';
 import { TextureInfo } from './lapptexturemanager';
 import { TouchManager } from './touchmanager';
 import { LAppSubdelegate } from './lappsubdelegate';
-import { CubismLogInfo } from '@framework/utils/cubismdebug';
-import { LAppMultilingual, MessageKey } from './lappmultilingual';
 
 /**
  * 描画クラス。

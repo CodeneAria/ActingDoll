@@ -3,11 +3,8 @@
  * ブラウザ環境でのWebSocket通信クライアント
  */
 
-import {
-  CubismLogVerbose,
-  CubismLogError,
-  CubismLogInfo
-} from '@framework/utils/cubismdebug';
+import { CubismLogVerbose, CubismLogError, CubismLogInfo }
+  from '@framework/utils/cubismdebug';
 import { LAppMultilingual, MessageKey } from './lappmultilingual';
 
 /**

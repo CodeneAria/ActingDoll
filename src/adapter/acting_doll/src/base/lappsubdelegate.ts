@@ -12,8 +12,6 @@ import { LAppPal } from './lapppal';
 import { LAppTextureManager } from './lapptexturemanager';
 import { LAppUI } from './lappui';
 import { LAppView } from './lappview';
-import { CubismLogInfo } from '@framework/utils/cubismdebug';
-import { LAppMultilingual, MessageKey } from './lappmultilingual';
 
 /**
  * Canvasに関連する操作を取りまとめるクラス
