@@ -9,7 +9,7 @@ WebSocketとMCPプロトコルの両方をサポートする、Live2Dモデル�
 ## 機能
 
 - **WebSocketサーバー**: Live2Dクライアントとのリアルタイム通信
-- **MCPサーバー**: LLMからのstdio経由制御
+- **MCPサーバー**: LLMからのHTTP SSE経由制御
 - **統合モード**: WebSocketとMCPを同時実行
 - **モデル管理**: Live2Dモデルの情報取得、パラメータ・表情・モーション制御
 - **クライアント管理**: 接続中のクライアント一覧と状態監視
@@ -76,25 +76,25 @@ acting-doll-server --mode websocket --port 8766 --host localhost --disable-auth
 
 #### 2. MCPモード（`--mode mcp`）
 
-LLMからのstdio経由制御のみを行います。
+LLMからのHTTP SSE経由制御のみを行います。
 
 ```bash
-acting-doll-server --mode mcp --model-dir src/Cubism/Resources
+acting-doll-server --mode mcp --model-dir src/Cubism/Resources --mcp-port 3001
 ```
 
 - Claude Desktop等のMCPクライアントから使用
-- stdio経由で通信（ポート不要）
+- HTTP SSE経由で通信（デフォルト: ポート3001）
 
 #### 3. 両方モード（`--mode both`）
 
 WebSocketとMCPを同時実行します。
 
 ```bash
-acting-doll-server --mode both --port 8766 --disable-auth
+acting-doll-server --mode both --port 8766 --mcp-port 3001 --disable-auth
 ```
 
 - WebSocket: `ws://localhost:8766`
-- MCP: stdio経由
+- MCP: HTTP SSE経由（`http://localhost:3001/sse`）
 - 1つのプロセスで両方を処理
 
 ### コマンドライン引数
@@ -102,8 +102,9 @@ acting-doll-server --mode both --port 8766 --disable-auth
 ```
 --mode {websocket,mcp,both}  動作モード（デフォルト: websocket）
 --model-dir PATH             モデルディレクトリのパス
---host HOST                  WebSocketサーバーのホスト
---port PORT                  WebSocketサーバーのポート
+--host HOST                  WebSocketおよびMCPサーバーのホスト（デフォルト: localhost）
+--port PORT                  WebSocketサーバーのポート（デフォルト: 8765）
+--mcp-port PORT              MCPサーバーのポート（デフォルト: 3001）
 --no-console                 対話型コンソールを無効化
 --disable-auth               認証を無効化（セキュリティリスクに注意）
 ```
@@ -124,9 +125,15 @@ Claude Desktopの設定ファイル（`claude_desktop_config.json`）に以下�
         "--mode",
         "mcp",
         "--model-dir",
-        "C:/path/to/models"
+        "C:/path/to/models",
+        "--mcp-port",
+        "3001"
       ],
-      "env": {}
+      "env": {},
+      "transport": {
+        "type": "sse",
+        "url": "http://localhost:3001/sse"
+      }
     }
   }
 }
@@ -144,9 +151,15 @@ Claude Desktopの設定ファイル（`claude_desktop_config.json`）に以下�
         "--mode",
         "mcp",
         "--model-dir",
-        "/path/to/models"
+        "/path/to/models",
+        "--mcp-port",
+        "3001"
       ],
-      "env": {}
+      "env": {},
+      "transport": {
+        "type": "sse",
+        "url": "http://localhost:3001/sse"
+      }
     }
   }
 }
@@ -304,7 +317,7 @@ src/adapter/server/
 ### データフロー
 
 ```
-MCPクライアント(Claude) --stdio--> MCPサーバー --内部メソッド--> コマンド処理 --WebSocket--> Live2Dクライアント
+MCPクライアント(Claude) --HTTP SSE--> MCPサーバー(port:3001) --内部メソッド--> コマンド処理 --WebSocket--> Live2Dクライアント
 WebSocketクライアント --WebSocket(8766)--> WebSocketサーバー --コマンド処理--> Live2Dクライアント
 ```
 
