@@ -79,7 +79,7 @@ acting-doll-server --mode websocket --port 8766 --host localhost --disable-auth
 LLMからのHTTP SSE経由制御のみを行います。
 
 ```bash
-acting-doll-server --mode mcp --model-dir src/Cubism/Resources
+acting-doll-server --mode mcp --model-dir src/Cubism/Resources --mcp-port 3001
 ```
 
 - Claude Desktop等のMCPクライアントから使用
@@ -90,7 +90,7 @@ acting-doll-server --mode mcp --model-dir src/Cubism/Resources
 WebSocketとMCPを同時実行します。
 
 ```bash
-acting-doll-server --mode both --port 8766 --disable-auth
+acting-doll-server --mode both --port 8766 --mcp-port 3001 --disable-auth
 ```
 
 - WebSocket: `ws://localhost:8766`
@@ -102,8 +102,8 @@ acting-doll-server --mode both --port 8766 --disable-auth
 ```
 --mode {websocket,mcp,both}  動作モード（デフォルト: websocket）
 --model-dir PATH             モデルディレクトリのパス
---host HOST                  サーバーのホスト
---port PORT                  WebSocketサーバーのポート
+--host HOST                  WebSocketおよびMCPサーバーのホスト（デフォルト: localhost）
+--port PORT                  WebSocketサーバーのポート（デフォルト: 8765）
 --mcp-port PORT              MCPサーバーのポート（デフォルト: 3001）
 --no-console                 対話型コンソールを無効化
 --disable-auth               認証を無効化（セキュリティリスクに注意）
@@ -127,9 +127,15 @@ Claude Desktopの設定ファイル（`claude_desktop_config.json`）に以下�
         "--mode",
         "mcp",
         "--model-dir",
-        "C:/path/to/models"
+        "C:/path/to/models",
+        "--mcp-port",
+        "3001"
       ],
-      "env": {}
+      "env": {},
+      "transport": {
+        "type": "sse",
+        "url": "http://localhost:3001/sse"
+      }
     }
   }
 }
@@ -147,9 +153,15 @@ Claude Desktopの設定ファイル（`claude_desktop_config.json`）に以下�
         "--mode",
         "mcp",
         "--model-dir",
-        "/path/to/models"
+        "/path/to/models",
+        "--mcp-port",
+        "3001"
       ],
-      "env": {}
+      "env": {},
+      "transport": {
+        "type": "sse",
+        "url": "http://localhost:3001/sse"
+      }
     }
   }
 }
@@ -328,7 +340,7 @@ src/adapter/server/
 ### データフロー
 
 ```
-MCPクライアント(Claude) --HTTP SSE(3001)--> MCPサーバー --内部メソッド--> コマンド処理 --WebSocket--> Live2Dクライアント
+MCPクライアント(Claude) --HTTP SSE--> MCPサーバー(port:3001) --内部メソッド--> コマンド処理 --WebSocket--> Live2Dクライアント
 WebSocketクライアント --WebSocket(8766)--> WebSocketサーバー --コマンド処理--> Live2Dクライアント
 ```
 
