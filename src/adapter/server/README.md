@@ -9,7 +9,7 @@ WebSocketとMCPプロトコルの両方をサポートする、Live2Dモデル�
 ## 機能
 
 - **WebSocketサーバー**: Live2Dクライアントとのリアルタイム通信
-- **MCPサーバー**: LLMからのstdio経由制御
+- **MCPサーバー**: LLMからのHTTP SSE (Server-Sent Events) 経由制御
 - **統合モード**: WebSocketとMCPを同時実行
 - **モデル管理**: Live2Dモデルの情報取得、パラメータ・表情・モーション制御
 - **クライアント管理**: 接続中のクライアント一覧と状態監視
@@ -76,14 +76,14 @@ acting-doll-server --mode websocket --port 8766 --host localhost --disable-auth
 
 #### 2. MCPモード（`--mode mcp`）
 
-LLMからのstdio経由制御のみを行います。
+LLMからのHTTP SSE経由制御のみを行います。
 
 ```bash
 acting-doll-server --mode mcp --model-dir src/Cubism/Resources
 ```
 
 - Claude Desktop等のMCPクライアントから使用
-- stdio経由で通信（ポート不要）
+- HTTP SSE経由で通信（デフォルトポート: 3001）
 
 #### 3. 両方モード（`--mode both`）
 
@@ -94,7 +94,7 @@ acting-doll-server --mode both --port 8766 --disable-auth
 ```
 
 - WebSocket: `ws://localhost:8766`
-- MCP: stdio経由
+- MCP: HTTP SSE経由（ポート: 3001）
 - 1つのプロセスで両方を処理
 
 ### コマンドライン引数
@@ -102,8 +102,9 @@ acting-doll-server --mode both --port 8766 --disable-auth
 ```
 --mode {websocket,mcp,both}  動作モード（デフォルト: websocket）
 --model-dir PATH             モデルディレクトリのパス
---host HOST                  WebSocketサーバーのホスト
+--host HOST                  サーバーのホスト
 --port PORT                  WebSocketサーバーのポート
+--mcp-port PORT              MCPサーバーのポート（デフォルト: 3001）
 --no-console                 対話型コンソールを無効化
 --disable-auth               認証を無効化（セキュリティリスクに注意）
 ```
@@ -111,6 +112,8 @@ acting-doll-server --mode both --port 8766 --disable-auth
 ### Claude Desktopでの使用
 
 Claude Desktopの設定ファイル（`claude_desktop_config.json`）に以下を追加：
+
+**注**: MCPサーバーは内部的にHTTP SSE (Server-Sent Events) で通信します。以下の設定により、Claude DesktopがMCPサーバープロセスを起動し、`http://localhost:3001/sse`で通信が行われます。
 
 #### Windows
 設定ファイルの場所: `%APPDATA%\Claude\claude_desktop_config.json`
@@ -145,6 +148,27 @@ Claude Desktopの設定ファイル（`claude_desktop_config.json`）に以下�
         "mcp",
         "--model-dir",
         "/path/to/models"
+      ],
+      "env": {}
+    }
+  }
+}
+```
+
+MCPポートを変更する場合は、`--mcp-port`引数を追加してください：
+
+```json
+{
+  "mcpServers": {
+    "acting-doll": {
+      "command": "acting-doll-server",
+      "args": [
+        "--mode",
+        "mcp",
+        "--model-dir",
+        "/path/to/models",
+        "--mcp-port",
+        "3002"
       ],
       "env": {}
     }
@@ -304,7 +328,7 @@ src/adapter/server/
 ### データフロー
 
 ```
-MCPクライアント(Claude) --stdio--> MCPサーバー --内部メソッド--> コマンド処理 --WebSocket--> Live2Dクライアント
+MCPクライアント(Claude) --HTTP SSE(3001)--> MCPサーバー --内部メソッド--> コマンド処理 --WebSocket--> Live2Dクライアント
 WebSocketクライアント --WebSocket(8766)--> WebSocketサーバー --コマンド処理--> Live2Dクライアント
 ```
 
