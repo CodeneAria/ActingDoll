@@ -9,13 +9,12 @@ from typing import Any
 
 # MCP imports
 try:
+    import uvicorn
     from mcp.server import Server
     from mcp.server.sse import SseServerTransport
     from mcp.types import TextContent, Tool
     from starlette.applications import Starlette
-    from starlette.routing import Route
-    from starlette.requests import Request
-    import uvicorn
+    from starlette.routing import Mount
     MCP_AVAILABLE = True
 except ImportError:
     MCP_AVAILABLE = False
@@ -317,30 +316,35 @@ class MCPServerHandler:
         # SSEトランスポートを作成
         sse = SseServerTransport("/messages")
 
-        async def handle_sse(request: Request):
-            """SSE接続エンドポイント"""
-            async with sse.connect_sse(
-                request.scope, request.receive, request._send
-            ) as streams:
+        async def handle_sse(scope, receive, send):
+            """SSE接続エンドポイント (ASGI callable)"""
+            async with sse.connect_sse(scope, receive, send) as streams:
                 await self.server.run(
                     streams[0], streams[1],
                     self.server.create_initialization_options()
                 )
-            return None
 
-        async def handle_messages(request: Request):
-            """メッセージ送信エンドポイント"""
-            await sse.handle_post_message(
-                request.scope, request.receive, request._send
-            )
-            return None
+        async def handle_messages(scope, receive, send):
+            """メッセージ送信エンドポイント (ASGI callable)"""
+            # Validate HTTP method
+            if scope["type"] == "http" and scope["method"] != "POST":
+                await send({
+                    'type': 'http.response.start',
+                    'status': 405,
+                    'headers': [[b'allow', b'POST']],
+                })
+                await send({
+                    'type': 'http.response.body',
+                    'body': b'Method Not Allowed',
+                })
+                return
+            await sse.handle_post_message(scope, receive, send)
 
         # Starlette アプリケーションを作成
         app = Starlette(
             routes=[
-                Route("/sse", endpoint=handle_sse),
-                Route("/messages", endpoint=handle_messages,
-                      methods=["POST"]),
+                Mount("/sse", app=handle_sse),
+                Mount("/messages", app=handle_messages),
             ]
         )
 
