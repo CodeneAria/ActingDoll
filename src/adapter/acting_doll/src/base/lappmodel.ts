@@ -1021,7 +1021,7 @@ export class LAppModel extends CubismUserModel {
       CubismLogError('WavFileHandler is not initialized');
       return;
     }
-    this._wavFileHandler.run(arrayBuffer, length);
+    this._wavFileHandler.loadWavFileFromBuffer(arrayBuffer, length);
     //this._lipsync = true;
   }
 

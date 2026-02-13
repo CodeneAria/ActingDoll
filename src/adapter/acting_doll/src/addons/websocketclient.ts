@@ -398,6 +398,7 @@ export class WebSocketClient {
                 bytes[i] = binaryString.charCodeAt(i);
               }
               const arrayBuffer = bytes.buffer;
+              data.filename = data.filename || 'stream data';
 
               // Wavファイルハンドラーでロード
               model.loadWavFileFromBuffer(arrayBuffer, binaryString.length);
