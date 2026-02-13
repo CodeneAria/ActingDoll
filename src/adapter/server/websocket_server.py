@@ -1568,7 +1568,7 @@ async def run():
             await mcp_server.run(host=args.host, port=args.mcp_port)
         except asyncio.CancelledError:
             logger.warning("MCPサーバーを停止中...")
-            mcp_server.stop()
+            await mcp_server.stop()
         except Exception as e:
             logger.error(f"MCPサーバーエラー: {e}")
 
