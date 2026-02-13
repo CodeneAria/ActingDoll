@@ -7,9 +7,15 @@
                 "--mode",
                 "mcp",
                 "--model-dir",
-                "src/Cubism/Resources"
+                "src/Cubism/Resources",
+                "--mcp-port",
+                "3001"
             ],
-            "env": {}
+            "env": {},
+            "transport": {
+                "type": "sse",
+                "url": "http://localhost:3001/sse"
+            }
         }
     }
 }
