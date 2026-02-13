@@ -9,12 +9,12 @@ from typing import Any
 
 # MCP imports
 try:
+    import uvicorn
     from mcp.server import Server
     from mcp.server.sse import SseServerTransport
     from mcp.types import TextContent, Tool
     from starlette.applications import Starlette
     from starlette.routing import Mount
-    import uvicorn
     MCP_AVAILABLE = True
 except ImportError:
     MCP_AVAILABLE = False
@@ -326,6 +326,18 @@ class MCPServerHandler:
 
         async def handle_messages(scope, receive, send):
             """メッセージ送信エンドポイント (ASGI callable)"""
+            # Validate HTTP method
+            if scope["type"] == "http" and scope["method"] != "POST":
+                await send({
+                    'type': 'http.response.start',
+                    'status': 405,
+                    'headers': [[b'allow', b'POST']],
+                })
+                await send({
+                    'type': 'http.response.body',
+                    'body': b'Method Not Allowed',
+                })
+                return
             await sse.handle_post_message(scope, receive, send)
 
         # Starlette アプリケーションを作成
