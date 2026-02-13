@@ -13,8 +13,7 @@ try:
     from mcp.server.sse import SseServerTransport
     from mcp.types import TextContent, Tool
     from starlette.applications import Starlette
-    from starlette.routing import Route
-    from starlette.requests import Request
+    from starlette.routing import Mount
     import uvicorn
     MCP_AVAILABLE = True
 except ImportError:
@@ -317,30 +316,23 @@ class MCPServerHandler:
         # SSEトランスポートを作成
         sse = SseServerTransport("/messages")
 
-        async def handle_sse(request: Request):
-            """SSE接続エンドポイント"""
-            async with sse.connect_sse(
-                request.scope, request.receive, request._send
-            ) as streams:
+        async def handle_sse(scope, receive, send):
+            """SSE接続エンドポイント (ASGI callable)"""
+            async with sse.connect_sse(scope, receive, send) as streams:
                 await self.server.run(
                     streams[0], streams[1],
                     self.server.create_initialization_options()
                 )
-            return None
 
-        async def handle_messages(request: Request):
-            """メッセージ送信エンドポイント"""
-            await sse.handle_post_message(
-                request.scope, request.receive, request._send
-            )
-            return None
+        async def handle_messages(scope, receive, send):
+            """メッセージ送信エンドポイント (ASGI callable)"""
+            await sse.handle_post_message(scope, receive, send)
 
         # Starlette アプリケーションを作成
         app = Starlette(
             routes=[
-                Route("/sse", endpoint=handle_sse),
-                Route("/messages", endpoint=handle_messages,
-                      methods=["POST"]),
+                Mount("/sse", app=handle_sse),
+                Mount("/messages", app=handle_messages),
             ]
         )
 
