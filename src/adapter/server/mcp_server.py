@@ -270,7 +270,7 @@ class MCPServerHandler:
 
     async def _get_client_state(self, client_id: str) -> dict:
         """クライアントの状態を取得"""
-        model = await self.client_command("get_model", "", client_id, "mcp")
+        model = await self.client_command("get_model_name", "", client_id, "mcp")
         expression = await self.client_command("get_expression", "", client_id, "mcp")
         motion = await self.client_command("get_motion", "", client_id, "mcp")
         eye_blink = await self.client_command("get_eye_blink", "", client_id, "mcp")
