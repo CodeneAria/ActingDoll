@@ -83,7 +83,7 @@ acting-doll-server --mode mcp --model-dir src/Cubism/Resources
 ```
 
 - Claude Desktop等のMCPクライアントから使用
-- HTTP SSE経由で通信（デフォルトポート: 3001）
+- HTTP SSE経由で通信（デフォルトポート: 3001、エンドポイント: `/sse`）
 
 #### 3. 両方モード（`--mode both`）
 
@@ -94,7 +94,7 @@ acting-doll-server --mode both --port 8766 --disable-auth
 ```
 
 - WebSocket: `ws://localhost:8766`
-- MCP: HTTP SSE経由（ポート: 3001）
+- MCP: HTTP SSE経由（ポート: 3001、エンドポイント: `/sse`）
 - 1つのプロセスで両方を処理
 
 ### コマンドライン引数
