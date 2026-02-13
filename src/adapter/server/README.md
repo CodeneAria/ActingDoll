@@ -102,7 +102,7 @@ acting-doll-server --mode both --port 8766 --mcp-port 3001 --disable-auth
 ```
 --mode {websocket,mcp,both}  動作モード（デフォルト: websocket）
 --model-dir PATH             モデルディレクトリのパス
---host HOST                  サーバーのホスト（デフォルト: localhost）
+--host HOST                  WebSocketおよびMCPサーバーのホスト（デフォルト: localhost）
 --port PORT                  WebSocketサーバーのポート（デフォルト: 8765）
 --mcp-port PORT              MCPサーバーのポート（デフォルト: 3001）
 --no-console                 対話型コンソールを無効化
