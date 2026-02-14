@@ -10,10 +10,10 @@ import os
 import base64
 from datetime import datetime
 from typing import Set, Optional
-from . import moc3manager
+import moc3manager
 import websockets
 from websockets.server import ServerConnection
-from .security_config import SecurityConfig
+from security_config import SecurityConfig
 
 str_format = '%(levelname)s: [%(name)s]\t%(asctime)s\t%(message)s'
 
