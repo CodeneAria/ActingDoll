@@ -188,6 +188,13 @@ export class LAppUI {
 
     // Initial WebSocket status check
     this.updateWebSocketStatus();
+
+    // Apply default toggle settings
+    this.updateBreathToggle(LAppDefine.DefaultToggle.breath);
+    this.updateIdleMotionToggle(LAppDefine.DefaultToggle.idle_motion);
+    this.updateDragFollowToggle(LAppDefine.DefaultToggle.drag_follow);
+    this.updatePhysicsToggle(LAppDefine.DefaultToggle.physics);
+    this.updateEyeBlinkToggle(LAppDefine.DefaultToggle.eye_blink);
   }
 
   /**

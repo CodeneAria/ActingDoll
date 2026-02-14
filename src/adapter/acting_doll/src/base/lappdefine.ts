@@ -115,3 +115,12 @@ export const WebSocketPort = '8765';
 export const WebSocketAutoConnect = true;
 export const WebSocketReconnectAttempts = 5;
 export const WebSocketReconnectDelay = 3000;
+
+// トグルのデフォルト設定
+export const DefaultToggle = {
+  breath: true,
+  idle_motion: true,
+  drag_follow: false,
+  physics: true,
+  eye_blink: true
+}
