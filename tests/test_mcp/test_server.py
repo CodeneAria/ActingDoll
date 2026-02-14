@@ -1,10 +1,7 @@
 """
 Tests for Acting Doll MCP Server
 """
-import asyncio
-import json
-from unittest.mock import AsyncMock, MagicMock, patch
-
+from unittest.mock import AsyncMock
 import pytest
 
 from adapter.server.mcp_server import MCPServerHandler
@@ -50,13 +47,16 @@ class TestMCPServerHandler:
 
         result = await server._get_model_list()
         assert result == expected_response["data"]
-        mock_handlers["model_command"].assert_called_once_with("list", "", "mcp")
+        mock_handlers["model_command"].assert_called_once_with(
+            "list", "", "mcp")
 
     @pytest.mark.asyncio
     async def test_get_model_info(self, server, mock_handlers):
         """モデル情報取得のテスト"""
-        expressions_response = {"status": "ok", "data": {"expressions": ["smile", "angry"]}}
-        motions_response = {"status": "ok", "data": {"motions": {"TapBody": [0, 1, 2]}}}
+        expressions_response = {"status": "ok",
+                                "data": {"expressions": ["smile", "angry"]}}
+        motions_response = {"status": "ok", "data": {
+            "motions": {"TapBody": [0, 1, 2]}}}
         parameters_response = {
             "status": "ok",
             "data": {"parameters": ["ParamAngleX", "ParamAngleY"]},

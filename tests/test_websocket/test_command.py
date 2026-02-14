@@ -37,7 +37,6 @@ import asyncio
 import json
 import logging
 from datetime import datetime
-from typing import Optional, Dict, List
 import pytest
 import pytest_asyncio
 import websockets
@@ -203,7 +202,8 @@ class TestBasicCommands:
         )
 
         assert response.get("type") == "command_response"
-        logger.info(f"✅ Send to {client_with_id.client_id}: {response.get('result')}")
+        logger.info(
+            f"✅ Send to {client_with_id.client_id}: {response.get('result')}")
 
 
 # テストクラス: モデル情報
