@@ -27,7 +27,9 @@ ActingDollは、[Model Context Protocol (MCP)](https://modelcontextprotocol.io/)
 ```bash
 git clone https://github.com/CodeneAria/ActingDoll.git
 cd ActingDoll
-pip install -e ".[dev]"
+python tools/CubismContainer/create_container.py
+python tools/CubismContainer/build.py --add_mcp
+python tools/CubismContainer/start.py
 ```
 
 ## 使用方法
