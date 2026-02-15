@@ -3,6 +3,7 @@ MCP Server Handler for unified server
 MCPサーバーハンドラー
 """
 
+import asyncio
 import json
 import logging
 from typing import Any
@@ -11,16 +12,20 @@ from typing import Any
 try:
     import uvicorn
     from mcp.server import Server
+    from mcp.server.stdio import stdio_server
     from mcp.server.sse import SseServerTransport
     from mcp.types import TextContent, Tool
+    from starlette.requests import Request
     from starlette.applications import Starlette
-    from starlette.routing import Mount
+    from starlette.routing import Mount, Route
     MCP_AVAILABLE = True
 except ImportError:
     MCP_AVAILABLE = False
 
 logger = logging.getLogger("MCP")
-logger.setLevel(logging.WARNING)
+logger.setLevel(logging.INFO)
+
+mcp_server = None  # グローバルなMCPサーバーインスタンス
 
 
 class MCPServerHandler:
@@ -309,7 +314,17 @@ class MCPServerHandler:
         await self.process_command(f"notify {message}", "mcp")
         return {"status": "notified"}
 
-    async def run(self, host: str = "0.0.0.0", port: int = 3001):
+    async def run_stdio(self):
+        """MCPサーバーを起動"""
+        logger.info("MCP Server starting...")
+        async with stdio_server() as (read_stream, write_stream):
+            await self.server.run(
+                read_stream,
+                write_stream,
+                self.server.create_initialization_options(),
+            )
+
+    async def run_sse_v2(self, host: str = "0.0.0.0", port: int = 3001):
         """MCPサーバーをSSE (HTTP) 経由で起動"""
         logger.info(f"MCP Server starting on http://{host}:{port}/sse")
 
@@ -366,6 +381,53 @@ class MCPServerHandler:
         self.uvicorn_server = uvicorn.Server(config)
         await self.uvicorn_server.serve()
 
+    async def run_sse_v1(self, host: str = "0.0.0.0", port: int = 3001):
+        """MCPサーバーをSSE (HTTP) 経由で起動"""
+        logger.info(f"MCP Server starting on http://{host}:{port}/sse")
+
+        # SSEトランスポートを作成
+        sse = SseServerTransport("/messages")
+
+        async def handle_sse(request: Request):
+            """SSE接続エンドポイント"""
+            async with sse.connect_sse(
+                request.scope, request.receive, request._send
+            ) as streams:
+                await self.server.run(
+                    streams[0], streams[1],
+                    self.server.create_initialization_options()
+                )
+            return None
+
+        async def handle_messages(request: Request):
+            """メッセージ送信エンドポイント"""
+            await sse.handle_post_message(
+                request.scope, request.receive, request._send
+            )
+            return None
+
+        # Starlette アプリケーションを作成
+        app = Starlette(
+            routes=[
+                Route("/sse", endpoint=handle_sse),
+                Route("/messages", endpoint=handle_messages, methods=["POST"]),
+            ]
+        )
+
+        # Uvicorn サーバーで起動
+        config = uvicorn.Config(
+            app,
+            host=host,
+            port=port,
+            log_level="info"
+        )
+        server = uvicorn.Server(config)
+        await server.serve()
+
+    async def run(self, host: str = "0.0.0.0", port: int = 3001):
+        """MCPサーバーを起動"""
+        await self.run_sse_v1(host, port)
+
     async def stop(self):
         """MCPサーバーを停止"""
         if self.uvicorn_server:
@@ -373,3 +435,42 @@ class MCPServerHandler:
             self.uvicorn_server.should_exit = True
         else:
             logger.warning("MCPサーバーは起動していません")
+
+
+async def stop_mcp_server():
+    """グローバルなMCPサーバーインスタンスを停止"""
+    global mcp_server
+    if mcp_server is not None:
+        await mcp_server.stop()
+    else:
+        logger.warning("MCPサーバーは起動していません")
+
+
+async def run_mcp(host: str, port: int, model_command, client_command, process_command):
+    """
+    MCPサーバーを起動
+
+    Args:
+        model_command: モデルコマンド処理関数
+        client_command: クライアントコマンド処理関数
+        process_command: プロセスコマンド処理関数
+        host: バインドするホスト
+        port: バインドするポート
+    """
+    global mcp_server
+    # MCPモードチェック
+    if not MCP_AVAILABLE:
+        logger.error("MCPモジュールがインストールされていません。"
+                     "pip install mcp を実行してください")
+        return
+    mcp_server = MCPServerHandler(
+        model_command, client_command, process_command)
+    try:
+        logger.info(
+            f"MCPサーバーが起動しました\thttp://{host}:{port}/sse")
+        await mcp_server.run(host=host, port=port)
+    except asyncio.CancelledError:
+        logger.warning("MCPサーバーを停止中...")
+        await mcp_server.stop()
+    except Exception as e:
+        logger.error(f"MCPサーバーエラー: {e}")

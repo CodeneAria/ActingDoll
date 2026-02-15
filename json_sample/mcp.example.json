@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "acting-doll": {
+      "url": "http://localhost:3001/sse"
+    }
+  }
+}

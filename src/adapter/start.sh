@@ -19,52 +19,73 @@ export WEBSOCKET_ALLOWED_DIRS=${WEBSOCKET_ALLOWED_DIRS:-"/root/workspace/adapter
 export WEBSOCKET_REQUIRE_AUTH=${WEBSOCKET_REQUIRE_AUTH:-"false"}
 
 ###################################
+# Function
+###################################
+# WebSocketサーバーが正常に起動したか確認
+function check_process {
+    local MAX_RETRIES=20
+    local RETRY_COUNT=0
+    local PORT_READY=0
+    local  CH_PID=${1}
+    local  CH_NAME=${2}
+    while [ ${RETRY_COUNT} -lt ${MAX_RETRIES} ]; do
+        if kill -0 ${CH_PID} 2>/dev/null; then
+            PORT_READY=1
+            break
+        fi
+        sleep 0.5
+        RETRY_COUNT=$((RETRY_COUNT + 1))
+    done
+
+    if [ ${PORT_READY} -eq 0 ]; then
+        echo "Error: ${CH_NAME} failed to start" >&2
+        kill ${CH_PID} 2>/dev/null || true
+        exit 1
+    fi
+}
+###################################
 # Start WebSocket Server
 ###################################
 cd ${SERVER_DIR}
 
 # 既存のwebsocket_serverプロセスを停止
-pip show acting-doll-server
-ret=$?
+pip show acting-doll >/dev/null 2>&1
+ret_acting_doll=$?
 # WebSocketサーバーを起動
-if [ ${ret} -ne 0 ]; then
-    echo "starting websocket_server.py directly"
-    pkill -f "websocket_server.py" || true
-    sleep 1
-    python3 websocket_server.py --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --mcp-port ${PORT_MCP_NUMBER} --no-console &
+pkill -f "acting_doll_server" || true
+if [ ${ret_acting_doll} -ne 0 ]; then
+    # Run WebSocket server in the background
+    python3 acting_doll_server.py --mode websocket --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --no-console &
     WEBSOCKET_PID=$!
+    check_process ${WEBSOCKET_PID} "WebSocket Server"
+    sleep 1
+    # Run MCP server in the background
+    python3 acting_doll_server.py --mode mcp --host ${HOST_ADDRESS} --mcp-port ${PORT_MCP_NUMBER} --no-console &
+    MCP_PID=$!
+    check_process ${MCP_PID} "MCP Server"
+    echo "# 'acting_doll_server.py' started successfully (WebSocket PID: ${WEBSOCKET_PID}, MCP PID: ${MCP_PID})"
 else
-    echo "starting acting-doll-server command"
-    pkill -f "acting-doll-server" || true
-    sleep 1
-    acting-doll-server --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --mcp-port ${PORT_MCP_NUMBER} --no-console &
+    # Run WebSocket server in the background
+    acting-doll-server --mode websocket --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --no-console &
     WEBSOCKET_PID=$!
+    check_process ${WEBSOCKET_PID} "WebSocket Server"
+    sleep 1
+    # Run MCP server in the background
+    acting-doll-server --mode mcp --host ${HOST_ADDRESS} --mcp-port ${PORT_MCP_NUMBER} --no-console &
+    MCP_PID=$!
+    check_process ${MCP_PID} "MCP Server"
+
+    echo "# 'acting-doll-server' started successfully (WebSocket PID: ${WEBSOCKET_PID}, MCP PID: ${MCP_PID})"
 fi
 
-# WebSocketサーバーが正常に起動したか確認
-MAX_RETRIES=20
-RETRY_COUNT=0
-PORT_READY=0
 
-while [ ${RETRY_COUNT} -lt ${MAX_RETRIES} ]; do
-    if kill -0 ${WEBSOCKET_PID} 2>/dev/null; then
-        PORT_READY=1
-        break
-    fi
-    sleep 0.5
-    RETRY_COUNT=$((RETRY_COUNT + 1))
-done
-
-if [ ${PORT_READY} -eq 0 ]; then
-    echo "Error: WebSocket server failed to start" >&2
-    kill ${WEBSOCKET_PID} 2>/dev/null || true
-    exit 1
-fi
-
-echo "'acting-doll-server' started successfully (PID: ${WEBSOCKET_PID})"
+sleep 1
 
 ###################################
 # Start Node.js Application
 ###################################
 cd ${NODE_DIR}
 npm run start -- --port ${PORT_HTTP_NUMBER} --host ${HOST_ADDRESS}
+
+# Clean up: Stop WebSocket and MCP servers when Node.js application exits
+pkill -f "acting_doll_server" || true
