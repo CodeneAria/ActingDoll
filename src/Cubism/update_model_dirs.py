@@ -94,7 +94,6 @@ def update_lappdefine_ts(file_path: Path, model_dirs: list[str]) -> bool:
     # ファイルに書き込み
     file_path.write_text(new_content, encoding='utf-8')
     logger.info(f"✓ {file_path.name} を更新しました")
-    logger.info(f"  検出されたモデル: {', '.join(model_dirs)}")
 
     return True
 
@@ -106,7 +105,7 @@ def main(work_dir, config_path):
     # パスを設定
     models_dir = work_dir / "Cubism" / "Resources"
     lappdefine_path = work_dir / "adapter" / \
-        "acting_doll" / "src" / "lappdefine.ts"
+        "acting_doll" / "src" / "base" / "lappdefine.ts"
 
     logger.info("=" * 60)
     logger.info("ModelConfigs自動更新スクリプト")
@@ -134,8 +133,8 @@ def main(work_dir, config_path):
 
     if success:
         logger.info("✓ 更新が完了しました！")
-        logger.info("注意: カスタムパラメータIDが必要なモデルは、")
-        logger.info("      手動でlappdefine.tsのisCustomをtrueに変更してください。")
+        logger.info("[注意] カスタムパラメータIDが必要なモデルは、"
+                    "手動でlappdefine.tsのisCustomをtrueに変更してください。")
     else:
         logger.error("✗ 更新に失敗しました")
 
