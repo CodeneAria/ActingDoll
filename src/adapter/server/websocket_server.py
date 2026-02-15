@@ -1345,10 +1345,12 @@ async def server_console():
             if command == "quit":
                 logger.info("サーバーを停止します...")
                 # MCPサーバーを停止
-                global fnc_stop_mcp
-                if fnc_stop_mcp:
-                    fnc_stop_mcp()
-                    pass
+                try:
+                    global fnc_stop_mcp
+                    if fnc_stop_mcp:
+                        await fnc_stop_mcp()
+                except Exception as e:
+                    logger.error(f"MCPサーバー停止中にエラーが発生しました: {e}")
                 break
 
             elif command == "send" and len(parts) > 1:

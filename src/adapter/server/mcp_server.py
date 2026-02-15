@@ -442,8 +442,6 @@ async def stop_mcp_server():
     global mcp_server
     if mcp_server is not None:
         await mcp_server.stop()
-    else:
-        logger.warning("MCPサーバーは起動していません")
 
 
 async def run_mcp(host: str, port: int, model_command, client_command, process_command):

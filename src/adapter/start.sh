@@ -23,11 +23,12 @@ export WEBSOCKET_REQUIRE_AUTH=${WEBSOCKET_REQUIRE_AUTH:-"false"}
 ###################################
 # WebSocketサーバーが正常に起動したか確認
 function check_process {
+    local CH_PID=${1}
+    local CH_NAME=${2}
+
     local MAX_RETRIES=20
     local RETRY_COUNT=0
     local PORT_READY=0
-    local  CH_PID=${1}
-    local  CH_NAME=${2}
     while [ ${RETRY_COUNT} -lt ${MAX_RETRIES} ]; do
         if kill -0 ${CH_PID} 2>/dev/null; then
             PORT_READY=1
