@@ -424,9 +424,13 @@ class MCPServerHandler:
         server = uvicorn.Server(config)
         await server.serve()
 
-    async def run(self, host: str = "0.0.0.0", port: int = 3001):
+    async def run(self, host: str, port: int, is_sse: bool = True):
         """MCPサーバーを起動"""
-        await self.run_sse_v1(host, port)
+
+        if is_sse:
+            await self.run_sse_v1(host, port)
+        else:
+            await self.run_stdio()
 
     async def stop(self):
         """MCPサーバーを停止"""
@@ -444,7 +448,7 @@ async def stop_mcp_server():
         await mcp_server.stop()
 
 
-async def run_mcp(host: str, port: int, model_command, client_command, process_command):
+async def run_mcp(host: str, port: int, model_command, client_command, process_command, is_sse: bool = True, delay: float = 0.0):
     """
     MCPサーバーを起動
 
@@ -461,14 +465,18 @@ async def run_mcp(host: str, port: int, model_command, client_command, process_c
         logger.error("MCPモジュールがインストールされていません。"
                      "pip install mcp を実行してください")
         return
-    mcp_server = MCPServerHandler(
+
+    mcp_server = MCPHandler(
         model_command, client_command, process_command)
+
     try:
         logger.info(
             f"MCPサーバーが起動しました\thttp://{host}:{port}/sse")
-        await mcp_server.run(host=host, port=port)
+        if delay > 0:
+            await asyncio.sleep(delay)
+        await mcp_server.run(host=host, port=port, is_sse=is_sse)
     except asyncio.CancelledError:
-        logger.warning("MCPサーバーを停止中...")
+        logger.info("MCPサーバーを停止中...")
         await mcp_server.stop()
     except Exception as e:
         logger.error(f"MCPサーバーエラー: {e}")

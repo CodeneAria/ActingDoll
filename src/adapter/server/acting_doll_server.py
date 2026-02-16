@@ -35,9 +35,13 @@ def parse_args():
     parser.add_argument(
         '--mode',
         type=str,
-        choices=['websocket', 'mcp', 'both'],
+        choices=['cubism', 'mcp_sse', 'mcp_stdin', 'both'],
         default='both',
-        help='サーバーモード: websocket (WebSocketのみ), mcp (MCPのみ), both (両方)'
+        help='サーバーモード: '
+        'cubism(CubismControllerのみ), '
+        'mcp_sse(MCP SSEのみ), '
+        'mcp_stdin(MCP STDINのみ), '
+        'both(CubismControllerとMCP SSEを起動)'
     )
     parser.add_argument(
         '--model-dir',
@@ -97,21 +101,29 @@ async def run_acting_doll():
         ##################################################
         # モードに応じた処理
         ##################################################
-        # WebSocketモード
-        if args.mode == 'websocket' or args.mode == 'both':
+        # cubismモード
+        if args.mode == 'cubism' or args.mode == 'both':
             from handler_mcp import stop_mcp_server
             websocket_task = asyncio.create_task(run_websocket(
                 host, port,
                 security_config,
                 stop_mcp_server,
                 args.model_dir,
-                args.no_console,
+                args.no_console if args.mode != 'mcp_stdin' else False,
                 args.disable_auth
             ))
 
         # MCPモード
-        if args.mode == 'mcp' or args.mode == 'both':
-            from websocket_server import model_command, client_command, process_command
+        if args.mode == 'mcp_sse' or args.mode == 'both':
+            from handler_cubism_controller import model_command, client_command, process_command
+            mcp_task = asyncio.create_task(run_mcp(
+                host, args.mcp_port,
+                model_command,  # モデルコマンド処理関数を指定
+                client_command,  # クライアントコマンド処理関数を指定
+                process_command  # プロセスコマンド処理関数を指定
+            ))
+        elif args.mode == 'mcp_stdin':
+            from handler_cubism_controller import model_command, client_command, process_command
             mcp_task = asyncio.create_task(run_mcp(
                 host, args.mcp_port,
                 model_command,  # モデルコマンド処理関数を指定

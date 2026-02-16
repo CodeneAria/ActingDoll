@@ -39,13 +39,13 @@ python tools/CubismContainer/start.py
 #### WebSocketサーバーのみ（Live2Dクライアントと通信）
 
 ```bash
-python src/adapter/server/websocket_server.py --mode websocket --port 8766 --disable-auth
+python src/adapter/server/websocket_server.py --mode cubism --port 8766 --disable-auth
 ```
 
 #### MCPサーバーのみ（LLMから制御）
 
 ```bash
-python src/adapter/server/websocket_server.py --mode mcp
+python src/adapter/server/websocket_server.py --mode mcp_stdin
 ```
 
 #### 両方同時（推奨）
@@ -66,7 +66,7 @@ Claude Desktopの設定ファイル（`claude_desktop_config.json`）に以下�
       "args": [
         "src/adapter/server/websocket_server.py",
         "--mode",
-        "mcp",
+        "mcp_stdin",
         "--model-dir",
         "src/Cubism/Resources"
       ],

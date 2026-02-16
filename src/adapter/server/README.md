@@ -51,11 +51,11 @@ pip install -e ".[all]"
 インストール後、`acting-doll-server` コマンドが利用可能になります：
 
 ```bash
-# WebSocketサーバーのみ（デフォルト）
-acting-doll-server --mode websocket --port 8766 --disable-auth
+# Cubism Controllerモード
+acting-doll-server --mode cubism --port 8766 --disable-auth
 
 # MCPサーバーのみ
-acting-doll-server --mode mcp --model-dir /path/to/models
+acting-doll-server --mode mcp_sse --model-dir /path/to/models
 
 # 両方同時実行（推奨）
 acting-doll-server --mode both --port 8766 --disable-auth
@@ -63,29 +63,42 @@ acting-doll-server --mode both --port 8766 --disable-auth
 
 ### モード説明
 
-#### 1. WebSocketモード（`--mode websocket`）
+#### 1. Cubism Controllerモード（`--mode cubism`）
 
 Live2DクライアントとのWebSocket通信のみを行います。
 
 ```bash
-acting-doll-server --mode websocket --port 8766 --host localhost --disable-auth
+acting-doll-server --mode cubism --port 8766 --host localhost --disable-auth
 ```
 
 - Live2Dクライアントは `ws://localhost:8766` に接続
 - コンソールから対話的にコマンド実行可能（`--no-console`で無効化）
 
-#### 2. MCPモード（`--mode mcp`）
+#### 2. MCPモード（`--mode mcp_sse`）
 
 LLMからのHTTP SSE経由制御のみを行います。
 
 ```bash
-acting-doll-server --mode mcp --model-dir src/Cubism/Resources --mcp-port 3001
+acting-doll-server --mode mcp_sse --model-dir src/Cubism/Resources --mcp-port 3001
 ```
 
+- MCPをSSE経由で操作するモード（MCPと接続は別サーバーとして動作させたい場合のモード）
 - Claude Desktop等のMCPクライアントから使用
 - HTTP SSE経由で通信（デフォルトポート: 3001、エンドポイント: `/sse`）
 
-#### 3. 両方モード（`--mode both`）
+#### 3. MCPモード（`--mode mcp_stdin`）
+
+LLMからの標準入力経由制御のみを行います。
+
+```bash
+acting-doll-server --mode mcp_stdin --model-dir src/Cubism/Resources --mcp-port 3001
+```
+
+- MCPを標準入力経由で操作するモード（MCPを同PC内で動作させたい場合のモード）
+- Claude Desktop等のMCPクライアントから使用
+- 標準入力経由で通信し、Cubism Controllerにコマンドを送信
+
+#### 4. 両方モード（`--mode both`）
 
 WebSocketとMCPを同時実行します。
 

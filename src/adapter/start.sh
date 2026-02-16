@@ -56,27 +56,16 @@ ret_acting_doll=$?
 pkill -f "acting_doll_server" || true
 if [ ${ret_acting_doll} -ne 0 ]; then
     # Run WebSocket server in the background
-    python3 acting_doll_server.py --mode websocket --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --no-console &
-    WEBSOCKET_PID=$!
-    check_process ${WEBSOCKET_PID} "WebSocket Server"
-    sleep 1
-    # Run MCP server in the background
-    python3 acting_doll_server.py --mode mcp --host ${HOST_ADDRESS} --mcp-port ${PORT_MCP_NUMBER} --no-console &
-    MCP_PID=$!
-    check_process ${MCP_PID} "MCP Server"
-    echo "# 'acting_doll_server.py' started successfully (WebSocket PID: ${WEBSOCKET_PID}, MCP PID: ${MCP_PID})"
+    python3 acting_doll_server.py --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --mcp-port ${PORT_MCP_NUMBER}  --no-console &
+    CUBISM_PID=$!
+    check_process ${CUBISM_PID} "acting_doll_server.py "
+    echo "# 'acting_doll_server.py' started successfully (PID: ${CUBISM_PID})"
 else
     # Run WebSocket server in the background
-    acting-doll-server --mode websocket --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --no-console &
-    WEBSOCKET_PID=$!
-    check_process ${WEBSOCKET_PID} "WebSocket Server"
-    sleep 1
-    # Run MCP server in the background
-    acting-doll-server --mode mcp --host ${HOST_ADDRESS} --mcp-port ${PORT_MCP_NUMBER} --no-console &
-    MCP_PID=$!
-    check_process ${MCP_PID} "MCP Server"
-
-    echo "# 'acting-doll-server' started successfully (WebSocket PID: ${WEBSOCKET_PID}, MCP PID: ${MCP_PID})"
+    acting-doll-server --mode cubism --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --no-console &
+    CUBISM_PID=$!
+    check_process ${CUBISM_PID} "acting-doll-server"
+    echo "# 'acting-doll-server' started successfully (PID: ${CUBISM_PID})"
 fi
 
 
