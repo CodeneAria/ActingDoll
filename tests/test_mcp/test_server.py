@@ -4,7 +4,7 @@ Tests for Acting Doll MCP Server
 from unittest.mock import AsyncMock
 import pytest
 
-from adapter.server.mcp_server import MCPServerHandler
+from adapter.server.handler_mcp import MCPServerHandler
 
 
 class TestMCPServerHandler:

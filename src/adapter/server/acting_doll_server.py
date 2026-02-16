@@ -5,9 +5,10 @@ import argparse
 import asyncio
 import logging
 import os
-from websocket_server import run_websocket
-from mcp_server import run_mcp
+from handler_cubism_controller import run_websocket
+from handler_mcp import run_mcp
 from security_config import SecurityConfig
+from __init__ import __version__ as VERSION
 from typing import Optional
 # グローバルなタスク（後で初期化）
 mcp_task: Optional[asyncio.Task] = None
@@ -29,6 +30,8 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='Live2D model control Server with MCP'
     )
+    parser.add_argument('--version', action='version',
+                        version=f'%(prog)s {VERSION}')
     parser.add_argument(
         '--mode',
         type=str,
@@ -96,7 +99,7 @@ async def run_acting_doll():
         ##################################################
         # WebSocketモード
         if args.mode == 'websocket' or args.mode == 'both':
-            from mcp_server import stop_mcp_server
+            from handler_mcp import stop_mcp_server
             websocket_task = asyncio.create_task(run_websocket(
                 host, port,
                 security_config,
