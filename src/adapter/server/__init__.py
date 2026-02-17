@@ -10,4 +10,4 @@ __author__ = "CodeneAria"
 
 from acting_doll_server import main
 
-__all__ = ["main", "__version__"]
+__all__ = ["main"]

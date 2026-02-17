@@ -11,7 +11,7 @@ logger = logging.getLogger("SEC")
 
 
 class SecurityConfig:
-    """WebSocketサーバーのセキュリティ設定"""
+    """セキュリティ設定"""
 
     def __init__(self):
         # 認証トークン（環境変数から取得）

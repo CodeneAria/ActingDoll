@@ -8,7 +8,7 @@ WebSocketとMCPプロトコルの両方をサポートする、Live2Dモデル�
 
 ## 機能
 
-- **WebSocketサーバー**: Live2Dクライアントとのリアルタイム通信
+- **Cubism Controller**: Live2Dクライアントとのリアルタイム通信
 - **MCPサーバー**: LLMからのHTTP SSE (Server-Sent Events) 経由制御
 - **統合モード**: WebSocketとMCPを同時実行
 - **モデル管理**: Live2Dモデルの情報取得、パラメータ・表情・モーション制御
@@ -116,7 +116,7 @@ acting-doll-server --mode both --port 8766 --mcp-port 3001 --disable-auth
 --mode {websocket,mcp,both}  動作モード（デフォルト: websocket）
 --model-dir PATH             モデルディレクトリのパス
 --host HOST                  WebSocketおよびMCPサーバーのホスト（デフォルト: localhost）
---port PORT                  WebSocketサーバーのポート（デフォルト: 8765）
+--port PORT                  Cubism Controllerのポート（デフォルト: 8765）
 --mcp-port PORT              MCPサーバーのポート（デフォルト: 3001）
 --no-console                 対話型コンソールを無効化
 --disable-auth               認証を無効化（セキュリティリスクに注意）
@@ -207,7 +207,7 @@ MCPポートを変更する場合は、`--mcp-port`引数を追加してくだ�
 import asyncio
 from acting_doll_server import main
 
-# WebSocketサーバーとして起動
+# Cubism Controllerとして起動
 asyncio.run(main())
 
 ```
@@ -257,12 +257,12 @@ Claude Desktopで以下のようにリクエストできます：
 
 ## トラブルシューティング
 
-### WebSocketサーバーに接続できない
+### Cubism Controllerに接続できない
 
-エラーメッセージ: `WebSocketサーバー (ws://localhost:8766) に接続できませんでした`
+エラーメッセージ: `Cubism Controller (ws://localhost:8766) に接続できませんでした`
 
 **解決方法:**
-1. WebSocketサーバーが起動しているか確認
+1. Cubism Controllerが起動しているか確認
 2. ホストとポート番号が正しいか確認
 3. ファイアウォールの設定を確認
 
@@ -271,7 +271,7 @@ Claude Desktopで以下のようにリクエストできます：
 エラーメッセージ: `タイムアウト: サーバーからの応答がありません`
 
 **解決方法:**
-1. WebSocketサーバーが正常に動作しているか確認
+1. Cubism Controllerが正常に動作しているか確認
 2. コマンドが正しいか確認
 3. クライアントIDが正しいか確認
 
@@ -359,7 +359,7 @@ python3 acting_doll_server.py
 export WEBSOCKET_HOST="0.0.0.0"
 export WEBSOCKET_PORT="8765"
 export WEBSOCKET_AUTH_TOKEN="$(openssl rand -base64 32)"
-export WEBSOCKET_ALLOWED_DIRS="/opt/actingdoll/audio:/opt/actingdoll/data"
+export WEBSOCKET_ALLOWED_DIRS="/opt/acting-doll/audio:/opt/acting-doll/data"
 python3 acting_doll_server.py --no-console
 ```
 
@@ -491,7 +491,7 @@ src/adapter/server/
 
 ```
 MCPクライアント(Claude) --HTTP SSE--> MCPサーバー(port:3001) --内部メソッド--> コマンド処理 --WebSocket--> Live2Dクライアント
-WebSocketクライアント --WebSocket(8766)--> WebSocketサーバー --コマンド処理--> Live2Dクライアント
+WebSocketクライアント --WebSocket(8766)--> Cubism Controller --コマンド処理--> Live2Dクライアント
 ```
 
 ## ライセンス

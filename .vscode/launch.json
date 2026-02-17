@@ -5,12 +5,55 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: websocket_server.py",
+            "name": "[MCP_SSE] acting_doll_server",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/adapter/server/websocket_server.py",
+            "program": "${workspaceFolder}/src/adapter/server/acting_doll_server.py",
             "console": "integratedTerminal",
-            "args": ["--port", "8767"]
+            "args": [
+                "--mode",
+                "mcp_sse",
+                "--host",
+                "localhost",
+                "--port",
+                "8765",
+                "--mcp-port",
+                "3002"
+            ]
+        },
+        {
+            "name": "[Cubism] acting_doll_server",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/adapter/server/acting_doll_server.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--mode",
+                "cubism",
+                "--host",
+                "localhost",
+                "--port",
+                "8765",
+                "--mcp-port",
+                "3002",
+                "--disable-auth"
+            ]
+        },
+        {
+            "name": "[BOTH] acting_doll_server",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/adapter/server/acting_doll_server.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--host",
+                "localhost",
+                "--port",
+                "8766",
+                "--mcp-port",
+                "3002",
+                "--disable-auth"
+            ]
         }
     ]
 }

@@ -94,7 +94,7 @@ python tests/test_websocket/client.py demo
 
 ```bash
 $ python tests/test_websocket/server.py
-2025-12-14 10:00:00 - INFO - WebSocketサーバーを起動中: ws://localhost:8765
+2025-12-14 10:00:00 - INFO - Cubism Controllerを起動中: ws://localhost:8765
 2025-12-14 10:00:00 - INFO - サーバーが起動しました。Ctrl+Cで停止します。
 2025-12-14 10:00:05 - INFO - 新しいクライアント接続: 127.0.0.1:54321
 ```
@@ -105,7 +105,7 @@ $ python tests/test_websocket/server.py
 $ python tests/test_websocket/client.py
 2025-12-14 10:00:05 - INFO - サーバーに接続中: ws://localhost:8765
 2025-12-14 10:00:05 - INFO - 接続しました
-2025-12-14 10:00:05 - INFO - 受信: {'type': 'welcome', 'message': 'WebSocketサーバーに接続しました'}
+2025-12-14 10:00:05 - INFO - 受信: {'type': 'welcome', 'message': 'Cubism Controllerに接続しました'}
 > broadcast Hello everyone!
 2025-12-14 10:00:10 - INFO - 送信: {'type': 'broadcast', 'content': 'Hello everyone!'}
 ```

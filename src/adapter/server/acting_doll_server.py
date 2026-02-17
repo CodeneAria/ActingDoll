@@ -8,8 +8,13 @@ import os
 from handler_cubism_controller import run_websocket
 from handler_mcp import run_mcp
 from security_config import SecurityConfig
-from __init__ import __version__ as VERSION
 from typing import Optional
+try:
+    from importlib.metadata import version as get_version
+    __version__ = get_version('acting-doll-server')
+except Exception:
+    __version__ = '--,--,--'
+
 # グローバルなタスク（後で初期化）
 mcp_task: Optional[asyncio.Task] = None
 websocket_task: Optional[asyncio.Task] = None
@@ -30,8 +35,8 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='Live2D model control Server with MCP'
     )
-    parser.add_argument('--version', action='version',
-                        version=f'%(prog)s {VERSION}')
+    parser.add_argument('-v', '--version', action='version',
+                        version=f'%(prog)s {__version__}')
     parser.add_argument(
         '--mode',
         type=str,
@@ -88,6 +93,9 @@ async def run_acting_doll():
     try:
         # コマンドライン引数をパース
         args = parse_args()
+
+        logger.debug(f"Acting Doll Server Version:{__version__} を起動")
+
         # セキュリティ設定を初期化
         security_config = SecurityConfig()
 
@@ -95,7 +103,7 @@ async def run_acting_doll():
         host = args.host if args.host is not None else security_config.default_host
         port = args.port if args.port is not None else security_config.default_port
 
-        # WebSocketサーバーのURL
+        # Cubism ControllerのURL
         websocket_url = f"ws://{host}:{port}"
 
         ##################################################

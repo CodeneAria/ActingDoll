@@ -21,7 +21,7 @@ export WEBSOCKET_REQUIRE_AUTH=${WEBSOCKET_REQUIRE_AUTH:-"false"}
 ###################################
 # Function
 ###################################
-# WebSocketサーバーが正常に起動したか確認
+# Cubism Controllerが正常に起動したか確認
 function check_process {
     local CH_PID=${1}
     local CH_NAME=${2}
@@ -49,27 +49,29 @@ function check_process {
 ###################################
 cd ${SERVER_DIR}
 
-# 既存のwebsocket_serverプロセスを停止
+# 既存のCubism Controllerプロセスを停止
 pip show acting-doll >/dev/null 2>&1
 ret_acting_doll=$?
-# WebSocketサーバーを起動
+# Cubism Controllerを起動
+MESSAGE_PROCESS="acting_doll_server.py "
+CUBISM_PID=-1
 pkill -f "acting_doll_server" || true
 if [ ${ret_acting_doll} -ne 0 ]; then
+    MESSAGE_PROCESS="python3 acting_doll_server.py"
     # Run WebSocket server in the background
-    python3 acting_doll_server.py --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --mcp-port ${PORT_MCP_NUMBER}  --no-console &
+    python3 acting_doll_server.py --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --mcp-port ${PORT_MCP_NUMBER} --no-console &
     CUBISM_PID=$!
-    check_process ${CUBISM_PID} "acting_doll_server.py "
-    echo "# 'acting_doll_server.py' started successfully (PID: ${CUBISM_PID})"
 else
+    MESSAGE_PROCESS="acting-doll-server"
     # Run WebSocket server in the background
-    acting-doll-server --mode cubism --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --no-console &
+    acting-doll-server --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --mcp-port ${PORT_MCP_NUMBER} --no-console &
     CUBISM_PID=$!
-    check_process ${CUBISM_PID} "acting-doll-server"
-    echo "# 'acting-doll-server' started successfully (PID: ${CUBISM_PID})"
 fi
+check_process ${CUBISM_PID} "${MESSAGE_PROCESS}"
+echo "# '${MESSAGE_PROCESS}' started successfully (PID: ${CUBISM_PID})"
 
 
-sleep 1
+sleep 2
 
 ###################################
 # Start Node.js Application

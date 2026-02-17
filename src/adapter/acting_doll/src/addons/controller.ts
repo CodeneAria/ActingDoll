@@ -26,7 +26,11 @@ class Live2DController {
 
   constructor() {
     // WebSocketクライアントを初期化
-    this.wsClient = new WebSocketClient(LAppDefine.WebSocketUrl + location.hostname + ':' + LAppDefine.WebSocketPort);
+    this.wsClient = new WebSocketClient("API",
+      LAppDefine.WebSocketUrl
+      + (LAppDefine.WebSocketHost || location.hostname)
+      + ':' + LAppDefine.WebSocketPort
+    );
 
     // メッセージハンドラを登録
     this.setupMessageHandlers();
@@ -46,7 +50,7 @@ class Live2DController {
     // WebSocket接続
     try {
       await this.wsClient.connect();
-      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.CTRL_WS_CONNECTED));
+      CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_CONNECTED));
 
       // UIを構築
       this.buildUI();
@@ -54,8 +58,8 @@ class Live2DController {
       // 初期データを取得
       this.loadInitialData();
     } catch (error) {
-      CubismLogError(LAppMultilingual.getMessage(MessageKey.CTRL_WS_FAILED, error.toString()));
-      this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_WS_FAILED_SHOW, error.toString()));
+      CubismLogError(LAppMultilingual.getMessage(MessageKey.WS_CONNECTED_FAILED, error.toString()));
+      this.showError(LAppMultilingual.getMessage(MessageKey.WS_CONNECTED_FAILED, error.toString()));
     }
   }
 
@@ -89,6 +93,7 @@ class Live2DController {
       // クライアントIDを保存して表示
       if (data.client_id) {
         this.myClientId = data.client_id;
+        this.wsClient.sendThankYou(this.myClientId);
         this.updateConnectionStatus();
       }
     });

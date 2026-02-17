@@ -48,13 +48,16 @@ export class WebSocketClient {
   private maxReconnectAttempts: number = 0; // 0で無制限
   private reconnectDelay: number = 3000;
   private clientId: string | null = null;
+  private pageType: string = '';
 
   /**
    * コンストラクタ
-   * @param uri WebSocketサーバーのURI
+   * @param page_type ページタイプ
+   * @param uri Cubism ControllerのURI
    */
-  constructor(uri: string) {
+  constructor(page_type: string, uri: string) {
     this.uri = uri;
+    this.pageType = page_type;
   }
 
   public setOnMessageHandlers(subdelegate: LAppSubdelegate): void {
@@ -62,6 +65,7 @@ export class WebSocketClient {
     this.onMessage('welcome', (data) => {
       const clientId = data.client_id || 'unknown';
       this.setClientId(clientId);
+      this.sendThankYou(clientId);
       CubismLogInfo(LAppMultilingual.getMessage(MessageKey.WS_WELCOME_RECEIVED, clientId));
     });
 
@@ -828,6 +832,15 @@ export class WebSocketClient {
       motion: { group: motion_group, no: motion_no, priority: motion_priority },
       position: { x: positionX, y: positionY }, scale: scale
     }, from);
+  }
+
+  /**
+   * サンキューメッセージを送信
+   * @param from 送信元クライアントID
+   */
+  public sendThankYou(from: string): void {
+    const client_type = this.pageType || 'unknown';
+    this.sendClientResponse('thanks', { client_type }, from);
   }
 
   /**
