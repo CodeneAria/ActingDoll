@@ -45,7 +45,7 @@ class CubismControllerHandler:
     # サーバーの実行状態を管理
     is_running = False
 
-    def print_server_console(self):
+    def print_usage(self):
         print("=== サーバーコンソール ===")
 
         print("サーバーコマンド:")
@@ -1341,9 +1341,8 @@ class CubismControllerHandler:
         """
         サーバーコンソール - サーバーから能動的にメッセージを送信
         """
-        self.print_server_console()
 
-        while True:
+        while self.is_running:
             try:
                 # 非同期で標準入力を読み取り
                 user_input = await asyncio.get_event_loop().run_in_executor(
@@ -1359,11 +1358,6 @@ class CubismControllerHandler:
                 if command == "quit":
                     logger.info("サーバーを停止します...")
                     # MCPサーバーを停止
-                    try:
-                        if self.fnc_stop_mcp:
-                            await self.fnc_stop_mcp()
-                    except Exception as e:
-                        logger.error(f"MCPサーバー停止中にエラーが発生しました: {e}")
                     break
 
                 elif command == "send" and len(parts) > 1:
@@ -1430,7 +1424,7 @@ class CubismControllerHandler:
 
                 else:
                     logger.warning(f"不明なコマンド: {command}")
-                    self.print_server_console()
+                    self.print_usage()
 
             except EOFError:
                 break
@@ -1504,20 +1498,25 @@ class CubismControllerHandler:
                     await asyncio.sleep(1.5)  # サーバーが起動するまでしばらく待機
                     logger.info("Cubism Controllerが起動しました: "
                                 f"ws://{host}:{port}")
+                    self.print_usage()
                     await self.server_console()
                 else:
                     logger.info("Cubism Controllerが起動しました"
                                 "（コンソールなし）: "
                                 f"ws://{host}:{port}")
                     await self.send_periodic_messages()
+        except asyncio.CancelledError:
+            logger.info("Cubism Controllerを停止中...")
         except Exception as e:
             logger.error(f"Cubism Controllerエラー: {e}")
+        finally:
+            if self.is_running:
+                await self.stop()
 
     async def stop(self):
         """
         サーバー停止処理
         """
-        logger.info("MCPサーバーを停止中...")
         # クライアントにサーバー停止通知を送信
         await self.broadcast_message({
             "type": "server_shutdown",
@@ -1525,6 +1524,12 @@ class CubismControllerHandler:
             "timestamp": datetime.now().isoformat()
         })
         self.is_running = False
+        # MCPサーバーを停止
+        try:
+            if self.fnc_stop_mcp:
+                await self.fnc_stop_mcp()
+        except Exception as e:
+            logger.error(f"MCPサーバー停止中にエラーが発生しました: {e}")
         # クライアント接続を全て閉じる
         for websocket in self.connected_clients:
             try:
@@ -1534,7 +1539,7 @@ class CubismControllerHandler:
         self.connected_clients.clear()
         self.client_id_map.clear()
         self.authenticated_clients.clear()
-        logger.info("MCPサーバーは正常に停止しました")
+        logger.info("Cubism Controllerは正常に停止しました")
 
 
 async def run_websocket(host: str, port: int,

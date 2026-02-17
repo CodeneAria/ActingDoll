@@ -139,18 +139,15 @@ async def run_acting_doll():
                 delay=0.0
             ))
 
-        try:
-            if (mcp_task is not None) and (websocket_task is not None):
-                await asyncio.gather(websocket_task, mcp_task)
-            elif websocket_task is not None:
-                await asyncio.gather(websocket_task)
-            elif mcp_task is not None:
-                await asyncio.gather(mcp_task)
-            else:
-                logger.error("有効なサーバーモードが指定されていません")
-            return
-        except asyncio.CancelledError:
-            logger.info("タスクを停止しました")
+        if (mcp_task is not None) and (websocket_task is not None):
+            await asyncio.gather(websocket_task, mcp_task)
+        elif websocket_task is not None:
+            await asyncio.gather(websocket_task)
+        elif mcp_task is not None:
+            await asyncio.gather(mcp_task)
+        else:
+            logger.error("有効なサーバーモードが指定されていません")
+        return
         return
 
     except KeyboardInterrupt:

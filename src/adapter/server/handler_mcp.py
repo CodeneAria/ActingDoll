@@ -653,8 +653,8 @@ async def run_mcp(websocket_url: str = "ws://localhost:8765",
         if delay > 0:
             await asyncio.sleep(delay)
         await mcp_server.run(host=host, port=port, websocket_url=websocket_url, is_sse=is_sse)
-    except asyncio.CancelledError:
-        logger.info("MCPサーバーを停止中...")
-        await mcp_server.stop()
     except Exception as e:
         logger.error(f"MCPサーバーエラー: {e}")
+    finally:
+        await mcp_server.stop()
+        logger.info("MCPサーバーは正常に停止しました")
