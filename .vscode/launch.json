@@ -14,11 +14,12 @@
                 "--mode",
                 "mcp_sse",
                 "--host",
-                "localhost",
+                "0.0.0.0",
                 "--port",
                 "8765",
                 "--mcp-port",
-                "3002"
+                "3002",
+                "--no-console"
             ]
         },
         {
@@ -31,12 +32,13 @@
                 "--mode",
                 "cubism",
                 "--host",
-                "localhost",
+                "0.0.0.0",
                 "--port",
                 "8765",
                 "--mcp-port",
                 "3002",
-                "--disable-auth"
+                "--disable-auth",
+                "--no-console"
             ]
         },
         {
@@ -47,12 +49,13 @@
             "console": "integratedTerminal",
             "args": [
                 "--host",
-                "localhost",
+                "0.0.0.0",
                 "--port",
                 "8766",
                 "--mcp-port",
                 "3002",
-                "--disable-auth"
+                "--disable-auth",
+                "--no-console"
             ]
         }
     ]

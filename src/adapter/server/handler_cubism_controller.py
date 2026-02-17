@@ -13,7 +13,7 @@ import websockets
 from websockets.server import ServerConnection
 from security_config import SecurityConfig
 
-logger = logging.getLogger("WSS")
+logger = logging.getLogger("CubismControllerHandler")
 # ServerConnection（websockets）のログレベルをWARNINGに設定
 logging.getLogger('websockets').setLevel(logging.WARNING)
 
@@ -181,7 +181,7 @@ class CubismControllerHandler:
         """
         # クライアントIDを生成
         client_id = self.get_client_id(websocket)
-        logger.info(f"新しいクライアント接続: {client_id}")
+        logger.debug(f"新しいクライアント接続: {client_id}")
 
         # クライアントを登録
         self.connected_clients.add(websocket)
@@ -490,7 +490,7 @@ class CubismControllerHandler:
         elif command.startswith("thanks"):
             self.client_type_map[client_id] = args.get(
                 "client_type", "unknown")
-            logger.debug(
+            logger.info(
                 f"{client_id}を{self.client_type_map[client_id]}として登録")
             pass
         elif command.startswith("set_"):

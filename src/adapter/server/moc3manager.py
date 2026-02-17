@@ -8,7 +8,7 @@ import json
 import logging
 
 # ロギング設定
-logger = logging.getLogger("MOC")
+logger = logging.getLogger("ModelManager")
 logger.setLevel(logging.INFO)
 
 

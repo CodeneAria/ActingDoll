@@ -24,7 +24,7 @@ try:
 except ImportError:
     MCP_AVAILABLE = False
 
-logger = logging.getLogger("MCP")
+logger = logging.getLogger("MCPHandler")
 logger.setLevel(logging.INFO)
 
 mcp_server = None  # グローバルなMCPサーバーインスタンス
@@ -180,7 +180,7 @@ class MCPHandler:
                         },
                         "required": ["message"],
                     },
-                ),
+                )
                 # send <client_id> <message>
                 #
                 # client <client_id> set_idle_motion [enabled|disabled]
@@ -458,7 +458,7 @@ class MCPHandler:
 
     async def _notify(self, message: str) -> dict:
         """状態を通知"""
-        await self._send_command({
+        await self._send_notify({
             "type": "command",
             "command": f"notify {message}"
         })
@@ -511,13 +511,12 @@ class MCPHandler:
             ]
         )
 
-        # Uvicorn サーバーで起動
         # ログフォーマットをカスタマイズ
         log_config = uvicorn.config.LOGGING_CONFIG
         log_config["formatters"]["default"]["fmt"] = \
-            "%(levelname)s: [MCP/Uvicorn]\t%(asctime)s\t%(message)s"
+            "%(levelname)s: %(asctime)s [MCP/Uvicorn]\t%(message)s"
         log_config["formatters"]["access"]["fmt"] =\
-            '%(levelname)s: [MCP/Access]\t%(asctime)s\t%(client_addr)s - "%(request_line)s" %(status_code)s'
+            '%(levelname)s: %(asctime)s [MCP/Access]\t%(client_addr)s - "%(request_line)s" %(status_code)s'
 
         config = uvicorn.Config(
             app,
@@ -526,6 +525,7 @@ class MCPHandler:
             log_level="info",
             log_config=log_config
         )
+        # Uvicorn サーバーで起動
         self.uvicorn_server = uvicorn.Server(config)
         await self.uvicorn_server.serve()
 
@@ -560,13 +560,21 @@ class MCPHandler:
             ]
         )
 
-        # Uvicorn サーバーで起動
+        # ログフォーマットをカスタマイズ
+        log_config = uvicorn.config.LOGGING_CONFIG
+        log_config["formatters"]["default"]["fmt"] = \
+            "%(levelname)s: %(asctime)s [MCP/Uvicorn]\t%(message)s"
+        log_config["formatters"]["access"]["fmt"] =\
+            '%(levelname)s: %(asctime)s [MCP/Access]\t%(client_addr)s - "%(request_line)s" %(status_code)s'
+
         config = uvicorn.Config(
             app,
             host=host,
             port=port,
-            log_level="info"
+            log_level="info",
+            log_config=log_config
         )
+        # Uvicorn サーバーで起動
         self.uvicorn_server = uvicorn.Server(config)
         await self.uvicorn_server.serve()
 

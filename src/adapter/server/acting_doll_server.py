@@ -25,7 +25,7 @@ logging.basicConfig(
     level=logging.INFO,
     format=str_format
 )
-logger = logging.getLogger("ADS")
+logger = logging.getLogger("ActingDollServer")
 
 
 def parse_args():
