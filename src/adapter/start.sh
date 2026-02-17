@@ -50,7 +50,7 @@ function check_process {
 cd ${SERVER_DIR}
 
 # 既存のCubism Controllerプロセスを停止
-pip show acting-doll >/dev/null 2>&1
+pip show acting-doll-server >/dev/null 2>&1
 ret_acting_doll=$?
 # Cubism Controllerを起動
 MESSAGE_PROCESS="acting_doll_server.py "
@@ -62,6 +62,7 @@ if [ ${ret_acting_doll} -ne 0 ]; then
     python3 acting_doll_server.py --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --mcp-port ${PORT_MCP_NUMBER} --no-console &
     CUBISM_PID=$!
 else
+    acting-doll-server --version
     MESSAGE_PROCESS="acting-doll-server"
     # Run WebSocket server in the background
     acting-doll-server --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --mcp-port ${PORT_MCP_NUMBER} --no-console &
