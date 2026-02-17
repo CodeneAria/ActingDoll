@@ -123,20 +123,20 @@ async def run_acting_doll():
 
         # MCPモード
         if args.mode == 'mcp_sse' or args.mode == 'both':
-            from handler_cubism_controller import model_command, client_command, process_command
             mcp_task = asyncio.create_task(run_mcp(
-                host, args.mcp_port,
-                model_command,  # モデルコマンド処理関数を指定
-                client_command,  # クライアントコマンド処理関数を指定
-                process_command  # プロセスコマンド処理関数を指定
+                websocket_url=websocket_url,
+                host=host,
+                port=args.mcp_port,
+                is_sse=True,
+                delay=0.5 if (args.mode == 'both') else 0.0
             ))
         elif args.mode == 'mcp_stdin':
-            from handler_cubism_controller import model_command, client_command, process_command
             mcp_task = asyncio.create_task(run_mcp(
-                host, args.mcp_port,
-                model_command,  # モデルコマンド処理関数を指定
-                client_command,  # クライアントコマンド処理関数を指定
-                process_command  # プロセスコマンド処理関数を指定
+                websocket_url=websocket_url,
+                host=host,
+                port=args.mcp_port,
+                is_sse=False,
+                delay=0.0
             ))
 
         try:

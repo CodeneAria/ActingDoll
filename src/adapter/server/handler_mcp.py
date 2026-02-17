@@ -6,7 +6,9 @@ MCPサーバーハンドラー
 import asyncio
 import json
 import logging
+from datetime import datetime
 from typing import Any
+import websockets
 
 # MCP imports
 try:
@@ -28,24 +30,17 @@ logger.setLevel(logging.INFO)
 mcp_server = None  # グローバルなMCPサーバーインスタンス
 
 
-class MCPServerHandler:
-    """MCP Server handler for unified server"""
+class MCPHandler:
+    """MCP handler"""
 
-    def __init__(self, model_command, client_command, process_command):
+    def __init__(self):
         """Initialize MCP server
-
-        Args:
-            model_command: Functions to handle model commands
-            client_command: Function to handle client commands
-            process_command: Function to process commands
         """
         if not MCP_AVAILABLE:
             raise RuntimeError("MCPモジュールがインストールされていません")
 
         self.server = Server("acting-doll")
-        self.model_command = model_command
-        self.client_command = client_command
-        self.process_command = process_command
+        self.websocket = None
         self.uvicorn_server = None
         self._setup_handlers()
 
@@ -236,16 +231,84 @@ class MCPServerHandler:
         else:
             return {"error": f"Unknown tool: {name}"}
 
+    async def _send_command(self, message: dict) -> dict:
+        """
+        WebSocketでコマンドを送信してレスポンスを受け取る
+        Args:
+            message: 送信するメッセージ（辞書形式）
+        Returns:
+            レスポンス（辞書形式）
+        """
+        try:
+            if not self.websocket:
+                return {"error": "WebSocket接続がありません"}
+
+            # メッセージを送信
+            await self.websocket.send(json.dumps(message, ensure_ascii=False))
+
+            # レスポンスを受信
+            response_text = await self.websocket.recv()
+            response = json.loads(response_text)
+            return response
+        except Exception as e:
+            logger.error(f"WebSocketコマンド送信エラー: {e}")
+            return {"error": str(e)}
+
+    async def _send_notify(self, message: dict):
+        """
+        WebSocketで通知メッセージを送信
+        Args:
+            message: 送信するメッセージ（辞書形式）
+        """
+        try:
+            if not self.websocket:
+                return {"error": "WebSocket接続がありません"}
+
+            # メッセージを送信
+            await self.websocket.send(json.dumps(message, ensure_ascii=False))
+
+        except Exception as e:
+            logger.error(f"WebSocketコマンド送信エラー: {e}")
+
+    async def _send_thank_you_message(self, client_id: str):
+        """クライアントに感謝のメッセージを送信"""
+        if client_id != "unknown":
+            await self._send_notify({
+                'type': 'client',
+                'command': 'thanks',
+                'args': {'client_type': 'MCP'},
+                'from': client_id,
+                'timestamp':  datetime.now().isoformat()
+            })
+        else:
+            logger.warning("クライアントIDが不明なため、感謝のメッセージを送信できません")
+
     async def _get_model_list(self) -> dict:
         """モデル一覧を取得"""
-        result = await self.model_command("list", "", "mcp")
-        return result.get("data", {})
+        response = await self._send_command({
+            "type": "model",
+            "command": "list",
+            "args": ""
+        })
+        return response.get("data", {})
 
     async def _get_model_info(self, model_name: str) -> dict:
         """モデル情報を取得"""
-        expressions = await self.model_command("get_expressions", model_name, "mcp")
-        motions = await self.model_command("get_motions", model_name, "mcp")
-        parameters = await self.model_command("get_parameters", model_name, "mcp")
+        expressions = await self._send_command({
+            "type": "model",
+            "command": "get_expressions",
+            "args": model_name
+        })
+        motions = await self._send_command({
+            "type": "model",
+            "command": "get_motions",
+            "args": model_name
+        })
+        parameters = await self._send_command({
+            "type": "model",
+            "command": "get_parameters",
+            "args": model_name
+        })
 
         return {
             "model_name": model_name,
@@ -256,34 +319,106 @@ class MCPServerHandler:
 
     async def _set_expression(self, client_id: str, expression: str) -> dict:
         """表情を設定"""
-        return await self.client_command("set_expression", expression, client_id, "mcp")
+        return await self._send_command({
+            "type": "client",
+            "command": "set_expression",
+            "args": expression,
+            "from": "mcp",
+            "client_id": client_id
+        })
 
     async def _set_motion(self, client_id: str, group: str, no: int, priority: int = 2) -> dict:
         """モーションを設定"""
         args = f"{group} {no} {priority}"
-        return await self.client_command("set_motion", args, client_id, "mcp")
+        return await self._send_command({
+            "type": "client",
+            "command": "set_motion",
+            "args": args,
+            "from": "mcp",
+            "client_id": client_id
+        })
 
     async def _set_parameter(self, client_id: str, parameters: dict) -> dict:
         """パラメータを設定"""
-        return await self.client_command("set_parameter", parameters, client_id, "mcp")
+        return await self._send_command({
+            "type": "client",
+            "command": "set_parameter",
+            "args": parameters,
+            "from": "mcp",
+            "client_id": client_id
+        })
 
     async def _list_clients(self) -> dict:
         """クライアント一覧を取得"""
-        result = await self.process_command("list", "mcp")
-        return result.get("data", {})
+        response = await self._send_command({
+            "type": "command",
+            "command": "list"
+        })
+        return response.get("data", {})
 
     async def _get_client_state(self, client_id: str) -> dict:
         """クライアントの状態を取得"""
-        model = await self.client_command("get_model_name", "", client_id, "mcp")
-        expression = await self.client_command("get_expression", "", client_id, "mcp")
-        motion = await self.client_command("get_motion", "", client_id, "mcp")
-        eye_blink = await self.client_command("get_eye_blink", "", client_id, "mcp")
-        breath = await self.client_command("get_breath", "", client_id, "mcp")
-        idle_motion = await self.client_command("get_idle_motion", "", client_id, "mcp")
-        drag_follow = await self.client_command("get_drag_follow", "", client_id, "mcp")
-        physics = await self.client_command("get_physics", "", client_id, "mcp")
-        position = await self.client_command("get_position", "", client_id, "mcp")
-        scale = await self.client_command("get_scale", "", client_id, "mcp")
+        # 各状態をWebSocketで取得
+        model = await self._send_command({
+            "type": "client",
+            "command": "get_model_name",
+            "from": "mcp",
+            "client_id": client_id
+        })
+        expression = await self._send_command({
+            "type": "client",
+            "command": "get_expression",
+            "from": "mcp",
+            "client_id": client_id
+        })
+        motion = await self._send_command({
+            "type": "client",
+            "command": "get_motion",
+            "from": "mcp",
+            "client_id": client_id
+        })
+        eye_blink = await self._send_command({
+            "type": "client",
+            "command": "get_eye_blink",
+            "from": "mcp",
+            "client_id": client_id
+        })
+        breath = await self._send_command({
+            "type": "client",
+            "command": "get_breath",
+            "from": "mcp",
+            "client_id": client_id
+        })
+        idle_motion = await self._send_command({
+            "type": "client",
+            "command": "get_idle_motion",
+            "from": "mcp",
+            "client_id": client_id
+        })
+        drag_follow = await self._send_command({
+            "type": "client",
+            "command": "get_drag_follow",
+            "from": "mcp",
+            "client_id": client_id
+        })
+        physics = await self._send_command({
+            "type": "client",
+            "command": "get_physics",
+            "from": "mcp",
+            "client_id": client_id
+        })
+        position = await self._send_command({
+            "type": "client",
+            "command": "get_position",
+            "from": "mcp",
+            "client_id": client_id
+        })
+        scale = await self._send_command({
+            "type": "client",
+            "command": "get_scale",
+            "from": "mcp",
+            "client_id": client_id
+        })
 
         return {
             "client_id": client_id,
@@ -302,16 +437,31 @@ class MCPServerHandler:
     async def _set_eye_blink(self, client_id: str, enabled: bool) -> dict:
         """まばたきを設定"""
         state = "enabled" if enabled else "disabled"
-        return await self.client_command("set_eye_blink", state, client_id, "mcp")
+        return await self._send_command({
+            "type": "client",
+            "command": "set_eye_blink",
+            "args": state,
+            "from": "mcp",
+            "client_id": client_id
+        })
 
     async def _set_breath(self, client_id: str, enabled: bool) -> dict:
         """呼吸を設定"""
         state = "enabled" if enabled else "disabled"
-        return await self.client_command("set_breath", state, client_id, "mcp")
+        return await self._send_command({
+            "type": "client",
+            "command": "set_breath",
+            "args": state,
+            "from": "mcp",
+            "client_id": client_id
+        })
 
     async def _notify(self, message: str) -> dict:
         """状態を通知"""
-        await self.process_command(f"notify {message}", "mcp")
+        await self._send_command({
+            "type": "command",
+            "command": f"notify {message}"
+        })
         return {"status": "notified"}
 
     async def run_stdio(self):
@@ -324,10 +474,8 @@ class MCPServerHandler:
                 self.server.create_initialization_options(),
             )
 
-    async def run_sse_v2(self, host: str = "0.0.0.0", port: int = 3001):
+    async def run_sse_v2(self, host: str, port: int):
         """MCPサーバーをSSE (HTTP) 経由で起動"""
-        logger.info(f"MCP Server starting on http://{host}:{port}/sse")
-
         # SSEトランスポートを作成
         sse = SseServerTransport("/messages")
 
@@ -375,16 +523,14 @@ class MCPServerHandler:
             app,
             host=host,
             port=port,
-            log_level="warning",
+            log_level="info",
             log_config=log_config
         )
         self.uvicorn_server = uvicorn.Server(config)
         await self.uvicorn_server.serve()
 
-    async def run_sse_v1(self, host: str = "0.0.0.0", port: int = 3001):
+    async def run_sse_v1(self, host: str, port: int):
         """MCPサーバーをSSE (HTTP) 経由で起動"""
-        logger.info(f"MCP Server starting on http://{host}:{port}/sse")
-
         # SSEトランスポートを作成
         sse = SseServerTransport("/messages")
 
@@ -421,16 +567,49 @@ class MCPServerHandler:
             port=port,
             log_level="info"
         )
-        server = uvicorn.Server(config)
-        await server.serve()
+        self.uvicorn_server = uvicorn.Server(config)
+        await self.uvicorn_server.serve()
 
-    async def run(self, host: str, port: int, is_sse: bool = True):
+    async def run(self, host: str, port: int, websocket_url: str, is_sse: bool = True):
         """MCPサーバーを起動"""
+        # Cubism Controllerに接続
+        try:
+            timeout_counter = 10
+            while True:
+                try:
+                    self.websocket = await websockets.connect(websocket_url)
+                    async for message in self.websocket:
+                        try:
+                            data = json.loads(message)
+                            msg_type = data.get("type")
+                            if msg_type == "welcome":
+                                await self._send_thank_you_message(data.get("client_id", "unknown"))
+                                logger.info(
+                                    f"MCP <--> Cubism Controllerの接続しました")
+                                break
+                        except:
+                            raise Exception("Invalid message format received")
+                    break
+                except Exception as e:
+                    if timeout_counter <= 0:
+                        raise RuntimeError(
+                            f"Failed to connect to MCP <--> Cubism Controller at {websocket_url}") from e
+                    logger.error(f"MCP <--> Cubism Controllerの接続できません: {e}")
+                    logger.info("3秒後に再試行します...")
+                    timeout_counter -= 1
+                await asyncio.sleep(3)
 
-        if is_sse:
-            await self.run_sse_v1(host, port)
-        else:
-            await self.run_stdio()
+            logger.info(f"MCP Server starting on http://{host}:{port}/sse")
+
+            if is_sse:
+                await self.run_sse_v1(host, port)
+            else:
+                await self.run_stdio()
+
+        finally:
+            # WebSocket接続を閉じる
+            if self.websocket is not None:
+                await self.websocket.close()
 
     async def stop(self):
         """MCPサーバーを停止"""
@@ -448,16 +627,18 @@ async def stop_mcp_server():
         await mcp_server.stop()
 
 
-async def run_mcp(host: str, port: int, model_command, client_command, process_command, is_sse: bool = True, delay: float = 0.0):
+async def run_mcp(websocket_url: str = "ws://localhost:8765",
+                  host: str = "0.0.0.0", port: int = 3001,
+                  is_sse: bool = True, delay: float = 0.5):
     """
     MCPサーバーを起動
 
     Args:
-        model_command: モデルコマンド処理関数
-        client_command: クライアントコマンド処理関数
-        process_command: プロセスコマンド処理関数
-        host: バインドするホスト
-        port: バインドするポート
+        websocket_url: Cubism ControllerのURL（例: ws://localhost:8765）
+        host: MCPサーバーのバインドホスト
+        port: MCPサーバーのバインドポート
+        is_sse: SSEモードを有効にするかどうか
+        delay: サーバー起動前の待機時間（秒）
     """
     global mcp_server
     # MCPモードチェック
@@ -466,15 +647,12 @@ async def run_mcp(host: str, port: int, model_command, client_command, process_c
                      "pip install mcp を実行してください")
         return
 
-    mcp_server = MCPHandler(
-        model_command, client_command, process_command)
+    mcp_server = MCPHandler()
 
     try:
-        logger.info(
-            f"MCPサーバーが起動しました\thttp://{host}:{port}/sse")
         if delay > 0:
             await asyncio.sleep(delay)
-        await mcp_server.run(host=host, port=port, is_sse=is_sse)
+        await mcp_server.run(host=host, port=port, websocket_url=websocket_url, is_sse=is_sse)
     except asyncio.CancelledError:
         logger.info("MCPサーバーを停止中...")
         await mcp_server.stop()
