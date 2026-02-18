@@ -19,6 +19,7 @@ except Exception:
 mcp_task: Optional[asyncio.Task] = None
 websocket_task: Optional[asyncio.Task] = None
 
+
 str_format = '%(levelname)s: %(asctime)s [%(name)s]\t%(message)s'
 # ロギング設定
 logging.basicConfig(
@@ -85,7 +86,7 @@ def parse_args():
     return parser.parse_args()
 
 
-async def run_acting_doll():
+def run_acting_doll():
     """
     エントリーポイント
     """
@@ -155,15 +156,5 @@ async def run_acting_doll():
         logger.error(f"サーバーの起動中にエラーが発生しました: {e}")
 
 
-def main():
-    """
-    メイン関数
-    """
-    try:
-        asyncio.run(run_acting_doll())
-    except KeyboardInterrupt:
-        logger.info("サーバーを停止しました")
-
-
 if __name__ == "__main__":
-    main()
+    run_acting_doll()

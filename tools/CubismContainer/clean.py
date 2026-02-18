@@ -53,6 +53,7 @@ def main(work_dir, config_path):
     DOCKER_CONTAINER_NAME = config['docker']['container']['name']
 
     node_dir = f"/root/workspace/adapter/acting_doll"
+    pip_node = f"/root/workspace/adapter/server"
 
     # Show running containers
     logger.info("=" * 50)
@@ -80,6 +81,11 @@ def main(work_dir, config_path):
         f'docker exec -t {DOCKER_CONTAINER_NAME} /bin/sh -c "'
         f'cd {node_dir}'
         f' && npm run clean'
+        f' && rm -rf public'
+        f' && rm -rf node_modules;'
+        f'cd {pip_node}'
+        f' && pip uninstall acting-doll-server'
+        f' && rm -rf dist/;'
         f'"'
     )
 

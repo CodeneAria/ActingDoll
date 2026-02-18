@@ -38,7 +38,7 @@ dev = [
 ]
 
 [project.scripts]
-acting-doll = "acting_doll_server:main"
+acting-doll = "acting_doll_server:run_acting_doll"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/adapter/server"]

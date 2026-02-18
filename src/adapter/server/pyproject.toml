@@ -23,11 +23,8 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "mcp>=1.23.0",
-    "httpx>=0.28.0",
-    "websockets>=13.0",
-    "starlette>=0.27.0",
-    "uvicorn>=0.23.0"
+    "fastmcp>=2.14.5",
+    "websockets>=13.0"
 ]
 
 [project.optional-dependencies]
@@ -35,7 +32,7 @@ dev = [
 ]
 
 [project.scripts]
-acting-doll-server = "acting_doll_server:main"
+acting-doll-server = "acting_doll_server:run_acting_doll"
 
 [tool.hatch.build.targets.wheel]
 packages = ["."]
