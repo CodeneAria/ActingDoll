@@ -3,8 +3,9 @@
 ###################################
 # Settings
 ###################################
-SERVER_DIR="/root/workspace/adapter/server"
-NODE_DIR="/root/workspace/adapter/acting_doll"
+CURRENT_DIR=$(dirname "$(readlink -f "$0")")
+SERVER_DIR=$(readlink -f "${CURRENT_DIR}/server")
+NODE_DIR=$(readlink -f "${CURRENT_DIR}/acting_doll")
 # 外部アクセスを許可する場合は 0.0.0.0 を指定してください（認証必須）
 HOST_ADDRESS=${HOST_ADDRESS:-"0.0.0.0"}
 
@@ -15,7 +16,7 @@ PORT_MCP_NUMBER=${PORT_MCP_NUMBER:-"3001"}
 # セキュリティ設定: デフォルトでlocalhostにバインド
 # 本番環境では環境変数で認証トークンとホワイトリストを設定してください:
 export WEBSOCKET_AUTH_TOKEN=${WEBSOCKET_AUTH_TOKEN:-"your_secret_token_here"}
-export WEBSOCKET_ALLOWED_DIRS=${WEBSOCKET_ALLOWED_DIRS:-"/root/workspace/adapter/allowed"}
+export WEBSOCKET_ALLOWED_DIRS=${WEBSOCKET_ALLOWED_DIRS:-"${CURRENT_DIR}/allowed"}
 export WEBSOCKET_REQUIRE_AUTH=${WEBSOCKET_REQUIRE_AUTH:-"false"}
 
 ###################################
@@ -45,7 +46,7 @@ function check_process {
     fi
 }
 ###################################
-# Start WebSocket Server
+# Start Server
 ###################################
 cd ${SERVER_DIR}
 
@@ -80,5 +81,7 @@ sleep 2
 cd ${NODE_DIR}
 npm run start -- --port ${PORT_HTTP_NUMBER} --host ${HOST_ADDRESS}
 
-# Clean up: Stop WebSocket and MCP servers when Node.js application exits
+###################################
+# Clean up: Stop application exits
+###################################
 pkill -f "acting_doll_server" || true

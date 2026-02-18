@@ -18,8 +18,7 @@
                 "--port",
                 "8765",
                 "--mcp-port",
-                "3002",
-                "--no-console"
+                "3002"
             ]
         },
         {
@@ -37,8 +36,7 @@
                 "8765",
                 "--mcp-port",
                 "3002",
-                "--disable-auth",
-                "--no-console"
+                "--disable-auth"
             ]
         },
         {
@@ -54,8 +52,7 @@
                 "8766",
                 "--mcp-port",
                 "3002",
-                "--disable-auth",
-                "--no-console"
+                "--disable-auth"
             ]
         }
     ]

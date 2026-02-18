@@ -72,7 +72,7 @@ acting-doll-server --mode cubism --port 8766 --host localhost --disable-auth
 ```
 
 - Live2Dクライアントは `ws://localhost:8766` に接続
-- コンソールから対話的にコマンド実行可能（`--no-console`で無効化）
+- コンソールから対話的にコマンド実行可能（`--console`で有効化）
 
 #### 2. MCPモード（`--mode mcp_sse`）
 
@@ -118,7 +118,7 @@ acting-doll-server --mode both --port 8766 --mcp-port 3001 --disable-auth
 --host HOST                  WebSocketおよびMCPサーバーのホスト（デフォルト: localhost）
 --port PORT                  Cubism Controllerのポート（デフォルト: 8765）
 --mcp-port PORT              MCPサーバーのポート（デフォルト: 3001）
---no-console                 対話型コンソールを無効化
+--console                 対話型コンソールを有効化
 --disable-auth               認証を無効化（セキュリティリスクに注意）
 ```
 
@@ -360,7 +360,7 @@ export WEBSOCKET_HOST="0.0.0.0"
 export WEBSOCKET_PORT="8765"
 export WEBSOCKET_AUTH_TOKEN="$(openssl rand -base64 32)"
 export WEBSOCKET_ALLOWED_DIRS="/opt/acting-doll/audio:/opt/acting-doll/data"
-python3 acting_doll_server.py --no-console
+python3 acting_doll_server.py
 ```
 
 **Dockerコンテナ内での設定**

@@ -1,11 +1,10 @@
 {
     "mcpServers": {
         "acting-doll": {
-            "command": "python",
+            "command": "acting-doll-server",
             "args": [
-                "acting-doll-server",
                 "--mode",
-                "mcp",
+                "mcp_sse",
                 "--mcp-port",
                 "3001"
             ],

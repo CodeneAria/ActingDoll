@@ -25,7 +25,7 @@ logging.basicConfig(
     level=logging.INFO,
     format=str_format
 )
-logger = logging.getLogger("ActingDollServer")
+logger = logging.getLogger("ActingDoll")
 
 
 def parse_args():
@@ -73,9 +73,9 @@ def parse_args():
         help='MCPサーバーのポート (デフォルト: 3001)'
     )
     parser.add_argument(
-        '--no-console',
+        '--console',
         action='store_true',
-        help='対話型コンソールを無効化（ログのみ出力）'
+        help='対話型コンソールを有効化'
     )
     parser.add_argument(
         '--disable-auth',
@@ -147,7 +147,6 @@ async def run_acting_doll():
             await asyncio.gather(mcp_task)
         else:
             logger.error("有効なサーバーモードが指定されていません")
-        return
         return
 
     except KeyboardInterrupt:

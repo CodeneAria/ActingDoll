@@ -13,7 +13,7 @@ import websockets
 from websockets.server import ServerConnection
 from security_config import SecurityConfig
 
-logger = logging.getLogger("CubismControllerHandler")
+logger = logging.getLogger("CCHandler")
 # ServerConnection（websockets）のログレベルをWARNINGに設定
 logging.getLogger('websockets').setLevel(logging.WARNING)
 
@@ -1452,7 +1452,7 @@ class CubismControllerHandler:
                   security: SecurityConfig,
                   stop_mcp_server: any,
                   model_dir: str,
-                  no_console: bool = False,
+                  console: bool = True,
                   disable_auth: bool = False):
         """
         Cubism Controllerを起動
@@ -1463,7 +1463,7 @@ class CubismControllerHandler:
             security: セキュリティ設定
             stop_mcp_server: MCPサーバー停止関数
             model_dir: モデルディレクトリパス
-            no_console: コンソール無効化フラグ
+            console: コンソール有効化フラグ
             disable_auth: 認証無効化フラグ
         """
 
@@ -1494,7 +1494,7 @@ class CubismControllerHandler:
         try:
             async with websockets.serve(self.handle_client, host, port):
                 self.is_running = True
-                if not no_console:
+                if not console:
                     await asyncio.sleep(1.5)  # サーバーが起動するまでしばらく待機
                     logger.info("Cubism Controllerが起動しました: "
                                 f"ws://{host}:{port}")
@@ -1546,7 +1546,7 @@ async def run_websocket(host: str, port: int,
                         security: SecurityConfig,
                         stop_mcp_server: any,
                         model_dir: str,
-                        no_console: bool = False,
+                        console: bool = True,
                         disable_auth: bool = False):
     """
     Cubism Controllerを起動
@@ -1557,7 +1557,7 @@ async def run_websocket(host: str, port: int,
         security: セキュリティ設定
         stop_mcp_server: MCPサーバー停止関数
         model_dir: モデルディレクトリパス
-        no_console: コンソール無効化フラグ
+        console: コンソール有効化フラグ
         disable_auth: 認証無効化フラグ
     """
     global task_cubism
@@ -1569,10 +1569,9 @@ async def run_websocket(host: str, port: int,
                               security=security,
                               stop_mcp_server=stop_mcp_server,
                               model_dir=model_dir,
-                              no_console=no_console,
+                              console=console,
                               disable_auth=disable_auth)
-    except asyncio.CancelledError:
-        logger.info("Cubism Controllerを停止中...")
-        await task_cubism.stop()
     except Exception as e:
         logger.error(f"Cubism Controllerエラー: {e}")
+    finally:
+        await task_cubism.stop()
