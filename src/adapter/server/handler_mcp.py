@@ -9,6 +9,8 @@ from typing import Dict
 import json
 from datetime import datetime
 import websockets
+import uvicorn
+from typing import Any
 
 
 logger = logging.getLogger("MCPHandler")
@@ -437,8 +439,17 @@ class MCPHandler:
                                          log_level=self.log_level,
                                          show_banner=False)
             else:
+                # Uvicornのログフォーマットをカスタマイズ
+                log_config = uvicorn.config.LOGGING_CONFIG
+                log_config["formatters"]["default"]["fmt"] = \
+                    "%(levelname)s: %(asctime)s [MCP/Uvicorn]\t%(message)s"
+                log_config["formatters"]["access"]["fmt"] = \
+                    '%(levelname)s: %(asctime)s [MCP/Access]\t%(client_addr)s - "%(request_line)s" %(status_code)s'
+                uvicorn_config: dict[str, Any] = {
+                    "log_config": log_config,
+                    "log_level": "info"
+                }
                 # SSE で動かす場合
-                #   uvicorn_config: dict[str, Any] = None
                 #   middleware: list[ASGIMiddleware] = None
                 #   json_response: bool = False
                 #   stateless_http: bool = False
@@ -449,6 +460,7 @@ class MCPHandler:
                     port=port,
                     path="/sse",
                     log_level=self.log_level,
+                    uvicorn_config=uvicorn_config,
                     show_banner=False
                 )
         except KeyboardInterrupt:
