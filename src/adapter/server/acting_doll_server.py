@@ -29,7 +29,7 @@ logging.basicConfig(
 logger = logging.getLogger("ActingDoll")
 
 
-def parse_args():
+def _parse_args():
     """
     コマンドライン引数をパース
     """
@@ -86,14 +86,14 @@ def parse_args():
     return parser.parse_args()
 
 
-async def run_acting_doll():
+async def _run_acting_doll():
     """
     エントリーポイント
     """
     global mcp_task, cubism_task
     try:
         # コマンドライン引数をパース
-        args = parse_args()
+        args = _parse_args()
 
         logger.debug(f"Acting Doll Server Version:{__version__} を起動")
 
@@ -147,5 +147,9 @@ async def run_acting_doll():
         logger.error(f"サーバーの起動中にエラーが発生しました: {e}")
 
 
+def run_acting_doll():
+    asyncio.run(_run_acting_doll())
+
+
 if __name__ == "__main__":
-    asyncio.run(run_acting_doll())
+    run_acting_doll()
