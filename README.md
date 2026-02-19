@@ -8,7 +8,7 @@ ActingDollは、[Model Context Protocol (MCP)](https://modelcontextprotocol.io/)
 
 ## アーキテクチャ
 
-- **統合サーバー**: WebSocketサーバーとMCPサーバーを1つのプロセスで実行
+- **統合サーバー**: Cubism ControllerとMCPを1つのプロセスで実行
 - **3つの動作モード**: WebSocketのみ、MCPのみ、両方同時実行
 - **共通のコマンド処理**: WebSocketとMCPで同じロジックを使用
 
@@ -36,22 +36,22 @@ python tools/CubismContainer/start.py
 
 ### 1. サーバーの起動
 
-#### WebSocketサーバーのみ（Live2Dクライアントと通信）
+#### Cubism Controllerのみ（Live2Dクライアントと通信）
 
 ```bash
-python src/adapter/server/websocket_server.py --mode websocket --port 8766 --disable-auth
+python src/adapter/server/acting_doll_server.py --mode cubism --port 8766 --disable-auth
 ```
 
 #### MCPサーバーのみ（LLMから制御）
 
 ```bash
-python src/adapter/server/websocket_server.py --mode mcp
+python src/adapter/server/acting_doll_server.py --mode mcp_stdin
 ```
 
 #### 両方同時（推奨）
 
 ```bash
-python src/adapter/server/websocket_server.py --mode both --port 8766 --disable-auth
+python src/adapter/server/acting_doll_server.py --mode both --port 8766 --disable-auth
 ```
 
 ### 2. Claude Desktopでの設定
@@ -64,11 +64,11 @@ Claude Desktopの設定ファイル（`claude_desktop_config.json`）に以下�
     "acting-doll": {
       "command": "python",
       "args": [
-        "src/adapter/server/websocket_server.py",
+        "src/adapter/server/acting_doll_server.py",
         "--mode",
-        "mcp",
-        "--model-dir",
-        "src/Cubism/Resources"
+        "mcp_stdin",
+        "--host",
+        "localhost"
       ],
       "env": {}
     }

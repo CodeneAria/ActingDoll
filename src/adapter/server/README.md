@@ -8,7 +8,7 @@ WebSocketとMCPプロトコルの両方をサポートする、Live2Dモデル�
 
 ## 機能
 
-- **WebSocketサーバー**: Live2Dクライアントとのリアルタイム通信
+- **Cubism Controller**: Live2Dクライアントとのリアルタイム通信
 - **MCPサーバー**: LLMからのHTTP SSE (Server-Sent Events) 経由制御
 - **統合モード**: WebSocketとMCPを同時実行
 - **モデル管理**: Live2Dモデルの情報取得、パラメータ・表情・モーション制御
@@ -51,11 +51,11 @@ pip install -e ".[all]"
 インストール後、`acting-doll-server` コマンドが利用可能になります：
 
 ```bash
-# WebSocketサーバーのみ（デフォルト）
-acting-doll-server --mode websocket --port 8766 --disable-auth
+# Cubism Controllerモード
+acting-doll-server --mode cubism --port 8766 --disable-auth
 
 # MCPサーバーのみ
-acting-doll-server --mode mcp --model-dir /path/to/models
+acting-doll-server --mode mcp_sse --model-dir /path/to/models
 
 # 両方同時実行（推奨）
 acting-doll-server --mode both --port 8766 --disable-auth
@@ -63,29 +63,42 @@ acting-doll-server --mode both --port 8766 --disable-auth
 
 ### モード説明
 
-#### 1. WebSocketモード（`--mode websocket`）
+#### 1. Cubism Controllerモード（`--mode cubism`）
 
 Live2DクライアントとのWebSocket通信のみを行います。
 
 ```bash
-acting-doll-server --mode websocket --port 8766 --host localhost --disable-auth
+acting-doll-server --mode cubism --port 8766 --host localhost --disable-auth
 ```
 
 - Live2Dクライアントは `ws://localhost:8766` に接続
-- コンソールから対話的にコマンド実行可能（`--no-console`で無効化）
+- コンソールから対話的にコマンド実行可能（`--console`で有効化）
 
-#### 2. MCPモード（`--mode mcp`）
+#### 2. MCPモード（`--mode mcp_sse`）
 
 LLMからのHTTP SSE経由制御のみを行います。
 
 ```bash
-acting-doll-server --mode mcp --model-dir src/Cubism/Resources --mcp-port 3001
+acting-doll-server --mode mcp_sse --model-dir src/Cubism/Resources --mcp-port 3001
 ```
 
+- MCPをSSE経由で操作するモード（MCPと接続は別サーバーとして動作させたい場合のモード）
 - Claude Desktop等のMCPクライアントから使用
 - HTTP SSE経由で通信（デフォルトポート: 3001、エンドポイント: `/sse`）
 
-#### 3. 両方モード（`--mode both`）
+#### 3. MCPモード（`--mode mcp_stdin`）
+
+LLMからの標準入力経由制御のみを行います。
+
+```bash
+acting-doll-server --mode mcp_stdin --model-dir src/Cubism/Resources --mcp-port 3001
+```
+
+- MCPを標準入力経由で操作するモード（MCPを同PC内で動作させたい場合のモード）
+- Claude Desktop等のMCPクライアントから使用
+- 標準入力経由で通信し、Cubism Controllerにコマンドを送信
+
+#### 4. 両方モード（`--mode both`）
 
 WebSocketとMCPを同時実行します。
 
@@ -103,9 +116,9 @@ acting-doll-server --mode both --port 8766 --mcp-port 3001 --disable-auth
 --mode {websocket,mcp,both}  動作モード（デフォルト: websocket）
 --model-dir PATH             モデルディレクトリのパス
 --host HOST                  WebSocketおよびMCPサーバーのホスト（デフォルト: localhost）
---port PORT                  WebSocketサーバーのポート（デフォルト: 8765）
+--port PORT                  Cubism Controllerのポート（デフォルト: 8765）
 --mcp-port PORT              MCPサーバーのポート（デフォルト: 3001）
---no-console                 対話型コンソールを無効化
+--console                 対話型コンソールを有効化
 --disable-auth               認証を無効化（セキュリティリスクに注意）
 ```
 
@@ -192,17 +205,11 @@ MCPポートを変更する場合は、`--mcp-port`引数を追加してくだ�
 
 ```python
 import asyncio
-from websocket_server import main, MCPServerHandler
+from acting_doll_server import main
 
-# WebSocketサーバーとして起動
+# Cubism Controllerとして起動
 asyncio.run(main())
 
-# または、MCPサーバーのみ
-async def run_mcp():
-    mcp_server = MCPServerHandler()
-    await mcp_server.run()
-
-asyncio.run(run_mcp())
 ```
 
 ## 利用可能なツール
@@ -250,12 +257,12 @@ Claude Desktopで以下のようにリクエストできます：
 
 ## トラブルシューティング
 
-### WebSocketサーバーに接続できない
+### Cubism Controllerに接続できない
 
-エラーメッセージ: `WebSocketサーバー (ws://localhost:8766) に接続できませんでした`
+エラーメッセージ: `Cubism Controller (ws://localhost:8766) に接続できませんでした`
 
 **解決方法:**
-1. WebSocketサーバーが起動しているか確認
+1. Cubism Controllerが起動しているか確認
 2. ホストとポート番号が正しいか確認
 3. ファイアウォールの設定を確認
 
@@ -264,9 +271,153 @@ Claude Desktopで以下のようにリクエストできます：
 エラーメッセージ: `タイムアウト: サーバーからの応答がありません`
 
 **解決方法:**
-1. WebSocketサーバーが正常に動作しているか確認
+1. Cubism Controllerが正常に動作しているか確認
 2. コマンドが正しいか確認
 3. クライアントIDが正しいか確認
+
+## セキュリティ設定
+
+このセクションでは、Cubism Control Serverのセキュリティ設定について説明します。
+
+### セキュリティ機能
+
+#### 1. 認証 (Authentication)
+
+Cubism Control Serverは、接続時にトークンベースの認証をサポートしています。
+
+**認証を有効にする**
+
+環境変数 `WEBSOCKET_AUTH_TOKEN` を設定して認証を有効にします。
+
+```bash
+export WEBSOCKET_AUTH_TOKEN="your-secret-token-here"
+```
+
+認証が有効な場合、クライアントは接続後に以下のメッセージを送信する必要があります：
+
+```json
+{
+  "type": "auth",
+  "token": "your-secret-token-here"
+}
+```
+
+**認証を無効にする（開発環境のみ推奨）**
+
+```bash
+export WEBSOCKET_REQUIRE_AUTH="false"
+```
+
+**警告**: 本番環境では認証を必ず有効にしてください。
+
+#### 2. ネットワーク制限 (Network Restrictions)
+
+**デフォルト設定（セキュア）**
+
+デフォルトでは、サーバーは `127.0.0.1` (localhost) にバインドされます。これにより、同じマシン上のクライアントのみが接続できます。
+
+```bash
+python3 acting_doll_server.py --host 127.0.0.1
+```
+
+**外部アクセスを許可する（認証必須）**
+
+外部からのアクセスを許可する場合は、`--host 0.0.0.0` を指定します。**この場合、必ず認証を有効にしてください**：
+
+```bash
+export WEBSOCKET_AUTH_TOKEN="your-secret-token-here"
+python3 acting_doll_server.py --host 0.0.0.0 --port 8765
+```
+
+#### 3. ファイルアクセス制限 (File Access Restrictions)
+
+`set_lipsync_from_file` コマンドなどのファイルを読み取るコマンドは、ホワイトリストで指定されたディレクトリ内のファイルのみにアクセスできます。
+
+**ホワイトリストの設定**
+
+環境変数 `WEBSOCKET_ALLOWED_DIRS` にコロン区切りでディレクトリパスを指定します：
+
+```bash
+export WEBSOCKET_ALLOWED_DIRS="/path/to/audio/files:/path/to/another/allowed/dir"
+```
+
+ホワイトリストが設定されていない場合、ファイル読み取りコマンドは全て拒否されます。
+
+### セキュリティ設定例
+
+**開発環境（ローカルのみ、認証なし）**
+
+```bash
+export WEBSOCKET_REQUIRE_AUTH="false"
+export WEBSOCKET_ALLOWED_DIRS="/home/user/workspace/audio"
+python3 acting_doll_server.py
+```
+
+**本番環境（認証あり、ホワイトリストあり）**
+
+```bash
+export WEBSOCKET_HOST="0.0.0.0"
+export WEBSOCKET_PORT="8765"
+export WEBSOCKET_AUTH_TOKEN="$(openssl rand -base64 32)"
+export WEBSOCKET_ALLOWED_DIRS="/opt/acting-doll/audio:/opt/acting-doll/data"
+python3 acting_doll_server.py
+```
+
+**Dockerコンテナ内での設定**
+
+`docker-compose.yml` で環境変数を設定：
+
+```yaml
+services:
+  websocket:
+    environment:
+      - WEBSOCKET_AUTH_TOKEN=your-secret-token
+      - WEBSOCKET_ALLOWED_DIRS=/app/audio
+      - WEBSOCKET_HOST=0.0.0.0
+```
+
+または `docker run` コマンド：
+
+```bash
+docker run -e WEBSOCKET_AUTH_TOKEN=your-secret-token \
+           -e WEBSOCKET_ALLOWED_DIRS=/app/audio \
+           -e WEBSOCKET_HOST=0.0.0.0 \
+           your-image
+```
+
+### セキュリティのベストプラクティス
+
+1. **本番環境では必ず認証を有効にする**: `WEBSOCKET_AUTH_TOKEN` を設定し、強力なランダムトークンを使用してください。
+
+2. **ネットワークアクセスを制限**: 可能な限り `127.0.0.1` にバインドし、必要な場合のみ外部アクセスを許可してください。
+
+3. **ファイルアクセスを最小限に**: `WEBSOCKET_ALLOWED_DIRS` で必要最小限のディレクトリのみを許可してください。
+
+4. **ファイアウォールを使用**: 追加のセキュリティ層として、ファイアウォール（iptables、ufw等）でポートアクセスを制限してください。
+
+5. **トークンを安全に管理**: 認証トークンは環境変数やシークレット管理システムで管理し、コードやログに含めないでください。
+
+6. **HTTPS/TLS を使用**: 本番環境では、リバースプロキシ（nginx、Caddy等）を使用してWSS（WebSocket Secure）を設定してください。
+
+### セキュリティに関するトラブルシューティング
+
+**接続が拒否される**
+
+- 認証トークンが正しく設定されているか確認してください
+- クライアントが正しい認証メッセージを送信しているか確認してください
+- ホストとポートの設定が正しいか確認してください
+
+**ファイルアクセスが拒否される**
+
+- `WEBSOCKET_ALLOWED_DIRS` が正しく設定されているか確認してください
+- ファイルパスがホワイトリストのディレクトリ内にあるか確認してください
+- ファイルへの読み取り権限があるか確認してください
+
+**外部から接続できない**
+
+- `--host 0.0.0.0` または `WEBSOCKET_HOST=0.0.0.0` が設定されているか確認してください
+- ファイアウォールでポートが開放されているか確認してください
+- 認証トークンが設定されているか確認してください
 
 ## 開発
 
@@ -327,13 +478,12 @@ python -m twine upload dist/*
 ```
 src/adapter/server/
 ├── __init__.py              # パッケージ初期化
-├── websocket_server.py      # メインサーバー（WebSocket + MCP統合）
+├── acting_doll_server.py      # メインサーバー（WebSocket + MCP統合）
 ├── moc3manager.py           # Live2Dモデル管理
 ├── security_config.py       # セキュリティ設定
 ├── pyproject.toml           # パッケージ設定
 ├── README.md                # このファイル
 ├── LICENSE                  # MITライセンス
-├── SECURITY.md              # セキュリティポリシー
 └── start.sh                 # 起動スクリプト
 ```
 
@@ -341,7 +491,7 @@ src/adapter/server/
 
 ```
 MCPクライアント(Claude) --HTTP SSE--> MCPサーバー(port:3001) --内部メソッド--> コマンド処理 --WebSocket--> Live2Dクライアント
-WebSocketクライアント --WebSocket(8766)--> WebSocketサーバー --コマンド処理--> Live2Dクライアント
+WebSocketクライアント --WebSocket(8766)--> Cubism Controller --コマンド処理--> Live2Dクライアント
 ```
 
 ## ライセンス
@@ -357,8 +507,4 @@ MIT License - 詳細は [LICENSE](LICENSE) を参照してください。
 ## 貢献
 
 プルリクエストを歓迎します。大きな変更の場合は、まずissueを開いて変更内容を議論してください。
-
-## セキュリティ
-
-セキュリティの問題を発見した場合は、[SECURITY.md](SECURITY.md)を参照してください。
 

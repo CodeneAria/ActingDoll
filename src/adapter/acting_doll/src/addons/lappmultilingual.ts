@@ -218,16 +218,24 @@ const messages: MessageMap = {
     en: 'Connecting to server: {0}'
   },
   WS_CONNECTED: {
-    ja: 'WebSocketサーバーに接続しました',
-    en: 'Connected to WebSocket server'
+    ja: 'Cubism Controllerに接続しました',
+    en: 'Connected to Cubism Controller'
+  },
+  WS_CONNECTED_FAILED: {
+    ja: 'Cubism Controllerの接続に失敗しました: {0}',
+    en: 'Cubism Controller connection failed: {0}'
   },
   WS_CLOSED: {
-    ja: 'WebSocket接続が閉じられました {0}',
-    en: 'WebSocket connection closed {0}'
+    ja: 'Cubism Controllerが閉じられました {0}',
+    en: 'Cubism Controller connection closed {0}'
+  },
+  WS_DISCONNECTED: {
+    ja: 'Cubism Controllerから切断しました',
+    en: 'Disconnected from Cubism Controller'
   },
   WS_ERROR: {
-    ja: 'WebSocketエラー: {0}',
-    en: 'WebSocket error: {0}'
+    ja: 'Cubism Controllerエラー: {0}',
+    en: 'Cubism Controller error: {0}'
   },
   WS_RECEIVED: {
     ja: '受信: {0}',
@@ -236,10 +244,6 @@ const messages: MessageMap = {
   WS_INVALID_JSON: {
     ja: '不正なJSON形式: {0} {1}',
     en: 'Invalid JSON format: {0} {1}'
-  },
-  WS_DISCONNECTED: {
-    ja: 'WebSocketサーバーから切断しました',
-    en: 'Disconnected from WebSocket server'
   },
   WS_RECONNECTING: {
     ja: '再接続を試みます... ({0}/{1})',
@@ -384,18 +388,6 @@ const messages: MessageMap = {
   CTRL_PANEL_NOT_FOUND: {
     ja: 'コントロールパネルが見つかりません',
     en: 'Control panel not found'
-  },
-  CTRL_WS_CONNECTED: {
-    ja: 'WebSocketサーバーに接続しました',
-    en: 'Connected to WebSocket server'
-  },
-  CTRL_WS_FAILED: {
-    ja: 'WebSocket接続に失敗しました: {0}',
-    en: 'WebSocket connection failed: {0}'
-  },
-  CTRL_WS_FAILED_SHOW: {
-    ja: 'サーバーに接続できませんでした。',
-    en: 'Server connection failed'
   },
   CTRL_CMD_RESPONSE: {
     ja: 'コマンド応答: {0}',
@@ -645,6 +637,7 @@ export const MessageKey = {
   // WebSocketClient関連
   WS_CONNECTING: 'WS_CONNECTING',
   WS_CONNECTED: 'WS_CONNECTED',
+  WS_CONNECTED_FAILED: 'WS_CONNECTED_FAILED',
   WS_CLOSED: 'WS_CLOSED',
   WS_ERROR: 'WS_ERROR',
   WS_RECEIVED: 'WS_RECEIVED',
@@ -688,9 +681,6 @@ export const MessageKey = {
 
   // Controller関連
   CTRL_PANEL_NOT_FOUND: 'CTRL_PANEL_NOT_FOUND',
-  CTRL_WS_CONNECTED: 'CTRL_WS_CONNECTED',
-  CTRL_WS_FAILED: 'CTRL_WS_FAILED',
-  CTRL_WS_FAILED_SHOW: 'CTRL_WS_FAILED_SHOW',
 
   CTRL_CMD_RESPONSE: 'CTRL_CMD_RESPONSE',
   CTRL_SERVER_ERROR: 'CTRL_SERVER_ERROR',

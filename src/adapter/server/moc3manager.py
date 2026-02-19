@@ -8,7 +8,7 @@ import json
 import logging
 
 # ロギング設定
-logger = logging.getLogger("MOC")
+logger = logging.getLogger("ModelManager")
 logger.setLevel(logging.INFO)
 
 
@@ -86,7 +86,11 @@ class ModelManager:
         """
         利用可能なモデル名のリストを取得
         """
-        return list(self.models.keys())
+        if len(self.models) > 0:
+            return list(self.models.keys())
+        else:
+            logger.warning("利用可能なモデルが見つかりません")
+        return []
 
     def get_motion_groups(self, model_name: Optional[str] = None) -> List[str]:
         """

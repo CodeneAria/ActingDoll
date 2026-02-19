@@ -263,7 +263,11 @@ export class LAppDelegate {
    */
   private initializeWebSocket(): void {
     if (LAppDefine.WebSocketAutoConnect) {
-      this._websocketClient = new WebSocketClient(LAppDefine.WebSocketUrl + location.hostname + ':' + LAppDefine.WebSocketPort);
+      this._websocketClient = new WebSocketClient("ActorDoll",
+        LAppDefine.WebSocketUrl
+        + (LAppDefine.WebSocketHost || location.hostname)
+        + ':' + LAppDefine.WebSocketPort
+      );
       this._websocketClient.setOnMessageHandlers(this.getSubdelegate(0));
     }
   }

@@ -7,11 +7,11 @@ import os
 from pathlib import Path
 from typing import Optional
 
-logger = logging.getLogger("SEC")
+logger = logging.getLogger("SecurityConfig")
 
 
 class SecurityConfig:
-    """WebSocketサーバーのセキュリティ設定"""
+    """セキュリティ設定"""
 
     def __init__(self):
         # 認証トークン（環境変数から取得）

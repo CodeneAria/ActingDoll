@@ -87,20 +87,6 @@
                 "${workspaceFolder}/src/Cubism/copy_from_CubismWebSamples.py"
             ],
             "detail": "src/Cubism/Resources/ 以下にCubism Web Samples for Webのサンプルリソースをコピーする"
-        },
-        {
-            "label": "Debug:Server:Websocket(Port8766)",
-            "type": "shell",
-            "command": "python",
-            "args": [
-                "${workspaceFolder}/src/adapter/server/websocket_server.py",
-                "--port",
-                "8766",
-                "--host",
-                "localhost",
-                "--disable-auth"
-            ],
-            "detail": "WebSocketのサーバーを起動する"
         }
     ]
 }

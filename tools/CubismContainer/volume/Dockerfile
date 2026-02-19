@@ -53,5 +53,5 @@ RUN if [ ! -z "${GIT_SAMPLE_DIR_NAME}" ] && [ ! -z "${GIT_SAMPLE_REPO}" ] && [ !
 WORKDIR /root/workspace/adapter
 
 # Expose WebSocket port
-# python3 websocket_server.py --host 0.0.0.0 --port 8765
-#CMD ["python3", "websocket_server.py", "--host", "0.0.0.0", "--port", "8765"]
+# python3 acting_doll_server.py --host 0.0.0.0 --port 8765
+#CMD ["python3", "acting_doll_server.py", "--host", "0.0.0.0", "--port", "8765"]

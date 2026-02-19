@@ -21,28 +21,30 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
     "pyyaml>=6.0.3",
-    "mcp>=1.23.0",
-    "httpx>=0.28.0",
-    "websockets>=13.0",
-    "starlette>=0.27.0",
-    "uvicorn>=0.23.0",
+    "acting-doll-server"
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.24.0",
-    "ruff>=0.8.0",
+    "ruff>=0.8.0"
 ]
 
 [project.scripts]
-acting-doll = "adapter.server.websocket_server:main"
+acting-doll = "acting_doll_server:run_acting_doll"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/adapter/server"]
+
+[tool.uv.sources]
+acting-doll-server = {workspace = true}
 
 [tool.ruff]
 line-length = 100
@@ -58,5 +60,5 @@ pythonpath = ["src"]
 
 [tool.uv.workspace]
 members = [
-    "src/adapter/server",
+    "src/adapter/server"
 ]

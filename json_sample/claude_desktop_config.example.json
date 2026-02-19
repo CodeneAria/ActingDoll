@@ -1,13 +1,10 @@
 {
     "mcpServers": {
         "acting-doll": {
-            "command": "python",
+            "command": "acting-doll-server",
             "args": [
-                "src/adapter/server/websocket_server.py",
                 "--mode",
-                "mcp",
-                "--model-dir",
-                "src/Cubism/Resources",
+                "mcp_sse",
                 "--mcp-port",
                 "3001"
             ],

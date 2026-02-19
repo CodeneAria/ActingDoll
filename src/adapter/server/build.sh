@@ -14,7 +14,7 @@ pip install --break-system-packages --upgrade build twine
 
 # Install local package dependencies
 echo "# Installing local package dependencies..."
-pip install --break-system-packages --upgrade ./
+pip install --break-system-packages --root-user-action=ignore --upgrade ./
 ret=$?
 if [ $ret -ne 0 ]; then
     echo "=== Failed to install package dependencies. Please check the error messages above. ==="

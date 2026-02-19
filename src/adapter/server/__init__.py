@@ -8,6 +8,6 @@ for controlling Live2D models through LLM interactions.
 __version__ = "0.1.0"
 __author__ = "CodeneAria"
 
-from .websocket_server import main, MCPServerHandler
+from acting_doll_server import run_acting_doll
 
-__all__ = ["main", "MCPServerHandler", "__version__"]
+__all__ = ["run_acting_doll"]

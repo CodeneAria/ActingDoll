@@ -4,7 +4,16 @@ src/modelsフォルダを検索して、lappdefine.tsのModelConfigs配列を自
 """
 import os
 import re
+import logging
 from pathlib import Path
+
+str_format = '[%(levelname)s]\t%(message)s'
+# ロギング設定
+logging.basicConfig(
+    level=logging.INFO,
+    format=str_format
+)
+logger = logging.getLogger(__name__)
 
 MODEL_POSITION = (0.4, -0.4, 1.4)  # (horizontal, vertical, initScale)
 
@@ -22,7 +31,7 @@ def find_model_directories(models_dir: Path) -> list[str]:
     model_dirs = []
 
     if not models_dir.exists():
-        print(f"エラー: {models_dir} が見つかりません")
+        logger.error(f"{models_dir} が見つかりません")
         return model_dirs
 
     for item in models_dir.iterdir():
@@ -47,7 +56,7 @@ def update_lappdefine_ts(file_path: Path, model_dirs: list[str]) -> bool:
         更新が成功したかどうか
     """
     if not file_path.exists():
-        print(f"エラー: {file_path} が見つかりません")
+        logger.error(f"{file_path} が見つかりません")
         return False
 
     # ファイルを読み込み
@@ -79,13 +88,12 @@ def update_lappdefine_ts(file_path: Path, model_dirs: list[str]) -> bool:
         pattern, replacement, content, flags=re.DOTALL)
 
     if count == 0:
-        print("警告: ModelConfigs配列が見つかりませんでした")
+        logger.warning("ModelConfigs配列が見つかりませんでした")
         return False
 
     # ファイルに書き込み
     file_path.write_text(new_content, encoding='utf-8')
-    print(f"✓ {file_path.name} を更新しました")
-    print(f"  検出されたモデル: {', '.join(model_dirs)}")
+    logger.info(f"✓ {file_path.name} を更新しました")
 
     return True
 
@@ -97,42 +105,38 @@ def main(work_dir, config_path):
     # パスを設定
     models_dir = work_dir / "Cubism" / "Resources"
     lappdefine_path = work_dir / "adapter" / \
-        "acting_doll" / "src" / "lappdefine.ts"
+        "acting_doll" / "src" / "base" / "lappdefine.ts"
 
-    print("=" * 60)
-    print("ModelConfigs自動更新スクリプト")
-    print("=" * 60)
-    print(f"プロジェクトルート : {work_dir}")
-    print(f"モデルディレクトリ : {models_dir}")
-    print(f"更新対象ファイル   : {lappdefine_path}")
-    print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("ModelConfigs自動更新スクリプト")
+    logger.info("=" * 60)
+    logger.info(f"プロジェクトルート : {work_dir}")
+    logger.info(f"モデルディレクトリ : {models_dir}")
+    logger.info(f"更新対象ファイル   : {lappdefine_path}")
+    logger.info("=" * 60)
 
     # モデルディレクトリを検索
-    print("モデルディレクトリを検索中...")
+    logger.info("モデルディレクトリを検索中...")
     model_dirs = find_model_directories(models_dir)
 
     if not model_dirs:
-        print("警告: .model3.jsonファイルを持つディレクトリが見つかりませんでした")
+        logger.warning("警告: .model3.jsonファイルを持つディレクトリが見つかりませんでした")
         return
 
-    print(f"検出されたモデル数: {len(model_dirs)}")
+    logger.info(f"検出されたモデル数: {len(model_dirs)}")
     for dir_name in model_dirs:
-        print(f"  - {dir_name}")
-    print()
+        logger.info(f"  - {dir_name}")
 
     # lappdefine.tsを更新
-    print("lappdefine.tsを更新中...")
+    logger.info("lappdefine.tsを更新中...")
     success = update_lappdefine_ts(lappdefine_path, model_dirs)
 
     if success:
-        print()
-        print("✓ 更新が完了しました！")
-        print()
-        print("注意: カスタムパラメータIDが必要なモデルは、")
-        print("      手動でlappdefine.tsのisCustomをtrueに変更してください。")
+        logger.info("✓ 更新が完了しました！")
+        logger.info("[注意] カスタムパラメータIDが必要なモデルは、"
+                    "手動でlappdefine.tsのisCustomをtrueに変更してください。")
     else:
-        print()
-        print("✗ 更新に失敗しました")
+        logger.error("✗ 更新に失敗しました")
 
 
 if __name__ == "__main__":

@@ -7,7 +7,16 @@ import os
 import subprocess
 import sys
 import yaml
+import logging
 from pathlib import Path
+
+str_format = '[%(levelname)s]\t%(message)s'
+# ロギング設定
+logging.basicConfig(
+    level=logging.INFO,
+    format=str_format
+)
+logger = logging.getLogger(__name__)
 
 
 def run_command(cmd, shell=True, capture_output=False, check=False):
@@ -33,11 +42,10 @@ def main(work_dir, config_path):
         with open(config_path, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
     except FileNotFoundError:
-        print(
-            f"Error: Configuration file not found: {config_path}", file=sys.stderr)
+        logger.error(f"Configuration file not found: {config_path}")
         sys.exit(1)
     except Exception as e:
-        print(f"Error: Failed to load configuration: {e}", file=sys.stderr)
+        logger.error(f"Failed to load configuration: {e}")
         sys.exit(1)
 
     INNER_SERVER_PORT = 5000
@@ -56,27 +64,26 @@ def main(work_dir, config_path):
     server_dir = f"/root/workspace/adapter"
 
     # Show running containers
-    print("=" * 50)
-    print("[Start Cubism SDK for Web]")
+    logger.info("=" * 50)
+    logger.info("[Start Cubism SDK for Web]")
     ps_filter_cmd = (
         f'docker ps -a --filter "ancestor={DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}" '
         f'--format "table {{{{.ID}}}}\\t{{{{.Image}}}}\\t{{{{.Status}}}}\\t{{{{.Names}}}}\\t{{{{.Ports}}}}"'
     )
     run_command(ps_filter_cmd)
-    print("=" * 50)
+    logger.info("=" * 50)
 
     # Restart container
-    print(f"# Restarting container {DOCKER_CONTAINER_NAME}...")
+    logger.info(f"# Restarting container {DOCKER_CONTAINER_NAME}...")
     result = run_command(
         f"docker restart {DOCKER_CONTAINER_NAME}", capture_output=True)
     if result.returncode != 0:
-        print(
-            f"[Error] Failed to start container {DOCKER_CONTAINER_NAME}", file=sys.stderr)
-        print("Please run create_container.py first.", file=sys.stderr)
+        logger.error(f"Failed to start container {DOCKER_CONTAINER_NAME}")
+        logger.error("Please run create_container.py first.")
         sys.exit(1)
 
     # Run npm start inside container
-    print("# Running npm start...")
+    logger.info("# Running npm start...")
     npm_cmd = (
         f'docker exec -t '
         f'-e WEBSOCKET_AUTH_TOKEN={AUTH_TOKEN} '
@@ -93,10 +100,10 @@ def main(work_dir, config_path):
         # Run the command and show output in real-time
         subprocess.run(npm_cmd, shell=True, check=True)
     except subprocess.CalledProcessError as e:
-        print(f"[Error] running npm start: {e}", file=sys.stderr)
+        logger.error(f"Failed to run npm start: {e}")
         sys.exit(1)
     except KeyboardInterrupt:
-        print("\n# Shutting down...")
+        logger.info("# Shutting down...")
         run_command(
             f"docker stop {DOCKER_CONTAINER_NAME}", capture_output=True)
         sys.exit(0)
