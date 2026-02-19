@@ -13,7 +13,7 @@ import websockets
 from websockets.server import ServerConnection
 from security_config import SecurityConfig
 
-logger = logging.getLogger("CCHandler")
+logger = logging.getLogger("CubismCtrl")
 # ServerConnection（websockets）のログレベルをWARNINGに設定
 logging.getLogger('websockets').setLevel(logging.WARNING)
 
@@ -1449,7 +1449,7 @@ class CubismControllerHandler:
 
     async def run(self,
                   host: str, port: int,
-                  security: SecurityConfig,
+                  security_config: SecurityConfig,
                   stop_mcp_server: any,
                   model_dir: str,
                   console: bool = True,
@@ -1468,7 +1468,7 @@ class CubismControllerHandler:
         """
 
         # セキュリティ設定を初期化
-        self.security_config = security
+        self.security_config = security_config
         self.fnc_stop_mcp = stop_mcp_server
 
         # モデルマネージャーを初期化
@@ -1494,7 +1494,7 @@ class CubismControllerHandler:
         try:
             async with websockets.serve(self.handle_client, host, port):
                 self.is_running = True
-                if not console:
+                if console:
                     await asyncio.sleep(1.5)  # サーバーが起動するまでしばらく待機
                     logger.info("Cubism Controllerが起動しました: "
                                 f"ws://{host}:{port}")
@@ -1543,7 +1543,7 @@ class CubismControllerHandler:
 
 
 async def run_websocket(host: str, port: int,
-                        security: SecurityConfig,
+                        security_config: SecurityConfig,
                         stop_mcp_server: any,
                         model_dir: str,
                         console: bool = True,
@@ -1566,7 +1566,7 @@ async def run_websocket(host: str, port: int,
 
     try:
         await task_cubism.run(host=host, port=port,
-                              security=security,
+                              security_config=security_config,
                               stop_mcp_server=stop_mcp_server,
                               model_dir=model_dir,
                               console=console,

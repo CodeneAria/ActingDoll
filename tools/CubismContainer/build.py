@@ -97,10 +97,10 @@ def main(work_dir, config_path, is_production=False, is_mcp=False):
         logger.info("# npm install and build inside the container...")
         build_mode = "production" if is_production else "development"
         build_cmd = f'npm install -g npm && npm install' \
-            + f' && npm audit fix && ' \
+            + f' && npm audit fix; ' \
             + ("npm run build:prod" if is_production else "npm run build")
         logger.info(f"# Build mode: {build_mode}")
-        # npm install -g npm && npm install && npm run build
+        # npm install -g npm && npm install && npm audit fix; npm run build
         npm_cmd = (
             f'docker exec -t {DOCKER_CONTAINER_NAME} /bin/sh -c "'
             f'cd {acting_doll_node};'

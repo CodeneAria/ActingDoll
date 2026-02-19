@@ -27,16 +27,19 @@ function check_process {
     local CH_PID=${1}
     local CH_NAME=${2}
 
-    local MAX_RETRIES=20
+    local MAX_RETRIES=15
     local RETRY_COUNT=0
     local PORT_READY=0
     while [ ${RETRY_COUNT} -lt ${MAX_RETRIES} ]; do
         if kill -0 ${CH_PID} 2>/dev/null; then
             PORT_READY=1
+        else
+            PORT_READY=0
             break
         fi
         sleep 0.5
         RETRY_COUNT=$((RETRY_COUNT + 1))
+        #echo "Waiting for '${CH_NAME}' to start... (Retry ${RETRY_COUNT}/${MAX_RETRIES})[${PORT_READY}]"
     done
 
     if [ ${PORT_READY} -eq 0 ]; then
@@ -44,6 +47,7 @@ function check_process {
         kill ${CH_PID} 2>/dev/null || true
         exit 1
     fi
+    echo "# '${CH_NAME}' started successfully (PID: ${CH_PID})"
 }
 ###################################
 # Start Server
@@ -60,20 +64,17 @@ pkill -f "acting_doll_server" || true
 if [ ${ret_acting_doll} -ne 0 ]; then
     MESSAGE_PROCESS="python3 acting_doll_server.py"
     # Run WebSocket server in the background
-    python3 acting_doll_server.py --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --mcp-port ${PORT_MCP_NUMBER} --no-console &
+    python3 acting_doll_server.py --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --mcp-port ${PORT_MCP_NUMBER} &
     CUBISM_PID=$!
 else
     acting-doll-server --version
     MESSAGE_PROCESS="acting-doll-server"
     # Run WebSocket server in the background
-    acting-doll-server --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --mcp-port ${PORT_MCP_NUMBER} --no-console &
+    acting-doll-server --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --mcp-port ${PORT_MCP_NUMBER} &
     CUBISM_PID=$!
 fi
 check_process ${CUBISM_PID} "${MESSAGE_PROCESS}"
-echo "# '${MESSAGE_PROCESS}' started successfully (PID: ${CUBISM_PID})"
 
-
-sleep 2
 
 ###################################
 # Start Node.js Application

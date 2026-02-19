@@ -17,7 +17,7 @@ except Exception:
 
 # グローバルなタスク（後で初期化）
 mcp_task: Optional[asyncio.Task] = None
-websocket_task: Optional[asyncio.Task] = None
+cubism_task: Optional[asyncio.Task] = None
 
 
 str_format = '%(levelname)s: %(asctime)s [%(name)s]\t%(message)s'
@@ -86,11 +86,11 @@ def parse_args():
     return parser.parse_args()
 
 
-def run_acting_doll():
+async def run_acting_doll():
     """
     エントリーポイント
     """
-    global mcp_task, websocket_task
+    global mcp_task, cubism_task
     try:
         # コマンドライン引数をパース
         args = parse_args()
@@ -110,40 +110,31 @@ def run_acting_doll():
         ##################################################
         # モードに応じた処理
         ##################################################
+        # MCPモード
+        if args.mode == 'mcp_sse' or args.mode == 'mcp_stdin' or args.mode == 'both':
+            mcp_task = asyncio.create_task(run_mcp(
+                websocket_url=websocket_url,
+                host=host, port=args.mcp_port,
+                is_stdio=False if args.mode != 'mcp_stdin' else True,
+                delay_start=0.0 if args.mode != 'both' else 0.5
+            ))
+
         # cubismモード
         if args.mode == 'cubism' or args.mode == 'both':
             from handler_mcp import stop_mcp_server
-            websocket_task = asyncio.create_task(run_websocket(
-                host, port,
-                security_config,
-                stop_mcp_server,
-                args.model_dir,
-                args.no_console if args.mode != 'mcp_stdin' else False,
-                args.disable_auth
+            cubism_task = asyncio.create_task(run_websocket(
+                host=host, port=port,
+                security_config=security_config,
+                stop_mcp_server=stop_mcp_server,
+                model_dir=args.model_dir,
+                console=args.console if args.mode != 'mcp_stdin' else False,
+                disable_auth=args.disable_auth
             ))
 
-        # MCPモード
-        if args.mode == 'mcp_sse' or args.mode == 'both':
-            mcp_task = asyncio.create_task(run_mcp(
-                websocket_url=websocket_url,
-                host=host,
-                port=args.mcp_port,
-                is_sse=True,
-                delay=0.5 if (args.mode == 'both') else 0.0
-            ))
-        elif args.mode == 'mcp_stdin':
-            mcp_task = asyncio.create_task(run_mcp(
-                websocket_url=websocket_url,
-                host=host,
-                port=args.mcp_port,
-                is_sse=False,
-                delay=0.0
-            ))
-
-        if (mcp_task is not None) and (websocket_task is not None):
-            await asyncio.gather(websocket_task, mcp_task)
-        elif websocket_task is not None:
-            await asyncio.gather(websocket_task)
+        if (mcp_task is not None) and (cubism_task is not None):
+            await asyncio.gather(cubism_task, mcp_task)
+        elif cubism_task is not None:
+            await asyncio.gather(cubism_task)
         elif mcp_task is not None:
             await asyncio.gather(mcp_task)
         else:
@@ -157,4 +148,4 @@ def run_acting_doll():
 
 
 if __name__ == "__main__":
-    run_acting_doll()
+    asyncio.run(run_acting_doll())
