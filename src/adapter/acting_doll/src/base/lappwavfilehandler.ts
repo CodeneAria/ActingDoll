@@ -5,8 +5,8 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { CubismLogError } from '@framework/utils/cubismdebug';
-import { LAppMultilingual, MessageKey } from './lappmultilingual';
+import { CubismLogDebug, CubismLogError } from '@framework/utils/cubismdebug';
+import { LAppMultilingual, MessageKey } from './../addons/lappmultilingual';
 
 /** @deprecated この変数は getInstance() が非推奨になったことに伴い、非推奨となりました。 */
 export let s_instance: LAppWavFileHandler = null;
@@ -227,6 +227,7 @@ export class LAppWavFileHandler {
               this._pcmData[channelCount][sampleCount] = this.getPcmSample();
             }
           }
+          this.playAudioStream(this._pcmData);
 
           ret = true;
 
@@ -240,7 +241,10 @@ export class LAppWavFileHandler {
     });
   }
 
-  public run(arrayBuffer: ArrayBuffer, length: number): Promise<boolean> {
+  /**
+   * Wavファイルのバイナリデータを読み込む
+   */
+  public loadWavFileFromBuffer(arrayBuffer: ArrayBuffer, length: number, fileName: string = 'stream data'): Promise<boolean> {
     // サンプル位参照位置を初期化
     this._sampleOffset = 0;
     this._userTimeSeconds = 0.0;
@@ -268,7 +272,7 @@ export class LAppWavFileHandler {
         }
 
         // ファイル名
-        this._wavFileInfo._fileName = "streamed data";
+        this._wavFileInfo._fileName = fileName;
 
         try {
           // シグネチャ "RIFF"
@@ -296,11 +300,9 @@ export class LAppWavFileHandler {
             throw new Error(LAppMultilingual.getMessage(MessageKey.WAV_NOT_LINEAR_PCM));
           }
           // チャンネル数
-          this._wavFileInfo._numberOfChannels =
-            this._byteReader.get16LittleEndian();
+          this._wavFileInfo._numberOfChannels = this._byteReader.get16LittleEndian();
           // サンプリングレート
-          this._wavFileInfo._samplingRate =
-            this._byteReader.get32LittleEndian();
+          this._wavFileInfo._samplingRate = this._byteReader.get32LittleEndian();
           // データ速度[byte/sec]（読み飛ばし）
           this._byteReader.get32LittleEndian();
           // ブロックサイズ（読み飛ばし）
@@ -329,35 +331,20 @@ export class LAppWavFileHandler {
           {
             const dataChunkSize = this._byteReader.get32LittleEndian();
             this._wavFileInfo._samplesPerChannel =
-              (dataChunkSize * 8) /
-              (this._wavFileInfo._bitsPerSample *
-                this._wavFileInfo._numberOfChannels);
+              (dataChunkSize * 8) / (this._wavFileInfo._bitsPerSample * this._wavFileInfo._numberOfChannels);
           }
           // 領域確保
           this._pcmData = new Array(this._wavFileInfo._numberOfChannels);
-          for (
-            let channelCount = 0;
-            channelCount < this._wavFileInfo._numberOfChannels;
-            channelCount++
-          ) {
-            this._pcmData[channelCount] = new Float32Array(
-              this._wavFileInfo._samplesPerChannel
-            );
+          for (let channelCount = 0; channelCount < this._wavFileInfo._numberOfChannels; channelCount++) {
+            this._pcmData[channelCount] = new Float32Array(this._wavFileInfo._samplesPerChannel);
           }
           // 波形データ取得
-          for (
-            let sampleCount = 0;
-            sampleCount < this._wavFileInfo._samplesPerChannel;
-            sampleCount++
-          ) {
-            for (
-              let channelCount = 0;
-              channelCount < this._wavFileInfo._numberOfChannels;
-              channelCount++
-            ) {
+          for (let sampleCount = 0; sampleCount < this._wavFileInfo._samplesPerChannel; sampleCount++) {
+            for (let channelCount = 0; channelCount < this._wavFileInfo._numberOfChannels; channelCount++) {
               this._pcmData[channelCount][sampleCount] = this.getPcmSample();
             }
           }
+          this.playAudioStream(this._pcmData);
 
           ret = true;
 
@@ -369,6 +356,42 @@ export class LAppWavFileHandler {
         resolveValue(ret);
       });
     });
+  }
+
+  /**
+   * AudioBufferSourceNodeの再生をスケジュールする
+   */
+  private playChunk(audio_src: any, scheduled_time: any) {
+    if (audio_src.start) {
+      CubismLogDebug('Using AudioBufferSourceNode.start()');
+      audio_src.start(scheduled_time);
+    } else {
+      CubismLogDebug('Using AudioBufferSourceNode.noteOn()');
+      audio_src.noteOn(scheduled_time);
+    }
+  }
+
+  /**
+   * 音声データを登録する
+   */
+  private playAudioStream(audio_f32: Array<Float32Array>): void {
+    var audio_buf = this._play_context.createBuffer(audio_f32.length, audio_f32[0].length, 44100);
+    var audio_src = this._play_context.createBufferSource();
+    var current_time = this._play_context.currentTime;
+    CubismLogDebug('Audio Stream Channels: ' + audio_f32.length.toString());
+    for (let ch = 0; ch < audio_f32.length; ch++) {
+      audio_buf.getChannelData(ch).set(audio_f32[ch], 0);
+    }
+    audio_src.buffer = audio_buf;
+    audio_src.connect(this._play_context.destination);
+
+    if (current_time < this._scheduled_time) {
+      this.playChunk(audio_src, this._scheduled_time);
+      this._scheduled_time += audio_buf.duration;
+    } else {
+      this.playChunk(audio_src, current_time);
+      this._scheduled_time = current_time + audio_buf.duration + this._initial_delay_sec;
+    }
   }
 
   public getPcmSample(): number {
@@ -446,6 +469,10 @@ export class LAppWavFileHandler {
   }
 
   _pcmData: Array<Float32Array>;
+  _play_context = new (window.AudioContext);
+  _initial_delay_sec = 0;
+  _scheduled_time = 0;
+
   _userTimeSeconds: number;
   _lastRms: number;
   _sampleOffset: number;

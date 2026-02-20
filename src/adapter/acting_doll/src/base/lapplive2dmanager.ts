@@ -13,8 +13,8 @@ import * as LAppDefine from './lappdefine';
 import { LAppModel } from './lappmodel';
 import { LAppPal } from './lapppal';
 import { LAppSubdelegate } from './lappsubdelegate';
-import { CubismLogDebug, CubismLogInfo } from '@framework/utils/cubismdebug';
-import { LAppMultilingual, MessageKey } from './lappmultilingual';
+import { CubismLogDebug } from '@framework/utils/cubismdebug';
+import { LAppMultilingual, MessageKey } from './../addons/lappmultilingual';
 
 /**
  * サンプルアプリケーションにおいてCubismModelを管理するクラス

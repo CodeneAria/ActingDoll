@@ -10,7 +10,7 @@ ActingDoll には WebSocket サーバー機能が組み込まれており、外�
 
 ```bash
 cd ./src/adapter/server
-./websocket_server.py --port (1で設定したWebSocketPortの数字)
+./acting_doll_server.py --port (1で設定したWebSocketPortの数字)
 ```
 
 | **ポート番号** | **概要**                                          |

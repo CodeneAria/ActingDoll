@@ -29,9 +29,23 @@ h1 {
 
 h2 {
     color: #666;
-    font-size: 18px;
-    margin-top: 20px;
-    margin-bottom: 10px;
+    font-size: 1.2em;
+    margin-top: 1.2em;
+    margin-bottom: 1em;
+}
+
+h3 {
+    color: #666;
+    font-size: 1em;
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+
+h4 {
+    color: #666;
+    font-size: 0.8em;
+    margin-left: 0em;
+    margin-bottom: 0em;
 }
 
 .status-section,

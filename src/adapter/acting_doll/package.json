@@ -1,5 +1,6 @@
 {
   "private": true,
+  "description": "",
   "scripts": {
     "start": "node copy_resources.js && vite --host",
     "build": "tsc --noEmit && node copy_resources.js && vite build --mode development",

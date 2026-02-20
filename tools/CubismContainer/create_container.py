@@ -7,14 +7,23 @@ import os
 import sys
 import subprocess
 import yaml
-from pathlib import Path
 import shutil
+import logging
+from pathlib import Path
+
+str_format = '[%(levelname)s]\t%(message)s'
+# ロギング設定
+logging.basicConfig(
+    level=logging.INFO,
+    format=str_format
+)
+logger = logging.getLogger(__name__)
 
 
 def run_command(cmd, shell=True, capture_output=False, check=False):
     """Run a shell command and return the result."""
     try:
-        # print(f"  [CMD] {' '.join(cmd) if isinstance(cmd, list) else cmd}")
+        # logger.info(f"  [CMD] {' '.join(cmd) if isinstance(cmd, list) else cmd}")
         result = subprocess.run(
             cmd,
             shell=shell,
@@ -57,12 +66,10 @@ def main(work_dir, config_path):
         with open(config_path, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
     except FileNotFoundError:
-        print(
-            f"[Error] Configuration file not found: {config_path}", file=sys.stderr)
+        logger.error(f"Configuration file not found: {config_path}")
         sys.exit(1)
     except yaml.YAMLError as e:
-        print(
-            f"[Error] Failed to parse YAML configuration: {e}", file=sys.stderr)
+        logger.error(f"Failed to parse YAML configuration: {e}")
         sys.exit(1)
 
     DOCKER_FILE_NAME = config['docker']['dockerfile']
@@ -71,6 +78,7 @@ def main(work_dir, config_path):
     DOCKER_CONTAINER_NAME = config['docker']['container']['name']
     SERVER_PORT = config['docker']['container']['port_cubism']
     WEBSOCKET_PORT = config['docker']['container']['port_websocket']
+    MCP_PORT = config['docker']['container']['port_mcp']
     GIT_FRAMEWORK_REPO = config['cubism']['git_framework_repo']
     GIT_FRAMEWORK_TAG = config['cubism']['git_framework_tag']
     GIT_FRAMEWORK_DIR_NAME = config['cubism']['git_framework_dir_name']
@@ -81,6 +89,10 @@ def main(work_dir, config_path):
     MODELS_DIR = config['cubism']['models_dir']
     ADAPTER_DIR = config['custom']['adapter_dir']
     FRAMEWORK_DIR = config['cubism']['framework_dir']
+
+    INNER_SERVER_PORT = 5000
+    INNER_WEBSOCKET_PORT = 8765
+    INNER_MCP_PORT = 3001
 
     # Authentication settings
     AUTH_TOKEN = config['authentication']['token']
@@ -96,73 +108,73 @@ def main(work_dir, config_path):
     temp_core_dir = Path(work_dir / args_core_dir).resolve().absolute()
 
     # Display settings
-    print("=" * 50)
-    print("[Create Cubism SDK for Web Docker Container]")
-    print(f"  Git")
-    print(f"    Framework : {GIT_FRAMEWORK_REPO}[{GIT_FRAMEWORK_TAG}]")
-    print(f"    Sample    : {GIT_SAMPLE_REPO}[{GIT_SAMPLE_TAG}]")
-    print(f"  Files")
-    print(f"    Working Dir       : {work_dir}")
-    print(f"    Config            : {config_path}")
-    print(f"    Cubism Core Dir   : {archive_core_path}")
-    print(f"    Cubism Models Dir : {models_path}")
-    print(f"  Authentication")
-    print(f"    Auth Token        : {AUTH_TOKEN}")
-    print(f"    Require Auth      : {REQUIRE_AUTH}")
-    print(f"    Allowed Dirs      : {ALLOWED_DIRS}")
-    print(f"  Docker")
-    print(f"    dockerfile : {dockerfile_path}")
-    print(f"    image      : {DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}")
-    print(f"    container  : {DOCKER_CONTAINER_NAME}")
-    print(f"      port(HTTP)      : {SERVER_PORT}")
-    print(f"      port(Websocket) : {WEBSOCKET_PORT}")
-    print("=" * 50)
+    logger.info("=" * 50)
+    logger.info("[Create Cubism SDK for Web Docker Container]")
+    logger.info(f"  Git")
+    logger.info(f"    Framework : {GIT_FRAMEWORK_REPO}[{GIT_FRAMEWORK_TAG}]")
+    logger.info(f"    Sample    : {GIT_SAMPLE_REPO}[{GIT_SAMPLE_TAG}]")
+    logger.info(f"  Files")
+    logger.info(f"    Working Dir       : {work_dir}")
+    logger.info(f"    Config            : {config_path}")
+    logger.info(f"    Cubism Core Dir   : {archive_core_path}")
+    logger.info(f"    Cubism Models Dir : {models_path}")
+    logger.info(f"  Authentication")
+    logger.info(f"    Auth Token        : {AUTH_TOKEN}")
+    logger.info(f"    Require Auth      : {REQUIRE_AUTH}")
+    logger.info(f"    Allowed Dirs      : {ALLOWED_DIRS}")
+    logger.info(f"  Docker")
+    logger.info(f"    dockerfile : {dockerfile_path}")
+    logger.info(f"    image      : {DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}")
+    logger.info(f"    container  : {DOCKER_CONTAINER_NAME}")
+    logger.info(f"      port(HTTP)      : {SERVER_PORT}")
+    logger.info(f"      port(Websocket) : {WEBSOCKET_PORT}")
+    logger.info(f"      port(MCP)       : {MCP_PORT}")
+    logger.info("=" * 50)
 
     # Check Cubism Core files
-    print(f"# Checking Archive Core directory: {archive_core_path}")
+    logger.info(f"# Checking Archive Core directory: {archive_core_path}")
     if not archive_core_path.exists():
-        print(
-            f"[Error] Archive core directory not found: {archive_core_path}", file=sys.stderr)
+        logger.error(f"Archive core directory not found: {archive_core_path}")
         sys.exit(1)
     js_files = list(archive_core_path.glob("*core*"))
     if not js_files:
-        print(
-            f"[Error] Cubism Core file not found: {archive_core_path}", file=sys.stderr)
-        print("Please download it from https://www.live2d.com/sdk/download/web/", file=sys.stderr)
+        logger.error(f"Cubism Core file not found: {archive_core_path}")
+        logger.error(
+            "Please download it from https://www.live2d.com/sdk/download/web/")
         sys.exit(1)
 
     # Remove existing containers
-    print("# Checking for existing containers...")
+    logger.info("# Checking for existing containers...")
     ps_cmd = f'docker ps -a --format "{{{{.ID}}}}" --filter "ancestor={DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}"'
     result = run_command(ps_cmd, capture_output=True)
     if result.stdout.strip():
         container_ids = result.stdout.strip().split('\n')
         for container_id in container_ids:
-            print(f"  - Remove existing container: ID[{container_id}]")
+            logger.info(f"  - Remove existing container: ID[{container_id}]")
             run_command(f"docker stop {container_id}", capture_output=True)
             run_command(f"docker rm {container_id}", capture_output=True)
 
     # Remove existing image
-    print("# Checking for existing images...")
+    logger.info("# Checking for existing images...")
     img_cmd = f"docker image ls -q {DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}"
     result = run_command(img_cmd, capture_output=True)
     if result.stdout.strip():
-        print(
+        logger.info(
             f"  - Remove existing image: {DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}")
         run_command(
             f"docker rmi {DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}", capture_output=True)
 
     # Build Docker image
-    print("# Building Docker image...")
+    logger.info("# Building Docker image...")
 
     # Temporarily copy Core files to Dockerfile directory
 
-    print(f"# Copying Core files to {temp_core_dir}")
+    logger.info(f"# Copying Core files to {temp_core_dir}")
     try:
         remove_directory_and_empty_parents(work_dir, temp_core_dir)
         shutil.copytree(archive_core_path, temp_core_dir)
     except Exception as e:
-        print(f"[Error] Failed to copy Core files: {e}", file=sys.stderr)
+        logger.error(f"Failed to copy Core files: {e}")
         sys.exit(1)
 
     try:
@@ -181,27 +193,27 @@ def main(work_dir, config_path):
         ]
         result = run_command(build_cmd, shell=False, check=True)
         if result.returncode != 0:
-            print(f"[Error] Failed to create Docker image", file=sys.stderr)
-            print(result.stderr, file=sys.stderr)
+            logger.error(f"Failed to create Docker image: {result.stderr}")
             sys.exit(1)
     except subprocess.CalledProcessError as e:
-        print(f"[Error] Failed to build Docker image", file=sys.stderr)
+        logger.error(f"Failed to build Docker image: {e}")
         sys.exit(1)
     finally:
         # Clean up temporary Core files
-        print("# Cleaning up temporary Core files...")
+        logger.info("# Cleaning up temporary Core files...")
         remove_directory_and_empty_parents(work_dir, temp_core_dir)
 
     # Run container
-    print("# Creating Docker container...")
+    logger.info("# Creating Docker container...")
     run_cmd = [
         "docker", "container", "run",
         "--name", DOCKER_CONTAINER_NAME,
         "-dit",
         "-v", f"{adapter_dir}:/root/workspace/adapter",
         "-v", f"{models_path}:/root/workspace/Cubism/Resources",
-        "-p", f"{SERVER_PORT}:5000",
-        "-p", f"{WEBSOCKET_PORT}:8765",
+        "-p", f"{SERVER_PORT}:{INNER_SERVER_PORT}",
+        "-p", f"{WEBSOCKET_PORT}:{INNER_WEBSOCKET_PORT}",
+        "-p", f"{MCP_PORT}:{INNER_MCP_PORT}",
         "-e", f"WEBSOCKET_AUTH_TOKEN={AUTH_TOKEN}",
         "-e", f"WEBSOCKET_REQUIRE_AUTH={REQUIRE_AUTH}",
         "-e", f"WEBSOCKET_ALLOWED_DIRS={ALLOWED_DIRS}",
@@ -209,12 +221,11 @@ def main(work_dir, config_path):
     ]
     result = run_command(run_cmd, shell=False, capture_output=True)
     if result.returncode != 0:
-        print(f"[Error] Failed to start Docker container", file=sys.stderr)
-        print(result.stderr, file=sys.stderr)
+        logger.error(f"Failed to start Docker container: {result.stderr}")
         sys.exit(1)
 
     # Copy Framework files from container
-    print("# Copying Framework files from Docker container...")
+    logger.info("# Copying Framework files from Docker container...")
     try:
         remove_directory_and_empty_parents(work_dir, framework_dir)
         frame_copy_cmd = [
@@ -224,24 +235,23 @@ def main(work_dir, config_path):
         ]
         result = run_command(frame_copy_cmd, shell=False, check=True)
         if result.returncode != 0:
-            print(
-                f"[Error] Failed to copy Framework files from Docker container", file=sys.stderr)
+            logger.error(
+                f"Failed to copy Framework files from Docker container")
     except subprocess.CalledProcessError as e:
-        print(
-            f"[Error] Failed to copy Framework files from Docker container", file=sys.stderr)
+        logger.error(
+            f"Failed to copy Framework files from Docker container: {e}")
 
     ps_filter_cmd = (
-        f'docker ps --filter "ancestor={DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}" '
+        f'docker ps -a --filter "ancestor={DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VER}" '
         f'--format "table {{{{.ID}}}}\\t{{{{.Image}}}}\\t{{{{.Status}}}}\\t{{{{.Names}}}}\\t{{{{.Ports}}}}"'
     )
-    print("-" * 25)
+    logger.info("Docker Containers list:")
     result = run_command(ps_filter_cmd, shell=True, capture_output=False)
-    print("\n" + ("=" * 50))
     if result.returncode != 0:
-        print("\n[Error] Container setup failed! --")
+        logger.error("[Error] Container setup failed! --")
         sys.exit(1)
     else:
-        print("# -- Container setup completed successfully! --")
+        logger.info("# -- Container setup completed successfully! --")
 
 
 if __name__ == "__main__":

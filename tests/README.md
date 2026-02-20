@@ -15,10 +15,10 @@ pip install -U pytest pytest-asyncio websockets
 
 ### 前提条件
 
-テスト実行の前提条件として、WebSocketサーバーが起動している必要があります。
+テスト実行の前提条件として、Cubism Controllerが起動している必要があります。
 
 ```bash
-# WebSocketサーバーの起動
+# Cubism Controllerの起動
 python tools/CubismContainer/create_container.py
 python tools/CubismContainer/build.py
 python tools/CubismContainer/start.py
@@ -47,7 +47,7 @@ pytest tests/test_websocket/test_command.py::TestBasicCommands::test_list_comman
 
 ### タイムアウトエラーが発生する
 
-- WebSocketサーバーが起動しているか確認
+- Cubism Controllerが起動しているか確認
 - ポート番号が正しいか確認（デフォルト: 8765）
 - ファイアウォールがブロックしていないか確認
 

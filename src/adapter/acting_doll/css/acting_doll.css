@@ -75,6 +75,14 @@
     color: #4CAF50;
 }
 
+.value-label {
+    font-weight: bold;
+}
+
+.value-color {
+    color: #4CAF50;
+}
+
 .parameter-item input[type="range"] {
     width: 100%;
     height: 6px;

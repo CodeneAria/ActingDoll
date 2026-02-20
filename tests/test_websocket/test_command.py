@@ -1,6 +1,6 @@
 """
 WebSocket Command Test Client
-WebSocketサーバーのコマンドをテストするクライアント
+Cubism Controllerのコマンドをテストするクライアント
 
 1. **TestBasicCommands** - 基本コマンドのテスト
    - `test_list_command`: 接続クライアントリストの取得
@@ -37,7 +37,6 @@ import asyncio
 import json
 import logging
 from datetime import datetime
-from typing import Optional, Dict, List
 import pytest
 import pytest_asyncio
 import websockets
@@ -63,7 +62,7 @@ class CommandTestClient:
         初期化
 
         Args:
-            uri: WebSocketサーバーのURI
+            uri: Cubism ControllerのURI
         """
         self.uri = uri
         self.websocket = None
@@ -203,7 +202,8 @@ class TestBasicCommands:
         )
 
         assert response.get("type") == "command_response"
-        logger.info(f"✅ Send to {client_with_id.client_id}: {response.get('result')}")
+        logger.info(
+            f"✅ Send to {client_with_id.client_id}: {response.get('result')}")
 
 
 # テストクラス: モデル情報

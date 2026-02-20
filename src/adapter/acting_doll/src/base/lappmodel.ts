@@ -5,7 +5,7 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { CubismDefaultParameterId_custom } from './cubismdefaultparameterid_custom';
+import { CubismDefaultParameterId_custom } from './../addons/cubismdefaultparameterid_custom';
 import { CubismDefaultParameterId } from '@framework/cubismdefaultparameterid';
 import { CubismModelSettingJson } from '@framework/cubismmodelsettingjson';
 import {
@@ -31,7 +31,6 @@ import {
 import { csmRect } from '@framework/type/csmrectf';
 import {
   CSM_ASSERT,
-  CubismLogVerbose,
   CubismLogDebug,
   CubismLogError,
   CubismLogInfo
@@ -44,7 +43,7 @@ import { LAppWavFileHandler } from './lappwavfilehandler';
 import { CubismMoc } from '@framework/model/cubismmoc';
 import { LAppDelegate } from './lappdelegate';
 import { LAppSubdelegate } from './lappsubdelegate';
-import { LAppMultilingual, MessageKey } from './lappmultilingual';
+import { LAppMultilingual, MessageKey } from './../addons/lappmultilingual';
 
 enum LoadStep {
   LoadAssets,
@@ -104,6 +103,7 @@ export class LAppModel extends CubismUserModel {
             ui.resetModelPosition();
             ui.moveModel(model_config.initX, model_config.initY, false);
             ui.setModelScale(model_config.initScale);
+            ui.updateModelPositionAxis();
           }
         }
       })
@@ -289,16 +289,16 @@ export class LAppModel extends CubismUserModel {
     const setupBreath = (): void => {
       this._breath = CubismBreath.create();
 
-      let parameter_id = CubismFramework.getIdManager().getId(
+      const parameter_id = CubismFramework.getIdManager().getId(
         this._cubismParameterId.ParamBreath !== undefined ? this._cubismParameterId.ParamBreath : CubismDefaultParameterId.ParamBreath
       );
       const paramIndex = this._model.getParameterIndex(parameter_id);
-      let breath_min = this._model.getParameterMinimumValue(paramIndex);
-      let breath_max = this._model.getParameterMaximumValue(paramIndex);
-      let breath_offset = (breath_min + breath_max) / 2; // 中央値
-      let breath_peak = (Math.abs(breath_min) + Math.abs(breath_max)) / 2;
-      let breath_cycle = 3.2345;
-      let breath_weight = 1;
+      const breath_min = this._model.getParameterMinimumValue(paramIndex);
+      const breath_max = this._model.getParameterMaximumValue(paramIndex);
+      const breath_offset = (breath_min + breath_max) / 2; // 中央値
+      const breath_peak = (Math.abs(breath_min) + Math.abs(breath_max)) / 2;
+      const breath_cycle = 3.2345;
+      const breath_weight = 1;
       const breathParameters: Array<BreathParameterData> = [
         new BreathParameterData(
           parameter_id,   // 呼吸をひもづけるパラメータID
@@ -1021,7 +1021,7 @@ export class LAppModel extends CubismUserModel {
       CubismLogError('WavFileHandler is not initialized');
       return;
     }
-    this._wavFileHandler.run(arrayBuffer, length);
+    this._wavFileHandler.loadWavFileFromBuffer(arrayBuffer, length);
     //this._lipsync = true;
   }
 
