@@ -444,18 +444,18 @@ pip install build
 python -m build
 
 # 生成されたファイル
-# dist/acting_doll_server-0.1.0-py3-none-any.whl
-# dist/acting_doll_server-0.1.0.tar.gz
+# dist/acting_doll_server-*-py3-none-any.whl
+# dist/acting_doll_server-*.tar.gz
 ```
 
 ### ローカルでのインストールテスト
 
 ```bash
 # wheelからインストール
-pip install dist/acting_doll_server-0.1.0-py3-none-any.whl
+pip install dist/acting_doll_server-*-py3-none-any.whl
 
 # または tar.gz から
-pip install dist/acting_doll_server-0.1.0.tar.gz
+pip install dist/acting_doll_server-*.tar.gz
 ```
 
 ### PyPIへの公開（メンテナ向け）

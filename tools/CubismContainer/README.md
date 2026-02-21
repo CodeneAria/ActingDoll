@@ -42,10 +42,10 @@ tools/CubismContainer/
 ### 3. Dockerコンテナの作成
 
 ```bash
-python create_container.py
+python CubismContainer.py create
 ```
 
-このスクリプトは以下の処理を実行します:
+このコマンドは以下の処理を実行します:
 
 1. 設定ファイル (`config.yaml`) を読み込み
 2. Cubism Coreファイルの存在を確認
@@ -57,25 +57,52 @@ python create_container.py
 
 エラーが発生した場合は処理を中断し、エラーメッセージを表示します。
 
-### 4. サーバーの起動
+### 4. ビルド
 
 ```bash
-python start_demo.py
+# 開発モードでMCP対応
+python CubismContainer.py build --add_mcp
+
+# 本番モードでMCP対応
+python CubismContainer.py build --production --add_mcp
 ```
 
-このスクリプトは以下の処理を実行します:
+### 5. サーバーの起動
+
+```bash
+python CubismContainer.py start
+```
+
+このコマンドは以下の処理を実行します:
 
 1. 設定ファイル (`config.yaml`) を読み込み
 2. Dockerコンテナを起動
-3. コンテナ内でnpm run startを実行
+3. サーバーを起動
    1. http://localhost:5000 でアクセス可能になります
 
 終了する場合は `Ctrl+C` を押してください。
 
+### 6. デモアプリの起動
+
+```bash
+python CubismContainer.py start_demo
+```
+
+### 7. コンテナ内のシェルアクセス
+
+```bash
+python CubismContainer.py exec
+```
+
+### 8. ビルド成果物のクリーンアップ
+
+```bash
+python CubismContainer.py clean
+```
+
 ## ファイル構成
 
-- `create_container.py` - Dockerコンテナの作成スクリプト
-- `start.py` - サーバー起動スクリプト
+- `CubismContainer.py` - 統合された全機能のスクリプト（create, build, clean, exec, start, start_demo）
 - `config.yaml` - 設定ファイル
 - `volume/`
   - `Dockerfile` - Dockerイメージの定義
