@@ -1,4 +1,7 @@
 {
+    "[shellscript]": {
+        "files.eol": "\n"
+    },
     "cSpell.words": [
         "Abstra",
         "acubismmotion",
@@ -75,7 +78,9 @@
         "pypackages",
         "pypirc",
         "pytest",
+        "pythonpath",
         "pytype",
+        "pyyaml",
         "retval",
         "ropeproject",
         "Scrapy",

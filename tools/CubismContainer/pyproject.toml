@@ -1,0 +1,10 @@
+[project]
+name = "cubism-container"
+version = "0.2.0"
+description = "Unified Docker container management script for Cubism SDK Web"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pyyaml",
+]
+
