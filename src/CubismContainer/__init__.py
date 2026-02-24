@@ -8,6 +8,6 @@ for controlling Live2D models through LLM interactions.
 __version__ = "0.2.0"
 __author__ = "CodeneAria"
 
-from acting_doll_server import run_acting_doll
+from cubism_container import *
 
-__all__ = ["run_acting_doll"]
+__all__ = ["main"]

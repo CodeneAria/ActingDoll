@@ -4,16 +4,26 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "Docker:template",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "${workspaceFolder}/src/CubismContainer/cubism_container.py",
+                "template",
+                "--output",
+                "${workspaceFolder}",
+            ],
+            "detail": "Dockerの中に入って操作できるコンソール"
+        },
+        {
             "label": "Docker:Exec",
             "type": "shell",
             "command": "python",
             "args": [
-                "${workspaceFolder}/tools/CubismContainer/CubismContainer.py",
-                "--workspace",
-                "${workspaceFolder}",
+                "${workspaceFolder}/src/CubismContainer/cubism_container.py",
+                "exec",
                 "--config",
-                "${workspaceFolder}/src/config.yaml",
-                "exec"
+                "${workspaceFolder}/src/config.yaml"
             ],
             "detail": "Dockerの中に入って操作できるコンソール"
         },
@@ -22,12 +32,12 @@
             "type": "shell",
             "command": "python",
             "args": [
-                "${workspaceFolder}/tools/CubismContainer/CubismContainer.py",
+                "${workspaceFolder}/src/CubismContainer/cubism_container.py",
+                "create",
                 "--workspace",
                 "${workspaceFolder}",
                 "--config",
-                "${workspaceFolder}/src/config.yaml",
-                "create"
+                "${workspaceFolder}/src/config.yaml"
             ],
             "detail": "Dockerイメージとコンテナを作成する"
         },
@@ -36,12 +46,10 @@
             "type": "shell",
             "command": "python",
             "args": [
-                "${workspaceFolder}/tools/CubismContainer/CubismContainer.py",
-                "--workspace",
-                "${workspaceFolder}",
+                "${workspaceFolder}/src/CubismContainer/cubism_container.py",
+                "build",
                 "--config",
                 "${workspaceFolder}/src/config.yaml",
-                "build",
                 "--add_mcp"
             ],
             "detail": "モデルデータをビルドして dist フォルダに出力する"
@@ -51,12 +59,10 @@
             "type": "shell",
             "command": "python",
             "args": [
-                "${workspaceFolder}/tools/CubismContainer/CubismContainer.py",
-                "--workspace",
-                "${workspaceFolder}",
+                "${workspaceFolder}/src/CubismContainer/cubism_container.py",
+                "start",
                 "--config",
-                "${workspaceFolder}/src/config.yaml",
-                "start"
+                "${workspaceFolder}/src/config.yaml"
             ],
             "detail": "Dockerコンテナを起動してモデルサーバーを立ち上げる"
         },
@@ -65,12 +71,10 @@
             "type": "shell",
             "command": "python",
             "args": [
-                "${workspaceFolder}/tools/CubismContainer/CubismContainer.py",
-                "--workspace",
-                "${workspaceFolder}",
+                "${workspaceFolder}/src/CubismContainer/cubism_container.py",
+                "build",
                 "--config",
                 "${workspaceFolder}/src/config.yaml",
-                "build",
                 "--production",
                 "--add_mcp"
             ],
@@ -81,12 +85,10 @@
             "type": "shell",
             "command": "python",
             "args": [
-                "${workspaceFolder}/tools/CubismContainer/CubismContainer.py",
-                "--workspace",
-                "${workspaceFolder}",
+                "${workspaceFolder}/src/CubismContainer/cubism_container.py",
+                "start_demo",
                 "--config",
-                "${workspaceFolder}/src/config.yaml",
-                "start_demo"
+                "${workspaceFolder}/src/config.yaml"
             ],
             "hide": true,
             "detail": "Demo版のモデルサーバーを起動する"
@@ -96,12 +98,10 @@
             "type": "shell",
             "command": "python",
             "args": [
-                "${workspaceFolder}/tools/CubismContainer/CubismContainer.py",
-                "--workspace",
-                "${workspaceFolder}",
+                "${workspaceFolder}/src/CubismContainer/cubism_container.py",
+                "clean",
                 "--config",
-                "${workspaceFolder}/src/config.yaml",
-                "clean"
+                "${workspaceFolder}/src/config.yaml"
             ],
             "detail": "Buildで作成したdistフォルダを削除する"
         },

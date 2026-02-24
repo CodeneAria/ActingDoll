@@ -42,7 +42,7 @@ tools/CubismContainer/
 ### 3. Dockerコンテナの作成
 
 ```bash
-python CubismContainer.py create
+python cubism_container.py create
 ```
 
 このコマンドは以下の処理を実行します:
@@ -61,16 +61,16 @@ python CubismContainer.py create
 
 ```bash
 # 開発モードでMCP対応
-python CubismContainer.py build --add_mcp
+python cubism_container.py build --add_mcp
 
 # 本番モードでMCP対応
-python CubismContainer.py build --production --add_mcp
+python cubism_container.py build --production --add_mcp
 ```
 
 ### 5. サーバーの起動
 
 ```bash
-python CubismContainer.py start
+python cubism_container.py start
 ```
 
 このコマンドは以下の処理を実行します:
@@ -85,24 +85,24 @@ python CubismContainer.py start
 ### 6. デモアプリの起動
 
 ```bash
-python CubismContainer.py start_demo
+python cubism_container.py start_demo
 ```
 
 ### 7. コンテナ内のシェルアクセス
 
 ```bash
-python CubismContainer.py exec
+python cubism_container.py exec
 ```
 
 ### 8. ビルド成果物のクリーンアップ
 
 ```bash
-python CubismContainer.py clean
+python cubism_container.py clean
 ```
 
 ## ファイル構成
 
-- `CubismContainer.py` - 統合された全機能のスクリプト（create, build, clean, exec, start, start_demo）
+- `cubism_container.py` - 統合された全機能のスクリプト（create, build, clean, exec, start, start_demo）
 - `config.yaml` - 設定ファイル
 - `volume/`
   - `Dockerfile` - Dockerイメージの定義

@@ -39,7 +39,7 @@ dev = [
 ]
 
 [project.scripts]
-acting-doll = "acting_doll_server:run_acting_doll"
+acting-doll = "cubism_container:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/adapter/server"]
@@ -63,5 +63,5 @@ pythonpath = ["src"]
 [tool.uv.workspace]
 members = [
     "src/adapter/server",
-    "tools/CubismContainer",
+    "src/CubismContainer",
 ]

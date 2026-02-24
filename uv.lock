@@ -29,7 +29,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "acting-doll-server", editable = "src/adapter/server" },
-    { name = "cubism-container", editable = "tools/CubismContainer" },
+    { name = "cubism-container", editable = "src/CubismContainer" },
     { name = "pyyaml", specifier = ">=6.0.3" },
 ]
 
@@ -287,7 +287,7 @@ wheels = [
 [[package]]
 name = "cubism-container"
 version = "0.2.0"
-source = { editable = "tools/CubismContainer" }
+source = { editable = "src/CubismContainer" }
 dependencies = [
     { name = "pyyaml" },
 ]

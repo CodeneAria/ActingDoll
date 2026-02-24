@@ -2,46 +2,43 @@
 docker:
   # Docker image settings
   image:
-    name: "img_node"
-    version: "5-r.5-beta.3"
+    name: image_acting_doll
+    version: latest
 
   # Docker container settings
   container:
-    name: "server_acting_doll"
-    port_cubism: "5000"
-    port_websocket: "8765"
-    port_mcp: "3001"
+    name: server_acting_doll
+    port_cubism: 8080
+    port_websocket: 8765
+    port_mcp: 3001
 
   # Dockerfile name
-  dockerfile: "tools/CubismContainer/volume/Dockerfile"
+  dockerfile: tools/CubismContainer/volume/Dockerfile
 
 authentication:
   # WEBSOCKET_AUTH_TOKEN
-  token: "your_authentication_token_here"
-  # WEBSOCKET_REQUIRE_AUTH
-  require_auth: true
+  token: your_authentication_token_here
   # WEBSOCKET_ALLOWED_DIRS
-  dirs:
-    - "/root/workspace/adapter/allowed"
+  allowed_dirs: []
 
 # Cubism SDK settings
 cubism:
   # Git repository and tag for Cubism Framework
-  framework_dir: "src/Cubism/Framework"
-  git_framework_dir_name: "Framework"
-  git_framework_repo: "https://github.com/Live2D/CubismWebFramework.git"
-  git_framework_tag: "5-r.5-beta.3"
+  framework_dir: src/Cubism/Framework
+  git_framework_dir_name: Framework
+  git_framework_repo: https://github.com/Live2D/CubismWebFramework.git
+  git_framework_tag: 5-r.5-beta.3
 
   # Git repository and tag for Cubism Web Samples
-  git_sample_dir_name: "Samples"
-  git_sample_repo: "https://github.com/Live2D/CubismWebSamples.git"
-  git_sample_tag: "5-r.5-beta.3"
+  git_sample_dir_name: Samples
+  git_sample_repo: https://github.com/Live2D/CubismWebSamples.git
+  git_sample_tag: 5-r.5-beta.3
 
   # Path to archive directory
-  archive_core_dir: "src/Cubism/Core"
-  models_dir: "src/Cubism/Resources"
+  archive_core_dir: src/Cubism/Core
+  models_dir: src/Cubism/Resources
 
 # Custom code paths
 custom:
   # Path to adapter directory
-  adapter_dir: "src/adapter"
+  adapter_dir: src/adapter

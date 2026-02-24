@@ -19,6 +19,12 @@ export WEBSOCKET_AUTH_TOKEN=${WEBSOCKET_AUTH_TOKEN:-"your_secret_token_here"}
 export WEBSOCKET_ALLOWED_DIRS=${WEBSOCKET_ALLOWED_DIRS:-"${CURRENT_DIR}/allowed"}
 export WEBSOCKET_REQUIRE_AUTH=${WEBSOCKET_REQUIRE_AUTH:-"false"}
 
+if [ "${WEBSOCKET_REQUIRE_AUTH}" == "false" ] || [ -z "${WEBSOCKET_AUTH_TOKEN}" ]; then
+    export WEBSOCKET_ALLOWED_DIRS=""
+    export WEBSOCKET_AUTH_TOKEN=""
+    export WEBSOCKET_REQUIRE_AUTH=false
+fi
+
 ###################################
 # Function
 ###################################

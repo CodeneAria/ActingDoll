@@ -30,6 +30,44 @@ except Exception:
 class ConfigActingDoll:
     """Configuration class for Acting Doll project."""
 
+    def yaml_str(self) -> str:
+        yaml_str = yaml.dump({
+            "docker": {
+                "dockerfile": str(self.DOCKER_FILE_NAME),
+                "image": {
+                    "name": str(self.DOCKER_IMAGE_NAME),
+                    "version": str(self.DOCKER_IMAGE_VER)
+                },
+                "container": {
+                    "name": str(self.DOCKER_CONTAINER_NAME),
+                    "port_cubism": self.SERVER_PORT,
+                    "port_websocket": self.WEBSOCKET_PORT,
+                    "port_mcp": self.MCP_PORT
+                }
+            },
+            "cubism": {
+                "git_framework_repo": str(self.GIT_FRAMEWORK_REPO),
+                "git_framework_tag": str(self.GIT_FRAMEWORK_TAG),
+                "git_framework_dir_name": str(self.GIT_FRAMEWORK_DIR_NAME),
+
+                "git_sample_repo": str(self.GIT_SAMPLE_REPO),
+                "git_sample_tag": str(self.GIT_SAMPLE_TAG),
+                "git_sample_dir_name": str(self.GIT_SAMPLE_DIR_NAME),
+
+                "archive_core_dir": str(self.archive_core_path),
+                "models_dir": str(self.models_path),
+                "framework_dir": str(self.framework_dir)
+            },
+            "authentication": {
+                "token": str(self.REQUIRE_AUTH),
+                "dirs": [str(d) for d in self.ALLOWED_DIRS] if self.ALLOWED_DIRS else []
+            },
+            "custom": {
+                "adapter_dir": str(self.adapter_dir)
+            }
+        }, sort_keys=False)
+        return yaml_str
+
     def __init__(self, work_dir: Path):
         self.work_dir = work_dir
         self.DOCKER_FILE_NAME = self._path("Dockerfile")
@@ -44,8 +82,8 @@ class ConfigActingDoll:
         self.INNER_MCP_PORT = 3001
 
         # Authentication settings
-        self.AUTH_TOKEN: bool = True
-        self.REQUIRE_AUTH: str = "your_authentication_token_here"
+        self.REQUIRE_AUTH: bool = False
+        self.AUTH_TOKEN: str = ""
         self.ALLOWED_DIRS = []
 
         self.server_dir = f"/root/workspace/adapter"
@@ -122,8 +160,8 @@ class ConfigActingDoll:
                 if 'authentication' in config:
                     authentication = config['authentication']
                     self.AUTH_TOKEN = authentication.get('token', self.AUTH_TOKEN)
-                    self.REQUIRE_AUTH = str(authentication.get('require_auth', self.REQUIRE_AUTH)).lower()
-                    self.ALLOWED_DIRS = ':'.join(authentication.get('dirs', self.ALLOWED_DIRS))
+                    self.REQUIRE_AUTH = False if self.AUTH_TOKEN == "" else True
+                    self.ALLOWED_DIRS = ':'.join(authentication.get('allowed_dirs', self.ALLOWED_DIRS))
 
                 # Load Custom settings
                 if 'custom' in config:
@@ -610,104 +648,95 @@ def cmd_start_demo(config: ConfigActingDoll):
 
 
 # ============================================================================
+# COMMAND: template
+# ============================================================================
+def cmd_template(config: ConfigActingDoll, output_dir=None):
+    """Generate template files for Dockerfile and config.yaml."""
+
+    if output_dir is None:
+        output_dir = config.work_dir
+    else:
+        output_dir = Path(output_dir).resolve().absolute()
+
+    # Ensure output directory exists
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    logger.info("=" * 50)
+    logger.info("[Generate Template Files]")
+    logger.info(f"Output directory: {output_dir}")
+    logger.info("=" * 50)
+
+    # Write config.yaml template
+    config_path = output_dir / "config.yaml.template"
+    try:
+        yaml_template = ConfigActingDoll(output_dir).yaml_str()
+        with open(config_path, 'w', encoding='utf-8') as f:
+            f.write(yaml_template)
+        logger.info(f"✓ Generated: {config_path}")
+    except Exception as e:
+        logger.error(f"Failed to write config.yaml template: {e}")
+        sys.exit(1)
+
+    logger.info("=" * 50)
+    logger.info("Template files generated successfully!")
+    logger.info("=" * 50)
+
+
+def _get_directory(path: str = None) -> Path:
+    """Determine the working directory based on command-line arguments."""
+    try:
+        if path is not None:
+            work_dir = Path(path).resolve().absolute()
+        else:
+            work_dir = Path(__file__).parent.parent.parent.resolve()
+        os.chdir(work_dir)
+        logger.info(f"Working directory set to: {work_dir}")
+        return work_dir
+    except Exception as e:
+        logger.error(f"Failed to set working directory: {e}")
+        sys.exit(1)
+
+# ============================================================================
 # MAIN
 # ============================================================================
+
+
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
         description="Unified Docker container management for Cubism SDK Web"
     )
 
-    # Global arguments
-    parser.add_argument(
+    subparsers = parser.add_subparsers(dest='command', help='Commands')
+
+    # create command
+    create_parser = subparsers.add_parser(
+        'create',
+        help='Create Docker image and container'
+    )
+    create_parser.add_argument(
         '-c', '--config',
         type=str,
         default=None,
         help='Path to config.yaml (default: config.yaml)'
     )
-    parser.add_argument(
+    create_parser.add_argument(
         '-w', '--workspace',
         type=str,
         default=None,
         help='Path to workspace folder (default: current folder)'
     )
 
-    # Docker image settings
-    parser.add_argument(
-        '--docker-image-name',
-        type=str,
-        default='image_acting_doll',
-        help='Docker image name (overrides config.yaml)'
-    )
-    parser.add_argument(
-        '--docker-image-version',
-        type=str,
-        default=None,
-        help='Docker image version (overrides config.yaml)'
-    )
-
-    # Docker container settings
-    parser.add_argument(
-        '--docker-container-name',
-        type=str,
-        default='server_acting_doll',
-        help='Docker container name (overrides config.yaml)'
-    )
-
-    # Port mappings
-    parser.add_argument(
-        '--port-http',
-        type=int,
-        default=8080,
-        help='HTTP port mapping (overrides config.yaml)'
-    )
-    parser.add_argument(
-        '--port-websocket',
-        type=int,
-        default=8765,
-        help='WebSocket port mapping (overrides config.yaml)'
-    )
-    parser.add_argument(
-        '--port-mcp',
-        type=int,
-        default=3001,
-        help='MCP port mapping (overrides config.yaml)'
-    )
-
-    # Authentication settings
-    parser.add_argument(
-        '--auth-token',
-        type=str,
-        default=None,
-        help='Authentication token (overrides config.yaml)'
-    )
-
-    # Directory settings
-    parser.add_argument(
-        '--dirs-models',
-        type=str,
-        default=None,
-        help='Directories for models (overrides config.yaml)'
-    )
-    parser.add_argument(
-        '--cubism-core-zip',
-        type=str,
-        default=None,
-        help='Path to Cubism Core ZIP file (overrides config.yaml)'
-    )
-
-    subparsers = parser.add_subparsers(dest='command', help='Commands')
-
-    # create command
-    subparsers.add_parser(
-        'create',
-        help='Create Docker image and container'
-    )
-
     # build command
     build_parser = subparsers.add_parser(
         'build',
         help='Build project inside Docker container'
+    )
+    build_parser.add_argument(
+        '-c', '--config',
+        type=str,
+        default=None,
+        help='Path to config.yaml (default: config.yaml)'
     )
     build_parser.add_argument(
         '-p', '--production',
@@ -723,27 +752,63 @@ def main():
     )
 
     # clean command
-    subparsers.add_parser(
+    clean_parser = subparsers.add_parser(
         'clean',
         help='Clean build artifacts inside Docker container'
     )
+    clean_parser.add_argument(
+        '-c', '--config',
+        type=str,
+        default=None,
+        help='Path to config.yaml (default: config.yaml)'
+    )
 
     # exec command
-    subparsers.add_parser(
+    exec_parser = subparsers.add_parser(
         'exec',
         help='Execute shell inside Docker container'
     )
+    exec_parser.add_argument(
+        '-c', '--config',
+        type=str,
+        default=None,
+        help='Path to config.yaml (default: config.yaml)'
+    )
 
     # start command
-    subparsers.add_parser(
+    start_parser = subparsers.add_parser(
         'start',
         help='Start application server'
     )
+    start_parser.add_argument(
+        '-c', '--config',
+        type=str,
+        default=None,
+        help='Path to config.yaml (default: config.yaml)'
+    )
 
     # start_demo command
-    subparsers.add_parser(
+    start_demo_parser = subparsers.add_parser(
         'start_demo',
         help='Start demo application'
+    )
+    start_demo_parser.add_argument(
+        '-c', '--config',
+        type=str,
+        default=None,
+        help='Path to config.yaml (default: config.yaml)'
+    )
+
+    # template command
+    template_parser = subparsers.add_parser(
+        'template',
+        help='Generate template files for Dockerfile and config.yaml'
+    )
+    template_parser.add_argument(
+        '-o', '--output',
+        type=str,
+        default=None,
+        help='Output directory for template files (default: workspace root)'
     )
 
     args = parser.parse_args()
@@ -752,21 +817,28 @@ def main():
         parser.print_help()
         sys.exit(0)
 
-    if args.workspace:
-        work_dir = Path(args.workspace).resolve().absolute()
-    else:
-        work_dir = Path(__file__).parent.parent.parent.resolve()
+    try:
+        if args.command == 'template':
+            work_dir = Path(args.output).parent.resolve() if args.output else Path(
+                __file__).parent.parent.parent.resolve()
+        else:
+            work_dir = Path(args.workspace).resolve().absolute() if args.workspace else Path(
+                __file__).parent.parent.parent.resolve()
+    except Exception as e:
+        work_dir = Path(__file__).parent.resolve()
     os.chdir(work_dir)
 
     # Create and load configuration
     config = ConfigActingDoll(work_dir)
 
     # Load from YAML
-    if args.config:
-        config_path = Path(args.config).resolve().absolute()
-        config.load_from_yaml(config_path)
-    # Apply command-line arguments
-    config.apply_args(args)
+
+    if args.command != 'template':
+        if args.config is not None:
+            config_path = Path(args.config).resolve().absolute()
+            config.load_from_yaml(config_path)
+        # Apply command-line arguments
+        config.apply_args(args)
 
     # Execute command
     if args.command == 'create':
@@ -781,6 +853,12 @@ def main():
         cmd_start(config)
     elif args.command == 'start_demo':
         cmd_start_demo(config)
+    elif args.command == 'template':
+        cmd_template(config, args.output if hasattr(args, 'output') else None)
+    else:
+        logger.error(f"Unknown command: {args.command}")
+        parser.print_help()
+        sys.exit(1)
 
 
 if __name__ == "__main__":
