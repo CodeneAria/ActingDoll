@@ -216,12 +216,12 @@ __marimo__/
 **/doxygen
 **/node_modules
 **/CubismSdkForWeb*
-src/Cubism/Core
-src/Cubism/Resources
-src/adapter/public
+**/temp_adapter
+archives
+config
+src/Resources
 src/adapter/acting_doll/dist
 src/adapter/acting_doll/public
-src/Cubism/Framework
+src/adapter/Cubism
 src/adapter/allowed
-CubismSdkForWeb*
 package-lock.json

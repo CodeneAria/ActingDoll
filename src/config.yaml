@@ -1,30 +1,42 @@
-# Docker Configuration for Cubism SDK Web
-docker:
-  # Docker image settings
-  image:
-    name: image_acting_doll
-    version: latest
+# Docker container settings
+docker_container_name: Haru
 
-  # Docker container settings
-  container:
-    name: server_acting_doll
-    port_cubism: 8080
-    port_websocket: 8765
-    port_mcp: 3001
+# Configuration for creating the Docker container
+create:
+  # [REQUIRED]
+  # absolute or relative path to the workspace directory (where the REQUIRED files are located)
+  workspace: ../
+
+  # moc3 file for Cubism SDK Web
+  moc3_file: archives/Resources/Haru/Haru.moc3
+  # Archive file for Cubism SDK Web
+  sdk_archive: archives/CubismSdkForWeb-5-r.5-beta.3.zip
 
   # Dockerfile name
-  dockerfile: tools/CubismContainer/volume/Dockerfile
+  dockerfile: src/CubismContainer/volume/Dockerfile
+  # target directory for custom code
+  code_dir: src/adapter
 
-authentication:
-  # WEBSOCKET_AUTH_TOKEN
-  token: your_authentication_token_here
-  # WEBSOCKET_ALLOWED_DIRS
-  allowed_dirs: []
+  # [OPTIONAL]
+  # Docker image settings
+  docker_image_name: acting_doll_image
 
-# Cubism SDK settings
+# Docker Configuration for Cubism SDK Web
+settings:
+  # Docker container ports
+  port:
+    http: 8080
+    websocket: 8765
+    mcp: 3001
+  # Authentication settings for WebSocket connections
+  authentication:
+    token: your_authentication_token_here
+  # Enable or disable outputting the configuration as YAML
+  output_yaml: true
+
+# Cubism SDK information
 cubism:
   # Git repository and tag for Cubism Framework
-  framework_dir: src/Cubism/Framework
   git_framework_dir_name: Framework
   git_framework_repo: https://github.com/Live2D/CubismWebFramework.git
   git_framework_tag: 5-r.5-beta.3
@@ -33,12 +45,3 @@ cubism:
   git_sample_dir_name: Samples
   git_sample_repo: https://github.com/Live2D/CubismWebSamples.git
   git_sample_tag: 5-r.5-beta.3
-
-  # Path to archive directory
-  archive_core_dir: src/Cubism/Core
-  models_dir: src/Cubism/Resources
-
-# Custom code paths
-custom:
-  # Path to adapter directory
-  adapter_dir: src/adapter

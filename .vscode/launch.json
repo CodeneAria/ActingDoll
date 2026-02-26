@@ -54,6 +54,21 @@
                 "3002",
                 "--disable-auth"
             ]
+        },
+        {
+            "name": "[create] CubismContainer",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/CubismContainer/cubism_container.py",
+            "console": "integratedTerminal",
+            "args": [
+                "create",
+                "--config",
+                "${workspaceFolder}/src/config.yaml",
+                "--workspace",
+                "${workspaceFolder}",
+                "--output_yaml"
+            ]
         }
     ]
 }

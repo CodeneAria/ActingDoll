@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "cubism-container"
 version = "0.2.0"
@@ -8,3 +12,9 @@ dependencies = [
     "pyyaml",
 ]
 
+[tool.hatch.build.targets.wheel]
+include = [
+    "volume/Dockerfile",
+]
+[tool.setuptools.package-data]
+cubism-container = ["volume/Dockerfile"]

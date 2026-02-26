@@ -11,7 +11,7 @@
     "baseUrl": "./",
     "paths": {
       "@framework/*": [
-        "../../Cubism/Framework/src/*"
+        "../Cubism/Framework/src/*"
       ]
     },
     "noImplicitAny": true,
@@ -19,7 +19,7 @@
   },
   "include": [
     "src/**/*.ts",
-    "../../Cubism/Core/*.ts"
+    "../Cubism/Core/*.ts"
   ],
   "exclude": [
     "node_modules",
