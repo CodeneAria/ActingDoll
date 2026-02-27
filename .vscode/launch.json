@@ -66,8 +66,7 @@
                 "--config",
                 "${workspaceFolder}/src/config.yaml",
                 "--workspace",
-                "${workspaceFolder}",
-                "--output_yaml"
+                "${workspaceFolder}"
             ]
         },
         {

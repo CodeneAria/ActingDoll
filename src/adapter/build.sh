@@ -4,6 +4,7 @@
 # Settings
 ###################################
 CURRENT_DIR=$(dirname "$(readlink -f "$0")")
+CODE_DIR=$(readlink -f "/root/workspace/adapter")
 MCP_DIR=$(readlink -f "${CURRENT_DIR}/server")
 NODE_DIR=$(readlink -f "${CURRENT_DIR}/acting_doll")
 BUILD_MCP=${BUILD_MCP:-"true"}
@@ -67,6 +68,14 @@ if [ "${BUILD_MCP}" == "true" ]; then
     fi
 
     echo "=== Complete acting-doll-server ==="
+    update-model --workspace ${CODE_DIR}
+    ret=$?
+    if [ $ret -ne 0 ]; then
+        echo "=== Failed to update model. Please check the error messages above. ==="
+        exit $ret
+    fi
+else
+    python update_model.py
 fi
 
 ###############################################################################

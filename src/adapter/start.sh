@@ -3,9 +3,9 @@
 SCRIPT_RUNNING=${SCRIPT_RUNNING:-"true"}
 if [ "${SCRIPT_RUNNING}" != "true" ]; then
     pkill -f "npm" || true
+    pkill -f "acting_doll_server" || true
     pkill -f "acting-doll-server" || true
-    pkill -f "acting-doll-server" || true
-    echo "=== Script is already running. Exiting to prevent multiple instances. ==="
+    echo "# Stop command received. Exiting start script."
     exit 0
 fi
 
@@ -100,5 +100,5 @@ npm run start -- --port ${PORT_HTTP_NUMBER} --host ${HOST_ADDRESS}
 ###################################
 # Clean up: Stop application exits
 ###################################
-pkill -f "acting-doll-server" || true
+pkill -f "acting_doll_server" || true
 pkill -f "acting-doll-server" || true

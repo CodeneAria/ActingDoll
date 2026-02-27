@@ -33,6 +33,7 @@ dev = [
 
 [project.scripts]
 acting-doll-server = "acting_doll_server:run_acting_doll"
+update-model = "update_model:run_update_model"
 
 [tool.hatch.build.targets.wheel]
 packages = ["."]

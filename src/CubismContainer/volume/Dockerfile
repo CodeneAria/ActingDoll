@@ -7,7 +7,7 @@ ENV CUBISM_MODEL_DIR=/root/workspace/Cubism/Resources
 RUN apk add \
     python3 py3-pip py3-websockets \
     git
-RUN pip3 install --break-system-packages websockets build twine "mcp[cli]"
+RUN pip3 install --break-system-packages websockets "mcp[cli]"
 
 ###############################################################################
 # Set working directory
@@ -36,8 +36,7 @@ RUN unzip -q ${SDK_ARCHIVE}.zip \
 RUN cd ./adapter/server \
     && rm -rf dist/ build/ *.egg-info/ \
     && pip install --break-system-packages --root-user-action=ignore --upgrade ./ \
-    && python -m build . \
-    && twine check dist/*
+    && update-model
 
 ###############################################################################
 # Build pipelines for production

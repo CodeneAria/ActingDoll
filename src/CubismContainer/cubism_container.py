@@ -70,10 +70,6 @@ class ConfigActingDoll:
         self.DOCKER_IMAGE_VER = 'latest'
         self.DOCKER_CONTAINER_NAME = 'acting_doll_server_sample'
 
-        # Build settings
-        self.PRODUCTION: bool = True
-        self.OUTPUT_YAML: bool = True
-
         # Authentication settings
         self.PORT_CUBISM: int = 8080
         self.PORT_WEBSOCKET: int = 8765
@@ -83,6 +79,10 @@ class ConfigActingDoll:
         self.ALLOWED_DIRS = [
             "/root/workspace/adapter/allowed"
         ]
+
+        # Build settings
+        self.PRODUCTION: bool = True
+        self.OUTPUT_YAML: bool = True
 
         # Default configuration values: Cubism SDK Web
         self.VOLUME_SHARE = True
@@ -162,8 +162,8 @@ class ConfigActingDoll:
         if hasattr(args, 'workspace'):
             if args.workspace is not None:
                 self.WORKSPACE = Path(args.workspace).resolve().absolute()
-        if hasattr(args, 'output_yaml'):
-            self.OUTPUT_YAML = args.output_yaml
+        if hasattr(args, 'not_output_yaml'):
+            self.OUTPUT_YAML = not args.not_output_yaml
         if hasattr(args, 'docker_file'):
             if args.docker_file is not None:
                 path = self._path(args.docker_file)
@@ -331,9 +331,9 @@ def _docker_restart(config: ConfigActingDoll):
     try:
         logger.info(f"# Restarting container {config.DOCKER_CONTAINER_NAME}...")
         _run_command(f"docker restart {config.DOCKER_CONTAINER_NAME}", capture_output=True)
-        logger.info(f"Container {config.DOCKER_CONTAINER_NAME} restarted successfully")
+        logger.info(f" - Container {config.DOCKER_CONTAINER_NAME} restarted successfully")
     except Exception as e:
-        logger.error(f"Failed to restart container {config.DOCKER_CONTAINER_NAME}: {e}")
+        logger.error(f" - Failed to restart container {config.DOCKER_CONTAINER_NAME}: {e}")
 
 
 # ============================================================================
@@ -562,7 +562,10 @@ def cmd_exec(config: ConfigActingDoll):
     # Run npm start inside container
     logger.info("# Executing shell inside the container...")
     try:
-        npm_cmd = f'docker exec -it {config.DOCKER_CONTAINER_NAME} /bin/sh'
+        npm_cmd = (f'docker exec -it '
+                   f' -e SCRIPT_RUNNING=false'
+                   f' {config.DOCKER_CONTAINER_NAME} /bin/sh'
+                   )
         # Run the command and show output in real-time
         subprocess.run(npm_cmd, shell=True, check=True)
     except subprocess.CalledProcessError as e:
@@ -582,18 +585,17 @@ def cmd_stop_server(config: ConfigActingDoll):
         logger.info("# Stopping server inside Docker container...")
         cmd_stop = (
             f'docker exec -t'
-            f' -e SCRIPT_RUNNING="false"'
-            f' {config.DOCKER_CONTAINER_NAME} /bin/sh -c "cd {config.root_dir};/bin/sh build.sh"'
+            f' -e SCRIPT_RUNNING=false'
+            f' {config.DOCKER_CONTAINER_NAME} /bin/sh -c "cd {config.root_dir};/bin/sh start.sh"'
         )
         result = _run_command(cmd_stop, check=True)
         if result.returncode != 0:
             logger.error(f"Build failed.")
             sys.exit(1)
-        else:
-            logger.info(f"Build completed successfully!")
     except Exception as e:
         logger.error(f"Failed to rebuild project inside Docker container: {e}")
         sys.exit(1)
+    logger.info("# Server stop command executed. Please check container logs for details.")
 
 
 # ============================================================================
@@ -681,10 +683,10 @@ def main():
             help='Authentication token for WebSocket connections (default: empty, no authentication)'
         )
         create_parser.add_argument(
-            '--output_yaml',
+            '--not_output_yaml',
             action='store_true',
             default=True,
-            help='Output configuration to YAML file'
+            help='Do not output configuration to YAML file'
         )
 
         # build command
@@ -703,6 +705,12 @@ def main():
             action='store_true',
             default=False,
             help='Build in development mode (npm run build)'
+        )
+        build_parser.add_argument(
+            '--docker_container_name',
+            type=str,
+            default=None,
+            help='Name of the Docker container'
         )
         build_parser.add_argument(
             '--no_build_node_modules',
@@ -739,6 +747,12 @@ def main():
             default=None,
             help='Path to config.yaml'
         )
+        exec_parser.add_argument(
+            '--docker_container_name',
+            type=str,
+            default=None,
+            help='Name of the Docker container'
+        )
         # stop_server command
         stop_parser = subparsers.add_parser(
             'stop_server',
@@ -749,6 +763,12 @@ def main():
             type=str,
             default=None,
             help='Path to config.yaml'
+        )
+        stop_parser.add_argument(
+            '--docker_container_name',
+            type=str,
+            default=None,
+            help='Name of the Docker container'
         )
 
         ############################
