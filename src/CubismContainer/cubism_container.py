@@ -85,6 +85,9 @@ class ConfigActingDoll:
         ]
 
         # Default configuration values: Cubism SDK Web
+        self.VOLUME_SHARE = True
+        self.root_dir = "/root/workspace/adapter"
+
         self.GIT_FRAMEWORK_REPO = "https://github.com/Live2D/CubismWebFramework.git"
         self.GIT_FRAMEWORK_TAG = "5-r.5-beta.3"
         self.GIT_FRAMEWORK_DIR_NAME = "Framework"
@@ -323,6 +326,16 @@ def _docker_logs(config: ConfigActingDoll):
         logger.error(f"Failed to retrieve container logs: {e}")
 
 
+def _docker_restart(config: ConfigActingDoll):
+    """Restart Docker container."""
+    try:
+        logger.info(f"# Restarting container {config.DOCKER_CONTAINER_NAME}...")
+        _run_command(f"docker restart {config.DOCKER_CONTAINER_NAME}", capture_output=True)
+        logger.info(f"Container {config.DOCKER_CONTAINER_NAME} restarted successfully")
+    except Exception as e:
+        logger.error(f"Failed to restart container {config.DOCKER_CONTAINER_NAME}: {e}")
+
+
 # ============================================================================
 # COMMAND
 # ============================================================================
@@ -392,14 +405,7 @@ def cmd_docker_build(config: ConfigActingDoll):
         ref_dir = temp_root_dir.relative_to(config.WORKSPACE).as_posix()
         build_cmd = "docker build" \
             + f" --build-arg ADAPTER_DIR=./{ref_dir}" \
-            + f" --build-arg PORT_CUBISM={config.PORT_CUBISM}" \
-            + f" --build-arg PORT_WEBSOCKET={config.PORT_WEBSOCKET}" \
-            + f" --build-arg PORT_MCP={config.PORT_MCP}" \
             + f" --build-arg SDK_ARCHIVE={config.SDK_ARCHIVE.stem}" \
-            + f" --build-arg PRODUCTION={config.PRODUCTION}" \
-            + f" --build-arg WEBSOCKET_AUTH_TOKEN={config.AUTH_TOKEN}" \
-            + f" --build-arg WEBSOCKET_REQUIRE_AUTH={config.REQUIRE_AUTH}" \
-            + f" --build-arg WEBSOCKET_ALLOWED_DIRS={':'.join(config.ALLOWED_DIRS)}" \
             + f" -t {config.DOCKER_IMAGE_NAME}:{config.DOCKER_IMAGE_VER}" \
             + f" -f {str(config.DOCKER_FILE_NAME)}" \
             + f" {config.WORKSPACE}"
@@ -407,7 +413,7 @@ def cmd_docker_build(config: ConfigActingDoll):
         if result.returncode != 0:
             logger.error(f"Failed to build Docker image")
             sys.exit(1)
-    except subprocess.CalledProcessError as e:
+    except Exception as e:
         logger.error(f"Failed to build Docker image: {e}")
         sys.exit(1)
     finally:
@@ -436,6 +442,9 @@ def cmd_docker_run(config: ConfigActingDoll, hosting: bool = False):
             + f" -p {config.PORT_CUBISM}:{config.PORT_CUBISM}" \
             + f" -p {config.PORT_WEBSOCKET}:{config.PORT_WEBSOCKET}" \
             + f" -p {config.PORT_MCP}:{config.PORT_MCP}" \
+            + f" -e PORT_HTTP_NUMBER={config.PORT_CUBISM}" \
+            + f" -e PORT_WEBSOCKET_NUMBER={config.PORT_WEBSOCKET}" \
+            + f" -e PORT_MCP_NUMBER={config.PORT_MCP}" \
             + f" -e WEBSOCKET_AUTH_TOKEN={config.AUTH_TOKEN}" \
             + f" -e WEBSOCKET_REQUIRE_AUTH={config.REQUIRE_AUTH}" \
             + f" -e WEBSOCKET_ALLOWED_DIRS={':'.join(config.ALLOWED_DIRS)}" \
@@ -446,7 +455,7 @@ def cmd_docker_run(config: ConfigActingDoll, hosting: bool = False):
             sys.exit(1)
         else:
             logger.info("# -- Container setup completed successfully! --")
-    except subprocess.CalledProcessError as e:
+    except Exception as e:
         logger.error(f"Failed to start Docker container: {e}")
         sys.exit(1)
     if not hosting:
@@ -463,7 +472,7 @@ def cmd_docker_run(config: ConfigActingDoll, hosting: bool = False):
                 sys.exit(1)
             else:
                 logger.info("# -- Container setup completed successfully! --")
-        except subprocess.CalledProcessError as e:
+        except Exception as e:
             logger.error(f"Failed to copy Cubism SDK files from container: {e}")
             sys.exit(1)
 
@@ -475,67 +484,37 @@ def cmd_docker_run(config: ConfigActingDoll, hosting: bool = False):
     logger.info("=" * 50)
     logger.info("Docker Containers list:")
     result = _run_command(ps_filter_cmd, shell=True, capture_output=False)
-    logger.info("=" * 50)
     if result.returncode != 0:
         logger.error("[Error] Docker container setup failed!")
         sys.exit(1)
 
 
-def cmd_rebuild(config: ConfigActingDoll, is_production=False, is_mcp=False):
+def cmd_rebuild(config: ConfigActingDoll,
+                is_production: bool = True,
+                build_node: bool = True,
+                build_mcp: bool = True):
     """Build project inside Docker container."""
-    # Show running containers
-    logger.info("[Build model inside Cubism SDK for Web container]")
-    ps_filter_cmd = (
-        f'docker ps -a --filter "ancestor={config.DOCKER_IMAGE_NAME}:{config.DOCKER_IMAGE_VER}" '
-        f'--format "table {{{{.ID}}}}\\t{{{{.Image}}}}\\t{{{{.Status}}}}\\t{{{{.Names}}}}\\t{{{{.Ports}}}}"'
-    )
-    _run_command(ps_filter_cmd, capture_output=True)
-
     # Ensure container is running
     if not _ensure_container_running(config):
         sys.exit(1)
 
     try:
-        if is_mcp:
-            logger.info("# Install MCP tools")
-            mcp_cmd = (
-                f'docker exec -dit {config.DOCKER_CONTAINER_NAME} /bin/sh -c "'
-                f'cd {config.acting_doll_server_dir};'
-                f'/bin/sh build.sh'
-                f'"'
-            )
-            result = _run_command(mcp_cmd, shell=True, check=True)
-            if result.returncode != 0:
-                logger.error(f"Build failed.")
-                sys.exit(1)
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Running MCP setup failed: {e}")
-        sys.exit(1)
-
-    try:
-        # Run npm start inside container
-        logger.info("# npm install and build inside the container...")
-        build_mode = "production" if is_production else "development"
-        build_cmd = f'npm install -g npm && npm install' \
-            + f' && npm audit fix; ' \
-            + ("npm run build:prod" if is_production else "npm run build")
-        logger.info(f"# Build mode: {build_mode}")
-        # npm install -g npm && npm install && npm audit fix; npm run build
-        npm_cmd = (
-            f'docker exec -t {config.DOCKER_CONTAINER_NAME} /bin/sh -c "'
-            f'cd {config.acting_doll_dir};'
-            f'{build_cmd}'
-            f'"'
+        logger.info("# Rebuilding project inside Docker container...")
+        cmd_rebuild = (
+            f'docker exec -t'
+            f' -e PRODUCTION={"true" if is_production else "false"}'
+            f' -e BUILD_NODE={"true" if build_node else "false"}'
+            f' -e BUILD_MCP={"true" if build_mcp else "false"}'
+            f' {config.DOCKER_CONTAINER_NAME} /bin/sh -c "cd {config.root_dir};/bin/sh build.sh"'
         )
-
-        # Run the command and show output in real-time
-        result = _run_command(npm_cmd, shell=True, check=True)
+        result = _run_command(cmd_rebuild, check=True)
         if result.returncode != 0:
             logger.error(f"Build failed.")
             sys.exit(1)
-        logger.info("== Build completed ==")
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Running npm install and build failed: {e}")
+        else:
+            logger.info(f"Build completed successfully!")
+    except Exception as e:
+        logger.error(f"Failed to rebuild project inside Docker container: {e}")
         sys.exit(1)
 
 
@@ -560,7 +539,6 @@ def cmd_template(config: ConfigActingDoll, file_name: str = "config.yaml.templat
         logger.info("=" * 50)
         logger.info("[Generate Template Files]")
         logger.info(f"Generated: {config_path}")
-        logger.info("=" * 50)
     except Exception as e:
         logger.error(f"An error occurred while generating template files: {e}")
         sys.exit(1)
@@ -579,7 +557,6 @@ def cmd_exec(config: ConfigActingDoll):
             f'--format "table {{{{.ID}}}}\\t{{{{.Image}}}}\\t{{{{.Status}}}}\\t{{{{.Names}}}}\\t{{{{.Ports}}}}"'
         )
         _run_command(ps_filter_cmd)
-        logger.info("=" * 50)
         return
 
     # Run npm start inside container
@@ -593,6 +570,30 @@ def cmd_exec(config: ConfigActingDoll):
         pass
     except KeyboardInterrupt:
         logger.info("# Shutting down...")
+
+
+def cmd_stop_server(config: ConfigActingDoll):
+    """Stop the server inside Docker container."""
+    # Ensure container is running
+    if not _ensure_container_running(config):
+        sys.exit(1)
+
+    try:
+        logger.info("# Stopping server inside Docker container...")
+        cmd_stop = (
+            f'docker exec -t'
+            f' -e SCRIPT_RUNNING="false"'
+            f' {config.DOCKER_CONTAINER_NAME} /bin/sh -c "cd {config.root_dir};/bin/sh build.sh"'
+        )
+        result = _run_command(cmd_stop, check=True)
+        if result.returncode != 0:
+            logger.error(f"Build failed.")
+            sys.exit(1)
+        else:
+            logger.info(f"Build completed successfully!")
+    except Exception as e:
+        logger.error(f"Failed to rebuild project inside Docker container: {e}")
+        sys.exit(1)
 
 
 # ============================================================================
@@ -616,7 +617,7 @@ def main():
             '-c', '--config',
             type=str,
             default=None,
-            help='Path to config.yaml (default: config.yaml)'
+            help='Path to config.yaml'
         )
         create_parser.add_argument(
             '-w', '--workspace',
@@ -695,13 +696,25 @@ def main():
             '-c', '--config',
             type=str,
             default=None,
-            help='Path to config.yaml (default: config.yaml)'
+            help='Path to config.yaml'
         )
         build_parser.add_argument(
-            '-p', '--production',
+            '-d', '--development',
             action='store_true',
             default=False,
-            help='Build in production mode (npm run build:prod)'
+            help='Build in development mode (npm run build)'
+        )
+        build_parser.add_argument(
+            '--no_build_node_modules',
+            action='store_true',
+            default=False,
+            help='Do not build node_modules (skip npm install)'
+        )
+        build_parser.add_argument(
+            '--no_build_mcp',
+            action='store_true',
+            default=False,
+            help='Do not build MCP (skip MCP build)'
         )
 
         # template command
@@ -724,7 +737,18 @@ def main():
             '-c', '--config',
             type=str,
             default=None,
-            help='Path to config.yaml (default: config.yaml)'
+            help='Path to config.yaml'
+        )
+        # stop_server command
+        stop_parser = subparsers.add_parser(
+            'stop_server',
+            help='Stop Server Script'
+        )
+        stop_parser.add_argument(
+            '-c', '--config',
+            type=str,
+            default=None,
+            help='Path to config.yaml'
         )
 
         ############################
@@ -764,21 +788,30 @@ def main():
         if args.command == 'create':
             cmd_docker_build(config)
             cmd_docker_run(config, hosting=False)
-            _docker_clean(config, with_image=False)
-            cmd_docker_run(config, hosting=True)
+            if config.VOLUME_SHARE:
+                _docker_clean(config, with_image=False)
+                cmd_docker_run(config, hosting=True)
             if config.OUTPUT_YAML:
                 cmd_template(config,
                              file_name=f"{config.DOCKER_CONTAINER_NAME}.yaml",
                              output_dir=config.WORKSPACE / "config")
-            time.sleep(20)  # Wait for container to start
-            _docker_logs(config)
+            # _docker_logs(config)
+            logger.info("=" * 50)
+            logger.info("\t(HTTP)\thttp://localhost:{port}".format(port=config.PORT_CUBISM))
+            logger.info("\t(MCP)\thttp://localhost:{port}/sse".format(port=config.PORT_MCP))
         elif args.command == 'rebuild':
-            cmd_rebuild(config, args.production, args.add_mcp)
-            cmd_docker_run(config, hosting=True)
+            development: bool = args.development if hasattr(args, 'development') else False
+            build_node: bool = not args.no_build_node_modules if hasattr(
+                args, 'no_build_node_modules') else True
+            build_mcp: bool = not args.no_build_mcp if hasattr(args, 'no_build_mcp') else True
+            cmd_rebuild(config, not development, build_node, build_mcp)
+            _docker_restart(config)
         elif args.command == 'template':
             cmd_template(config, output_dir=args.output if hasattr(args, 'output') else None)
         elif args.command == 'exec':
             cmd_exec(config)
+        elif args.command == 'stop_server':
+            cmd_stop_server(config)
         else:
             parser.print_help()
             raise ValueError(f"Unknown command: {args.command}")

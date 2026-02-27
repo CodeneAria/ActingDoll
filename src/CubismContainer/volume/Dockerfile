@@ -42,18 +42,9 @@ RUN cd ./adapter/server \
 ###############################################################################
 # Build pipelines for production
 RUN cd ./adapter/acting_doll \
-    && npm install -g npm && npm install && npm audit fix;
+    && npm install -g npm && npm audit fix;
 RUN cd ./adapter/acting_doll \
     && npm run build:prod
-
-###############################################################################
-# Define build arguments
-ARG PORT_CUBISM=3000
-ARG PORT_WEBSOCKET=8765
-ARG PORT_MCP=3001
-ARG WEBSOCKET_AUTH_TOKEN=""
-ARG WEBSOCKET_REQUIRE_AUTH=false
-ARG WEBSOCKET_ALLOWED_DIRS=""
 
 ###############################################################################
 RUN echo -e "Created: $(date)\nCubismSDKForWEB: ${SDK_ARCHIVE}\nDEV: false" > ./adapter/__version__
@@ -64,4 +55,3 @@ WORKDIR /root/workspace/adapter
 
 # Expose WebSocket port
 ENTRYPOINT ["/bin/sh", "start.sh" ]
-#CMD ["python3", "acting_doll_server.py", "--host", "0.0.0.0", "--port", "8765"]

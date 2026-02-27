@@ -42,7 +42,7 @@
             "detail": "Dockerイメージとコンテナを作成する"
         },
         {
-            "label": "Docker:01_Build",
+            "label": "Docker:01_Rebuild",
             "type": "shell",
             "command": "python",
             "args": [
@@ -61,6 +61,18 @@
                 "${workspaceFolder}/src/adapter/server/update_model_dirs.py"
             ],
             "detail": "src/Cubism/Resources/ 以下のモデルディレクトリを参照するように lappdefine.ts を更新する"
-        }
+        },
+        {
+            "label": "Docker:stop_server",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "${workspaceFolder}/src/CubismContainer/cubism_container.py",
+                "stop_server",
+                "--config",
+                "${workspaceFolder}/src/config.yaml"
+            ],
+            "detail": "Dockerコンテナ内のサーバーを停止する"
+        },
     ]
 }
