@@ -5,11 +5,11 @@ Live2D Cubism SDK for Webを "Dockerコンテナ"で動作させるためのツ�
 ## 必要なもの
 
 - Docker
-- Python 3.6以上
+- Python 3.12 以上
 - PyYAML (`pip install pyyaml`)
-- Live2D Cubism SDK for Web (CubismSdkForWeb-5-r.4)
-  - 上記のSDK内に含まれるCoreファイルを `./volume/Core/` に配置する必要があります。
-- 利用したい組み込み用Live2Dモデルデータ（`./src/adapter/resources/` に配置）
+- Live2D Cubism SDK for Web (5-r.5-beta.3)
+  - `archives/` フォルダに `CubismSdkForWeb-5-r.5-beta.3.zip` を配置
+- Live2D モデルデータ（`src/adapter/Resources/` に配置） - オプション
 
 ## セットアップ
 
@@ -25,112 +25,102 @@ Live2D Cubism SDK for Webを以下のURLからダウンロードしてくださ�
 
 **https://www.live2d.com/sdk/download/web/**
 
-ダウンロードした `CubismSdkForWeb-*.zip` を 展開し、Coreフォルダの中身を `./volume/Core/` ディレクトリに配置してください。
-"Cubism Core for Web"は、"live2dcubismcore.min.js"しかなくビルドに失敗するため"Cubism SDK for Web"を使用してください。
+ダウンロードした `CubismSdkForWeb-*.zip` を `archives/` フォルダに配置してください。
+このファイルは `create` コマンド実行時に自動的に展開されます。
 
 ```tree
-tools/CubismContainer/
-  └── volume/
-      └── Core/
-          ├── live2dcubismcore.d.ts
-          ├── live2dcubismcore.js
-          ├── live2dcubismcore.js.map
-          ├── live2dcubismcore.min.js
-          └── ... (その他のCoreファイル)
+Archives/
+  └── CubismSdkForWeb-5-r.5-beta.3.zip
 ```
 
-### 3. Dockerコンテナの作成
+### 3. コンテナの作成と起動
 
 ```bash
-python cubism_container.py create
+python cubism_container.py create --workspace . --config config/config.yaml
 ```
 
 このコマンドは以下の処理を実行します:
 
 1. 設定ファイル (`config.yaml`) を読み込み
-2. Cubism Coreファイルの存在を確認
-3. 既存のコンテナとイメージがあれば削除
-4. Dockerイメージをビルド
-   1. GitHub から Cubism Web Samples をクローン（または既存リポジトリをチェックアウト）
-   2. Cubism Core ファイルをSDKディレクトリにコピー
-   3. コンテナ内でnpm installとnpm run buildを実行
+2. モデルデータを更新
+3. Dockerイメージをビルド
+   - GitHub から Cubism Framework をクローン
+   - SDK アーカイブを展開して Framework に統合
+   - コンテナ内で npm install とビルドを実行
+4. Dockerコンテナを起動
+   - http://localhost:8080 でHTTPサーバーが起動
+   - WebSocket は localhost:8765 で待機
 
-エラーが発生した場合は処理を中断し、エラーメッセージを表示します。
+完了後、ブラウザで http://localhost:8080 にアクセスしてください。
 
-### 4. ビルド
+## コマンドリファレンス
 
-```bash
-# 開発モードでMCP対応
-python cubism_container.py build --add_mcp
-
-# 本番モードでMCP対応
-python cubism_container.py build --production --add_mcp
-```
-
-### 5. サーバーの起動
+### create
+Docker イメージとコンテナを作成して起動します。
 
 ```bash
-python cubism_container.py start
+python cubism_container.py create \
+  --workspace . \
+  --config config/config.yaml
 ```
 
-このコマンドは以下の処理を実行します:
+**主要オプション:**
+- `--workspace`: ワークスペースのパス
+- `--config`: config.yaml のパス
+- `--docker_image_name`: Docker イメージ名（デフォルト: image_acting_doll）
+- `--docker_container_name`: Docker コンテナ名
+- `--port_http`: HTTP サーバーポート
+- `--port_websocket`: WebSocket ポート
 
-1. 設定ファイル (`config.yaml`) を読み込み
-2. Dockerコンテナを起動
-3. サーバーを起動
-   1. http://localhost:5000 でアクセス可能になります
-
-終了する場合は `Ctrl+C` を押してください。
-
-### 6. デモアプリの起動
+### rebuild
+コンテナ内でプロジェクトを再ビルドします。
 
 ```bash
-python cubism_container.py start_demo
+python cubism_container.py rebuild --config config/config.yaml
 ```
 
-### 7. コンテナ内のシェルアクセス
+**主要オプション:**
+- `--config`: config.yaml のパス
+- `-d, --development`: 開発モードでビルド
+- `--docker_container_name`: Docker コンテナ名
+- `--no_build_node_modules`: node_modules をビルドしない
+- `--no_build_mcp`: MCP をビルドしない
+
+### template
+テンプレートファイル（config.yaml, Dockerfile）を生成します。
 
 ```bash
-python cubism_container.py exec
+python cubism_container.py template --output config/
 ```
 
-### 8. ビルド成果物のクリーンアップ
+### exec
+コンテナ内のシェルにアクセスします。
 
 ```bash
-python cubism_container.py clean
+python cubism_container.py exec --config config/config.yaml
 ```
 
-## ファイル構成
+### stop_server
+サーバーを停止します。
 
-- `cubism_container.py` - 統合された全機能のスクリプト（create, build, clean, exec, start, start_demo）
-- `config.yaml` - 設定ファイル
-- `volume/`
-  - `Dockerfile` - Dockerイメージの定義
-  - `Core/` - Cubism Coreファイルの配置ディレクトリ
+```bash
+python cubism_container.py stop_server --config config/config.yaml
+```
 
 ## 設定
 
 設定は `config.yaml` ファイルで管理されています。
 
-デフォルトの設定:
+**主要な設定項目:**
 
-- docker:
-
-| Key            | デフォルト値      | 概要                       |
-| -------------- | ----------------- | -------------------------- |
-| dockerfile     | volume/Dockerfile | Dockerfileのパス           |
-| image.name     | img_node          | Dockerイメージ名           |
-| image.version  | latest            | Dockerイメージのバージョン |
-| container.name | node_server       | Dockerコンテナ名           |
-| container.port | 5000              | コンテナのポート番号       |
-
-- cubism:
-
-| Key              | デフォルト値                                   | 概要               |
-| ---------------- | ---------------------------------------------- | ------------------ |
-| sdk_git_repo     | https://github.com/Live2D/CubismWebSamples.git | SDK Git リポジトリ |
-| sdk_git_tag      | 5-r.4                                          | SDK Git タグ       |
-| archive_core_dir | ./volume/Core                                  | Core配置パス       |
+| キー                  | デフォルト値                                 | 説明                     |
+| --------------------- | -------------------------------------------- | ------------------------ |
+| docker.image.name     | acting_doll_image                            | Docker イメージ名        |
+| docker.container.name | acting_doll_server_sample                    | Docker コンテナ名        |
+| server.port.cubism    | 8080                                         | HTTP サーバーポート      |
+| server.port.websocket | 8765                                         | WebSocket ポート         |
+| cubism.framework_repo | https://github.com/Live2D/CubismWebFramework | Framework Git リポジトリ |
+| cubism.framework_tag  | 5-r.5-beta.3                                 | Framework Git タグ       |
 
 
 設定を変更する場合は、`config.yaml` ファイルを編集してください。

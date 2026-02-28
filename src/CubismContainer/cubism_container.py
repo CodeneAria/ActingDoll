@@ -35,7 +35,7 @@ class ConfigActingDoll:
     """Configuration class for Acting Doll project."""
 
     def __init__(self, work_dir: Path):
-        self.WORKSPACE = Path(work_dir).resolve().absolute() if work_dir else Path(__file__).parent.parent.resolve()
+        self.WORKSPACE = Path(work_dir).resolve().absolute() if work_dir else Path.cwd()
         # Default configuration values: Create command
         self.DOCKER_FILE_NAME: Path = self._path('src/CubismContainer/volume/Dockerfile')
         self.SDK_ARCHIVE: Path = self._path('archives/CubismSdkForWeb-5-r.5-beta.3.zip')
@@ -117,18 +117,18 @@ class ConfigActingDoll:
             f"  workspace: {self.WORKSPACE}\n"
             f"\n"
             f"  # Archive file for Cubism SDK Web\n"
-            f"  sdk_archive: {str(self.SDK_ARCHIVE.relative_to(self.WORKSPACE).as_posix())}\n"
+            f"  sdk_archive: {'<your_sdk_archive_here>' if self.SDK_ARCHIVE is None else self.SDK_ARCHIVE.relative_to(self.WORKSPACE).as_posix()}\n"
             f"\n"
             f"  # Dockerfile name\n"
-            f"  dockerfile: {str(self.DOCKER_FILE_NAME.relative_to(self.WORKSPACE).as_posix())}\n"
+            f"  dockerfile: {'<your_dockerfile_here>' if self.DOCKER_FILE_NAME is None else self.DOCKER_FILE_NAME.relative_to(self.WORKSPACE).as_posix()}\n"
             f"  # target directory for custom code\n"
-            f"  code_dir: {str(self.CODE_DIRECTORY.relative_to(self.WORKSPACE).as_posix())}\n"
+            f"  code_dir: {'<your_code_directory_here>' if self.CODE_DIRECTORY is None else self.CODE_DIRECTORY.relative_to(self.WORKSPACE).as_posix()}\n"
             f"\n"
             f"  # [OPTIONAL]\n"
             f"  # Docker image settings\n"
             f"  docker_image_name: {self.DOCKER_IMAGE_NAME}\n"
             f"moc3:\n"
-            f"  file: {str(self.MOC3_FILE.relative_to(self.WORKSPACE).as_posix())}\n"
+            f"  file: {'<your_moc3_file_here>' if self.MOC3_FILE is None else self.MOC3_FILE.relative_to(self.WORKSPACE).as_posix()}\n"
             f"  scale: {self.MOC3_SCALE}\n"
             f"  horizontal: {self.MOC3_HORIZONTAL}\n"
             f"  vertical: {self.MOC3_VERTICAL}\n"
@@ -146,7 +146,7 @@ class ConfigActingDoll:
             f"    websocket: {self.PORT_WEBSOCKET}\n"
             f"  # Authentication settings for WebSocket connections\n"
             f"  authentication:\n"
-            f"    token: {self.AUTH_TOKEN}\n"
+            f"    token: {'<your_authentication_token_here>' if self.AUTH_TOKEN == "" else self.AUTH_TOKEN}\n"
             f"  # Enable or disable outputting the configuration as YAML\n"
             f"  output_yaml: {self.OUTPUT_YAML}\n"
             f"\n"
@@ -617,7 +617,7 @@ def cmd_rebuild(config: ConfigActingDoll,
         sys.exit(1)
 
 
-def cmd_template(config: ConfigActingDoll, file_name: str = "config.yaml.template", output_dir: str = None):
+def cmd_template(config: ConfigActingDoll, file_name: str = "template.config.yaml", output_dir: str = None):
     """Generate template files for Dockerfile and config.yaml."""
     try:
         output: Path = Path(output_dir).resolve().absolute() if output_dir is not None else config.WORKSPACE
@@ -757,7 +757,7 @@ def main():
         create_parser.add_argument(
             '-w', '--workspace',
             type=str,
-            default=Path(__file__).parent.resolve(),
+            default=Path.cwd(),
             help='Path to workspace folder (default: current folder)'
         )
         create_parser.add_argument(
@@ -918,9 +918,9 @@ def main():
                 if path_str is not None and path_str != "":
                     work_dir = Path(path_str).resolve().absolute()
                 else:
-                    work_dir = Path(__file__).parent.resolve().absolute()
+                    work_dir = Path.cwd()
             except Exception as e:
-                work_dir = Path(__file__).parent.resolve().absolute()
+                work_dir = Path.cwd()
             # logger.info(f"Working directory set to: {work_dir}")
             os.chdir(work_dir)
             return work_dir
