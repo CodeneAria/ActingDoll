@@ -4,7 +4,7 @@ WebSocketとMCPプロトコルの両方をサポートする、Live2Dモデル�
 
 ## 概要
 
-このパッケージは、Live2DクライアントとのWebSocket通信と、LLM（Claude Desktop等）からのMCP経由制御の両方を1つのサーバーで実現します。
+このパッケージは、Live2DクライアントとのWebSocket通信と、LLM（Claude Desktop等）からのMCP経由制御の両方を1つのサーバーで実現します。Cubism ControllerとMCPサーバーは独立して制御でき、必要に応じてどちらか一方、または両方を実行できます。
 
 ## 機能
 
@@ -51,85 +51,104 @@ pip install -e ".[all]"
 インストール後、`acting-doll-server` コマンドが利用可能になります：
 
 ```bash
-# Cubism Controllerモード
-acting-doll-server --mode cubism --port 8766 --disable-auth
+# デフォルト（Cubism + MCP streamable-http両方起動）
+acting-doll-server --disable-auth
 
-# MCPサーバーのみ
-acting-doll-server --mode mcp_sse --model-dir /path/to/models
+# Cubismのみを起動（MCPを無効化）
+acting-doll-server --mode_mcp none --disable-auth
 
-# 両方同時実行（推奨）
-acting-doll-server --mode both --port 8766 --disable-auth
+# MCPのみを起動（Cubismを無効化）
+acting-doll-server --mode_stop_cubism
+
+# MCP SSEモードで起動
+acting-doll-server --mode_mcp sse --disable-auth
+
+# MCP標準入力モードで起動
+acting-doll-server --mode_mcp stdin --disable-auth
 ```
 
-### モード説明
+### サーバーモード
 
-#### 1. Cubism Controllerモード（`--mode cubism`）
+#### デフォルトモード（推奨）
+
+Cubism ControllerとMCP（streamable-http）を同時実行します。
+
+```bash
+acting-doll-server --host 127.0.0.1 --port 8765 --mcp-port 3001 --disable-auth
+```
+
+- WebSocket: `ws://127.0.0.1:8765`
+- MCP: `http://127.0.0.1:3001/mcp` (streamable-http)
+- 1つのプロセスで両方を処理
+
+#### Cubismのみモード
 
 Live2DクライアントとのWebSocket通信のみを行います。
 
 ```bash
-acting-doll-server --mode cubism --port 8766 --host localhost --disable-auth
+acting-doll-server --mode_mcp none --port 8765 --disable-auth
 ```
 
-- Live2Dクライアントは `ws://localhost:8766` に接続
+- WebSocket: `ws://127.0.0.1:8765`
+- MCPは起動しない
 - コンソールから対話的にコマンド実行可能（`--console`で有効化）
 
-#### 2. MCPモード（`--mode mcp_sse`）
+#### MCPのみモード
 
-LLMからのHTTP SSE経由制御のみを行います。
+MCP経由の制御のみを行います。
 
 ```bash
-acting-doll-server --mode mcp_sse --model-dir src/Cubism/Resources --mcp-port 3001
+acting-doll-server --mode_stop_cubism --mode_mcp sse --mcp-port 3001
 ```
 
-- MCPをSSE経由で操作するモード（MCPと接続は別サーバーとして動作させたい場合のモード）
+- MCPサーバー: `http://127.0.0.1:3001/sse` (SSE)
+- Cubism Controllerは起動しない
 - Claude Desktop等のMCPクライアントから使用
-- HTTP SSE経由で通信（デフォルトポート: 3001、エンドポイント: `/sse`）
 
-#### 3. MCPモード（`--mode mcp_stdin`）
+#### MCP SSEモード
 
-LLMからの標準入力経由制御のみを行います。
-
-```bash
-acting-doll-server --mode mcp_stdin --model-dir src/Cubism/Resources --mcp-port 3001
-```
-
-- MCPを標準入力経由で操作するモード（MCPを同PC内で動作させたい場合のモード）
-- Claude Desktop等のMCPクライアントから使用
-- 標準入力経由で通信し、Cubism Controllerにコマンドを送信
-
-#### 4. 両方モード（`--mode both`）
-
-WebSocketとMCPを同時実行します。
+MCPをSSE（Server-Sent Events）経由で操作する場合：
 
 ```bash
-acting-doll-server --mode both --port 8766 --mcp-port 3001 --disable-auth
+acting-doll-server --mode_mcp sse --mcp-port 3001
 ```
 
-- WebSocket: `ws://localhost:8766`
-- MCP: HTTP SSE経由（ポート: 3001、エンドポイント: `/sse`）
-- 1つのプロセスで両方を処理
+- HTTP SSE経由で通信
+- エンドポイント: `http://127.0.0.1:3001/sse`
+
+#### MCP標準入力モード
+
+MCPを標準入力経由で操作する場合：
+
+```bash
+acting-doll-server --mode_mcp stdin --mcp-port 3001
+```
+
+- 標準入力/標準出力経由で通信
+- MCPを同PC内で常時実行する場合に使用
 
 ### コマンドライン引数
 
-```
---mode {websocket,mcp,both}  動作モード（デフォルト: websocket）
---model-dir PATH             モデルディレクトリのパス
---host HOST                  WebSocketおよびMCPサーバーのホスト（デフォルト: localhost）
---port PORT                  Cubism Controllerのポート（デフォルト: 8765）
---mcp-port PORT              MCPサーバーのポート（デフォルト: 3001）
---console                 対話型コンソールを有効化
---disable-auth               認証を無効化（セキュリティリスクに注意）
-```
+| 引数                 | 型                        | デフォルト値         | 説明                                                                                               |
+| -------------------- | ------------------------- | -------------------- | -------------------------------------------------------------------------------------------------- |
+| `--mode_mcp`         | {shttp, sse, stdin, none} | shttp                | MCPプロトコルモード（shttp:streamable-http, sse:Server-Sent Events, stdin:標準入力, none:MCP無効） |
+| `--mode_stop_cubism` | フラグ                    | False                | Cubism Controllerを無効化（このフラグが指定されるとCubismが起動しない）                            |
+| `--model-dir`        | PATH                      | src/Cubism/Resources | モデルディレクトリのパス（環境変数:`CUBISM_MODEL_DIR`）                                            |
+| `--host`             | HOST                      | 127.0.0.1            | WebSocketサーバーのホスト（環境変数:`WEBSOCKET_HOST`）                                             |
+| `--port`             | PORT                      | 8765                 | Cubism Controllerのポート（環境変数:`WEBSOCKET_PORT`）                                             |
+| `--mcp-port`         | PORT                      | 3001                 | MCPサーバーのポート                                                                                |
+| `--console`          | フラグ                    | False                | 対話型コンソールを有効化（MCPが起動している場合は無視）                                            |
+| `--disable-auth`     | フラグ                    | False                | 認証を無効化（セキュリティリスクに注意）                                                           |
+| `--version`          | -                         | -                    | バージョン情報を表示                                                                               |
 
 ### Claude Desktopでの使用
 
-Claude Desktopの設定ファイル（`claude_desktop_config.json`）に以下を追加：
-
-**注**: MCPサーバーは内部的にHTTP SSE (Server-Sent Events) で通信します。以下の設定により、Claude DesktopがMCPサーバープロセスを起動し、`http://localhost:3001/sse`で通信が行われます。
+Claude Desktopの設定ファイル（`claude_desktop_config.json`）にサーバーを追加してください。
 
 #### Windows
 設定ファイルの場所: `%APPDATA%\Claude\claude_desktop_config.json`
+
+**streamable-httpモード（推奨）**
 
 ```json
 {
@@ -137,25 +156,42 @@ Claude Desktopの設定ファイル（`claude_desktop_config.json`）に以下�
     "acting-doll": {
       "command": "acting-doll-server",
       "args": [
-        "--mode",
-        "mcp",
+        "--mode_mcp",
+        "shttp",
+        "--model-dir",
+        "C:/path/to/models"
+      ],
+      "env": {}
+    }
+  }
+}
+```
+
+**SSEモード**
+
+```json
+{
+  "mcpServers": {
+    "acting-doll": {
+      "command": "acting-doll-server",
+      "args": [
+        "--mode_mcp",
+        "sse",
         "--model-dir",
         "C:/path/to/models",
         "--mcp-port",
         "3001"
       ],
-      "env": {},
-      "transport": {
-        "type": "sse",
-        "url": "http://localhost:3001/sse"
-      }
+      "env": {}
     }
   }
 }
 ```
 
 #### macOS/Linux
-設定ファイルの場所: `~/Library/Application Support/Claude/claude_desktop_config.json`
+設定ファイルの場所: `~/.config/Claude/claude_desktop_config.json`
+
+**streamable-httpモード（推奨）**
 
 ```json
 {
@@ -163,24 +199,18 @@ Claude Desktopの設定ファイル（`claude_desktop_config.json`）に以下�
     "acting-doll": {
       "command": "acting-doll-server",
       "args": [
-        "--mode",
-        "mcp",
+        "--mode_mcp",
+        "shttp",
         "--model-dir",
-        "/path/to/models",
-        "--mcp-port",
-        "3001"
+        "/path/to/models"
       ],
-      "env": {},
-      "transport": {
-        "type": "sse",
-        "url": "http://localhost:3001/sse"
-      }
+      "env": {}
     }
   }
 }
 ```
 
-MCPポートを変更する場合は、`--mcp-port`引数を追加してください：
+**SSEモード**
 
 ```json
 {
@@ -188,12 +218,12 @@ MCPポートを変更する場合は、`--mcp-port`引数を追加してくだ�
     "acting-doll": {
       "command": "acting-doll-server",
       "args": [
-        "--mode",
-        "mcp",
+        "--mode_mcp",
+        "sse",
         "--model-dir",
         "/path/to/models",
         "--mcp-port",
-        "3002"
+        "3001"
       ],
       "env": {}
     }
@@ -444,18 +474,18 @@ pip install build
 python -m build
 
 # 生成されたファイル
-# dist/acting_doll_server-0.1.0-py3-none-any.whl
-# dist/acting_doll_server-0.1.0.tar.gz
+# dist/acting_doll_server-*-py3-none-any.whl
+# dist/acting_doll_server-*.tar.gz
 ```
 
 ### ローカルでのインストールテスト
 
 ```bash
 # wheelからインストール
-pip install dist/acting_doll_server-0.1.0-py3-none-any.whl
+pip install dist/acting_doll_server-*-py3-none-any.whl
 
 # または tar.gz から
-pip install dist/acting_doll_server-0.1.0.tar.gz
+pip install dist/acting_doll_server-*.tar.gz
 ```
 
 ### PyPIへの公開（メンテナ向け）

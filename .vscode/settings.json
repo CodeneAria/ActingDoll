@@ -1,4 +1,17 @@
 {
+    "[shellscript]": {
+        "files.eol": "\n"
+    },
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        "**/.pytest_cache": true,
+        "**/__pycache__": true,
+        "**/node_modules": true,
+    },
     "cSpell.words": [
         "Abstra",
         "acubismmotion",
@@ -75,15 +88,19 @@
         "pypackages",
         "pypirc",
         "pytest",
+        "pythonpath",
         "pytype",
+        "pyyaml",
         "retval",
         "ropeproject",
         "Scrapy",
         "sdist",
+        "shttp",
         "Spyder",
         "spyderproject",
         "spyproject",
         "starlette",
+        "streamable",
         "subdelegate",
         "subdelegates",
         "testpaths",

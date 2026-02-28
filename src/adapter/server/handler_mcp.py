@@ -15,6 +15,7 @@ from typing import Any
 
 logger = logging.getLogger("MCPHandler")
 logging.getLogger('docket.worker').setLevel(logging.WARNING)
+logging.getLogger('mcp.server.streamable_http_manager').setLevel(logging.WARNING)
 
 mcp_server = None  # グローバルなMCPサーバーインスタンス
 
@@ -427,13 +428,13 @@ class MCPHandler:
                 await asyncio.sleep(3)
 
     async def run(self, websocket_url: str, host: str, port: int,
-                  is_stdio: bool, delay_start: float):
+                  delay_start: float, transport: str = "streamable-http"):
         """MCPサーバーを実行"""
         self.is_running = True
         try:
             await self.setup_websocket(websocket_url, delay_start)
 
-            if is_stdio:
+            if transport == "stdio":
                 # 標準入出力で動かす場合
                 await self.mcp.run_async(transport="stdio",
                                          log_level=self.log_level,
@@ -442,9 +443,9 @@ class MCPHandler:
                 # Uvicornのログフォーマットをカスタマイズ
                 log_config = uvicorn.config.LOGGING_CONFIG
                 log_config["formatters"]["default"]["fmt"] = \
-                    "%(levelname)s: %(asctime)s [MCP/Uvicorn]\t%(message)s"
+                    "[%(asctime)s] %(levelname)s\t[MCP/Uvicorn]\t%(message)s"
                 log_config["formatters"]["access"]["fmt"] = \
-                    '%(levelname)s: %(asctime)s [MCP/Access]\t%(client_addr)s - "%(request_line)s" %(status_code)s'
+                    '[%(asctime)s] %(levelname)s\t[MCP/Access]\t%(client_addr)s - "%(request_line)s" %(status_code)s'
                 uvicorn_config: dict[str, Any] = {
                     "log_config": log_config,
                     "log_level": "info"
@@ -453,16 +454,25 @@ class MCPHandler:
                 #   middleware: list[ASGIMiddleware] = None
                 #   json_response: bool = False
                 #   stateless_http: bool = False
-                transport = "sse"  # or "streamable-http"
-                await self.mcp.run_async(
-                    transport=transport,
-                    host=host,
-                    port=port,
-                    path="/sse",
-                    log_level=self.log_level,
-                    uvicorn_config=uvicorn_config,
-                    show_banner=False
-                )
+                if transport == "sse":
+                    await self.mcp.run_async(
+                        transport="sse",
+                        host=host,
+                        port=port,
+                        path="/sse",
+                        log_level=self.log_level,
+                        uvicorn_config=uvicorn_config,
+                        show_banner=False
+                    )
+                else:
+                    await self.mcp.run_async(
+                        transport="streamable-http",
+                        host=host,
+                        port=port,
+                        log_level=self.log_level,
+                        uvicorn_config=uvicorn_config,
+                        show_banner=False
+                    )
         except KeyboardInterrupt:
             logger.info("MCPサーバーを停止しました")
         except Exception as e:
@@ -493,8 +503,8 @@ async def stop_mcp_server():
 
 async def run_mcp(websocket_url: str = "ws://localhost:8765",
                   host: str = "0.0.0.0", port: int = 3001,
-                  is_stdio: bool = False,
-                  delay_start: float = 0.5):
+                  delay_start: float = 0.5,
+                  transport: str = "streamable-http"):
     """
     MCP サーバーのエントリーポイント
 
@@ -511,7 +521,7 @@ async def run_mcp(websocket_url: str = "ws://localhost:8765",
         mcp_server = MCPHandler()
         await mcp_server.run(websocket_url=websocket_url,
                              host=host, port=port,
-                             is_stdio=is_stdio,
+                             transport=transport,
                              delay_start=delay_start)
     except Exception as e:
         raise RuntimeError(f"<MCP>{e}")

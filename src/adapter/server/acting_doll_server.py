@@ -20,7 +20,7 @@ mcp_task: Optional[asyncio.Task] = None
 cubism_task: Optional[asyncio.Task] = None
 
 
-str_format = '%(levelname)s: %(asctime)s [%(name)s]\t%(message)s'
+str_format = '[%(asctime)s] %(levelname)s\t[%(name)s]\t%(message)s'
 # ロギング設定
 logging.basicConfig(
     level=logging.INFO,
@@ -39,15 +39,21 @@ def _parse_args():
     parser.add_argument('-v', '--version', action='version',
                         version=f'%(prog)s {__version__}')
     parser.add_argument(
-        '--mode',
+        '--mode_mcp',
         type=str,
-        choices=['cubism', 'mcp_sse', 'mcp_stdin', 'both'],
-        default='both',
+        choices=['shttp', 'sse', 'stdin', 'none'],
+        default='shttp',
         help='サーバーモード: '
-        'cubism(CubismControllerのみ), '
-        'mcp_sse(MCP SSEのみ), '
-        'mcp_stdin(MCP STDINのみ), '
-        'both(CubismControllerとMCP SSEを起動)'
+        'shttp(MCP streamable-http), '
+        'sse(MCP SSE), '
+        'stdin(MCP STDIN), '
+        'none(サーバー起動なし)'
+    )
+    parser.add_argument(
+        '--mode_stop_cubism',
+        action='store_true',
+        default=False,
+        help='CubismControllerを起動しないフラグ（指定しない場合は起動します）'
     )
     parser.add_argument(
         '--model-dir',
@@ -111,23 +117,23 @@ async def _run_acting_doll():
         # モードに応じた処理
         ##################################################
         # MCPモード
-        if args.mode == 'mcp_sse' or args.mode == 'mcp_stdin' or args.mode == 'both':
+        if args.mode_mcp == 'sse' or args.mode_mcp == 'shttp' or args.mode_mcp == 'stdin':
             mcp_task = asyncio.create_task(run_mcp(
                 websocket_url=websocket_url,
                 host=host, port=args.mcp_port,
-                is_stdio=False if args.mode != 'mcp_stdin' else True,
-                delay_start=0.0 if args.mode != 'both' else 0.5
+                transport=args.mode_mcp,
+                delay_start=0.5 if not args.mode_stop_cubism else 0.0
             ))
 
         # cubismモード
-        if args.mode == 'cubism' or args.mode == 'both':
+        if not args.mode_stop_cubism:
             from handler_mcp import stop_mcp_server
             cubism_task = asyncio.create_task(run_websocket(
                 host=host, port=port,
                 security_config=security_config,
                 stop_mcp_server=stop_mcp_server,
                 model_dir=args.model_dir,
-                console=args.console if args.mode != 'mcp_stdin' else False,
+                console=args.console if args.mode_mcp != 'none' else False,
                 disable_auth=args.disable_auth
             ))
 

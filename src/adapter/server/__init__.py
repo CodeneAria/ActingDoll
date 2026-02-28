@@ -5,7 +5,7 @@ This package provides a unified server that supports both WebSocket and MCP prot
 for controlling Live2D models through LLM interactions.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __author__ = "CodeneAria"
 
 from acting_doll_server import run_acting_doll

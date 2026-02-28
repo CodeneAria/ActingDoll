@@ -12,6 +12,12 @@
 			79,
 			100,
 			120
+		],
+		"autopep8.args": [
+			"--ignore",
+			"E70",
+			"--max-line-length",
+			"120",
 		]
 	}
 }

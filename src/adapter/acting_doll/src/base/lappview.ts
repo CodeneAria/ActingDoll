@@ -231,13 +231,15 @@ export class LAppView {
     lapplive2dmanager.onTap(x, y);
 
     // 歯車にタップしたか
-    if (this._gear.isHit(posX, posY)) {
-      // WebSocketでサーバーに通知（LAppDelegateから取得）
-      const websocketClient = LAppDelegate.getInstance().getWebSocketClient();
-      if (websocketClient) {
-        websocketClient.sendHit('gear', posX, posY, x, y);
+    if (this._gear !== null) {
+      if (this._gear.isHit(posX, posY)) {
+        // WebSocketでサーバーに通知（LAppDelegateから取得）
+        const websocketClient = LAppDelegate.getInstance().getWebSocketClient();
+        if (websocketClient) {
+          websocketClient.sendHit('gear', posX, posY, x, y);
+        }
+        lapplive2dmanager.nextScene();
       }
-      lapplive2dmanager.nextScene();
     }
   }
 
