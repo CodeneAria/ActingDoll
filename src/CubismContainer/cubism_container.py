@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Docker container management script for Cubism SDK Web
-Unified script to manage build, clean, create, exec, start, and start_demo operations.
+Docker container management script for Cubism SDK Web.
+Provides a unified CLI to manage create, rebuild, template, exec, and stop_server operations.
 """
 
 import argparse
