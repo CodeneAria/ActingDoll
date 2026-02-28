@@ -1,8 +1,8 @@
 """
-Acting Doll Server - WebSocket and MCP server for Live2D model control
+cubism-container - Docker and container management utilities
 
-This package provides a unified server that supports both WebSocket and MCP protocols
-for controlling Live2D models through LLM interactions.
+This package provides helpers and interfaces for managing containers,
+such as starting, stopping, and coordinating Docker-based environments.
 """
 
 __version__ = "0.2.0"
