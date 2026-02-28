@@ -41,10 +41,11 @@ import pytest
 import pytest_asyncio
 import websockets
 
+str_format = '[%(levelname)s]\t%(message)s'
 # ロギング設定
 logging.basicConfig(
     level=logging.INFO,
-    format='[%(levelname)s] - %(message)s'
+    format=str_format
 )
 logger = logging.getLogger(__name__)
 
