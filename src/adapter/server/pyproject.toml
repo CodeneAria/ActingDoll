@@ -3,48 +3,40 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "acting-doll"
+name = "acting-doll-server"
 version = "0.1.0"
-description = "MCP server to control Live2D models through LLM"
+description = "'acting-doll-server' is a server application that allows you to control Live2D models using WebSocket and MCP protocols. It provides a interface for sending commands to the server, which then translates them into actions for the Live2D models."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 authors = [
     {name = "CodeneAria"}
 ]
-keywords = ["mcp", "live2d", "llm", "ai"]
+keywords = ["mcp", "live2d", "llm", "ai", "websocket"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "Topic :: Multimedia :: Graphics",
-    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "pyyaml>=6.0.3",
-    "acting-doll-server"
+    "fastmcp>=2.14.5",
+    "websockets>=13.0"
 ]
 
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
-    "pytest>=7.0.0",
-    "pytest-asyncio>=0.24.0",
-    "ruff>=0.8.0"
 ]
 
 [project.scripts]
-acting-doll = "acting_doll_server:run_acting_doll"
+acting-doll-server = "acting_doll_server:run_acting_doll"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/adapter/server"]
-
-[tool.uv.sources]
-acting-doll-server = {workspace = true}
+packages = ["."]
+exclude = []
 
 [tool.ruff]
 line-length = 100
@@ -56,9 +48,4 @@ select = ["E", "F", "I", "W"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
-pythonpath = ["src"]
 
-[tool.uv.workspace]
-members = [
-    "src/adapter/server"
-]

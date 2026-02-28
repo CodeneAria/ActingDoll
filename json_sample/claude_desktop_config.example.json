@@ -1,0 +1,18 @@
+{
+    "mcpServers": {
+        "acting-doll": {
+            "command": "acting-doll-server",
+            "args": [
+                "--mode",
+                "mcp_sse",
+                "--mcp-port",
+                "3001"
+            ],
+            "env": {},
+            "transport": {
+                "type": "sse",
+                "url": "http://localhost:3001/sse"
+            }
+        }
+    }
+}

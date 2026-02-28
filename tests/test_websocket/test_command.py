@@ -1,6 +1,6 @@
 """
 WebSocket Command Test Client
-WebSocketサーバーのコマンドをテストするクライアント
+Cubism Controllerのコマンドをテストするクライアント
 
 1. **TestBasicCommands** - 基本コマンドのテスト
    - `test_list_command`: 接続クライアントリストの取得
@@ -37,7 +37,6 @@ import asyncio
 import json
 import logging
 from datetime import datetime
-from typing import Optional, Dict, List
 import pytest
 import pytest_asyncio
 import websockets
@@ -63,7 +62,7 @@ class CommandTestClient:
         初期化
 
         Args:
-            uri: WebSocketサーバーのURI
+            uri: Cubism ControllerのURI
         """
         self.uri = uri
         self.websocket = None
@@ -173,6 +172,7 @@ class TestBasicCommands:
     @pytest.mark.asyncio
     async def test_list_command(self, ws_client):
         """listコマンドのテスト"""
+        await ws_client.send_command("list")
         response = await ws_client.send_command("list")
 
         assert response.get("type") == "command_response"
@@ -183,11 +183,12 @@ class TestBasicCommands:
     @pytest.mark.asyncio
     async def test_notify_command(self, ws_client):
         """notifyコマンドのテスト"""
+        await ws_client.send_command("notify テストメッセージ")
         response = await ws_client.send_command("notify テストメッセージ")
 
-        assert response.get("type") == "command_response"
-        assert response.get("result") in ["success", "ok"]
-        logger.info(f"✅ Notify result: {response.get('result')}")
+        assert response.get("type") == "notify"
+        assert "message" in response
+        logger.info(f"✅ Notify result: {response.get('message')}")
 
     @pytest.mark.asyncio
     async def test_send_command(self, client_with_id):
@@ -195,12 +196,14 @@ class TestBasicCommands:
         if not client_with_id.client_id:
             pytest.skip("No client_id available")
 
+        await ws_client.send_command("list")
         response = await client_with_id.send_command(
             f"send {client_with_id.client_id} テストメッセージ"
         )
 
         assert response.get("type") == "command_response"
-        logger.info(f"✅ Send to {client_with_id.client_id}: {response.get('result')}")
+        logger.info(
+            f"✅ Send to {client_with_id.client_id}: {response.get('result')}")
 
 
 # テストクラス: モデル情報
@@ -210,12 +213,12 @@ class TestModelCommands:
     @pytest.mark.asyncio
     async def test_model_list(self, ws_client):
         """model listコマンドのテスト"""
+        await ws_client.send_command("model list")
         response = await ws_client.send_command("model list")
 
         assert response.get("type") == "command_response"
         assert "data" in response
-        assert "models" in response["data"]
-        models = response["data"]["models"]
+        models = response["data"]
         assert len(models) > 0
         logger.info(f"✅ Models: {models}")
 

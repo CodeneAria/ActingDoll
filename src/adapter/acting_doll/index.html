@@ -1,22 +1,24 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Live2D Cubism Viewer for Web</title>
   <link rel="icon" href="./assets/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="./css/main.css">
   <link rel="stylesheet" href="./css/acting_doll.css">
   <!-- Live2DCubismCore script -->
-  <script src = "./Core/live2dcubismcore.min.js"></script>
+  <script src="./Core/live2dcubismcore.min.js"></script>
   <!-- Build script -->
-  <script src = "./src/main.ts" type="module"></script>
+  <script src="./src/base/main.ts" type="module"></script>
 </head>
+
 <body>
   <article id="article_controlPanel">
     <button id="togglePanel">Controls</button>
     <div id="controlPanel" class="hidden">
       <h3>Live2D Controls</h3>
-
       <!-- WebSocket Connection Status -->
       <div class="control-section">
         <label>WebSocket Status:</label>
@@ -28,17 +30,16 @@
           <div id="wsClientId" style="font-size: 0.9em; color: #666;">クライアントID: 取得中...</div>
         </div>
       </div>
-
       <!-- Animation Settings Section -->
       <div class="control-section">
         <label>Animation Settings:</label>
         <div class="contorol-animation-section" style="margin-top: 8px;">
           <label style="margin-bottom: 8px;">
-            <input type="checkbox" id="eyeBlinkToggle" checked style="margin-right: 8px;">
+            <input type="checkbox" id="eyeBlinkToggle" style="margin-right: 8px;">
             <span>自動目パチ (Eye Blink)</span>
           </label>
           <label style="margin-bottom: 8px;">
-            <input type="checkbox" id="breathToggle" checked style="margin-right: 8px;">
+            <input type="checkbox" id="breathToggle" style="margin-right: 8px;">
             <span>呼吸 (Breath)</span>
           </label>
           <label style="margin-bottom: 8px;">
@@ -55,10 +56,9 @@
           </label>
         </div>
       </div>
-
       <!-- Model Transform Section -->
       <div class="control-section">
-        <label>Model Position:</label>
+        <label><span class="value-label">Model Position: </span><span id="modelPositionAxis" class="value-color">(0, 0)</span></label>
         <div style="margin-top: 8px; display: flex; flex-direction: column; align-items: center; gap: 4px;">
           <button id="moveUp" style="padding: 8px 16px; min-width: 60px;">▲</button>
           <div style="display: flex; gap: 4px;">
@@ -69,11 +69,10 @@
           <button id="moveDown" style="padding: 8px 16px; min-width: 60px;">▼</button>
         </div>
         <div style="margin-top: 12px;">
-          <label for="scaleSlider" style="display: block; margin-bottom: 4px;">Model Scale: <span id="scaleValue">1.0</span></label>
+          <label for="scaleSlider" style="display: block; margin-bottom: 4px;"><span class="value-label">Model Scale: </span><span id="scaleValue" class="value-color">1.0</span></label>
           <input type="range" id="scaleSlider" min="0.1" max="3.0" step="0.1" value="1.0" style="width: 100%;">
         </div>
       </div>
-
       <!-- Expressions Section -->
       <div class="control-section">
         <label for="expressionSelect">Expressions:</label>
@@ -81,7 +80,6 @@
           <option value="">Select Expression...</option>
         </select>
       </div>
-
       <!-- Motions Section -->
       <div class="control-section">
         <label for="motionSelect">Motions:</label>
@@ -89,7 +87,6 @@
           <option value="">Select Motion...</option>
         </select>
       </div>
-
       <!-- Parameters Section -->
       <div class="control-section">
         <label>Parameters:</label>
@@ -100,4 +97,5 @@
     </div>
   </article>
 </body>
+
 </html>

@@ -21,6 +21,8 @@ export class LAppGlManager {
       // gl初期化失敗
       alert('Cannot initialize WebGL. This browser does not support.');
       this._gl = null;
+      // document.body.innerHTML =
+      //   'This browser does not support the <code>&lt;canvas&gt;</code> element.';
       return false;
     }
     return true;

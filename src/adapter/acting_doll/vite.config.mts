@@ -5,10 +5,12 @@ export default defineConfig((env: ConfigEnv): UserConfig => {
   let common: UserConfig = {
     server: {
       port: 5000,
+      host: '0.0.0.0', // すべてのネットワークインターフェースでリッスン
+      strictPort: false, // ポートが使用中の場合、次の空きポートを使用
     },
     root: './',
     base: '/',
-    publicDir: './../public',
+    publicDir: './public',
     resolve: {
       extensions: ['.ts', '.js'],
       alias: {
@@ -16,7 +18,7 @@ export default defineConfig((env: ConfigEnv): UserConfig => {
       }
     },
     build: {
-      target: 'modules',
+      target: 'baseline-widely-available',
       assetsDir: 'assets',
       outDir: './dist',
       sourcemap: env.mode == 'development' ? true : false,

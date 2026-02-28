@@ -35,6 +35,9 @@ export const ViewLogicalMaxTop = 2.0;
 // 相対パス
 export const ResourcesPath = './Resources/';
 
+// シェーダー相対パス
+export const ShaderPath = './Framework/Shaders/WebGL/';
+
 // モデルの後ろにある背景の画像ファイル
 export const BackImageName = 'back_class_normal.png';
 
@@ -47,22 +50,23 @@ export const PowerImageName = 'CloseNormal.png';
 // モデル定義---------------------------------------------
 // モデル設定の型定義
 export interface ModelConfig {
-  name: string;          // モデル名（ディレクトリ名とmodel3.jsonの名前を一致させること）
-  isCustom: boolean;     // カスタムパラメータIDを使用するか
-  initX: number;         // 初期位置 X軸
-  initY: number;         // 初期位置 Y軸
-  initScale: number;     // 初期スケール
+  name: string; // モデル名（ディレクトリ名とmodel3.jsonの名前を一致させること）
+  isCustom: boolean; // カスタムパラメータIDを使用するか
+  initX: number; // 初期位置 X軸
+  initY: number; // 初期位置 Y軸
+  initScale: number; // 初期スケール
 }
 
 // モデル設定配列
 export const ModelConfigs: ModelConfig[] = [
-  { name: 'Haru', isCustom: false, initX: 0, initY: 0, initScale: 1.0 },
-  { name: 'Hiyori', isCustom: false, initX: 0, initY: 0, initScale: 1.0 },
-  { name: 'Mao', isCustom: false, initX: 0, initY: 0, initScale: 1.0 },
-  { name: 'Mark', isCustom: false, initX: 0, initY: 0, initScale: 1.0 },
-  { name: 'Natori', isCustom: false, initX: 0, initY: 0, initScale: 1.0 },
-  { name: 'Rice', isCustom: false, initX: 0, initY: 0, initScale: 1.0 },
-  { name: 'Wanko', isCustom: false, initX: 0, initY: 0, initScale: 1.0 }
+  { name: 'Haru', isCustom: false, initX: 0.4, initY: -0.4, initScale: 1.4 },
+  { name: 'Hiyori', isCustom: false, initX: 0.4, initY: -0.4, initScale: 1.4 },
+  { name: 'Mao', isCustom: false, initX: 0.4, initY: -0.4, initScale: 1.4 },
+  { name: 'Mark', isCustom: false, initX: 0.4, initY: -0.4, initScale: 1.4 },
+  { name: 'Natori', isCustom: false, initX: 0.4, initY: -0.4, initScale: 1.4 },
+  { name: 'Ren', isCustom: false, initX: 0.4, initY: -0.4, initScale: 1.4 },
+  { name: 'Rice', isCustom: false, initX: 0.4, initY: -0.4, initScale: 1.4 },
+  { name: 'Wanko', isCustom: false, initX: 0.4, initY: -0.4, initScale: 1.4 }
 ];
 
 // 外部定義ファイル（json）と合わせる
@@ -107,8 +111,17 @@ export const ModelScaleDefault = 1.0;
 
 // WebSocket設定
 export const WebSocketUrl = 'ws://';
-export const WebSocketAddress = 'localhost';
+export const WebSocketHost = '';
 export const WebSocketPort = '8765';
 export const WebSocketAutoConnect = true;
 export const WebSocketReconnectAttempts = 5;
 export const WebSocketReconnectDelay = 3000;
+
+// トグルのデフォルト設定
+export const DefaultToggle = {
+  breath: true,
+  idle_motion: true,
+  drag_follow: false,
+  physics: true,
+  eye_blink: true
+}
