@@ -26,6 +26,7 @@ fi
 ###################################
 # Build
 ###################################
+ret_build_mcp=0
 if [ "${BUILD_MCP}" == "true" ]; then
     cd ${MCP_DIR}
     ###############################################################################
@@ -71,6 +72,7 @@ if [ "${BUILD_MCP}" == "true" ]; then
             echo "=== Failed to check distribution. Please check the error messages above. ==="
             exit $ret
         fi
+        ret_build_mcp=${ret}
     else
         rm -rf ${MCP_DIR}/dist
     fi
@@ -84,12 +86,13 @@ if [ "${BUILD_MCP}" == "true" ]; then
     fi
 else
     python update_model.py ${UPDATE_MODEL_ARGS}
+    ret_build_mcp=$?
 fi
 
 ###############################################################################
 # npm
 ###############################################################################
-
+ret_build_node=0
 if [ "${BUILD_NODE}" == "true" ]; then
     cd ${NODE_DIR}
     # Build script for node package
@@ -104,6 +107,7 @@ if [ "${BUILD_NODE}" == "true" ]; then
          npm run build
          ret=$?
     fi
+    ret_build_node=${ret}
     if [ $ret -ne 0 ]; then
         echo "=== Failed to build node package. Please check the error messages above. ==="
         exit $ret
@@ -111,6 +115,6 @@ if [ "${BUILD_NODE}" == "true" ]; then
 fi
 
 echo "=== Build Settings ==="
-echo " - Build MCP: ${BUILD_MCP}"
-echo " - Build Node: ${BUILD_NODE}"
 echo " - Production Mode: ${PRODUCTION}"
+echo " - Build MCP : ${BUILD_MCP} (Return Code: ${ret_build_mcp})"
+echo " - Build Node: ${BUILD_NODE} (Return Code: ${ret_build_node})"
