@@ -32,6 +32,7 @@ cubism-container = "cubism_container:main"
 include = [
     "cubism_container.py",
     "volume/Dockerfile",
+    "*.py"
 ]
 [tool.setuptools.package-data]
 cubism-container = ["volume/Dockerfile"]

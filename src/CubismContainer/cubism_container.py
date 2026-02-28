@@ -217,16 +217,15 @@ class ConfigActingDoll:
                     self.MCP_TYPE = mcp.get('type', self.MCP_TYPE)
                 if 'settings' in config:
                     settings = config['settings']
+                    self.OUTPUT_YAML = settings.get('output_yaml', self.OUTPUT_YAML)
                     if 'port' in settings:
                         port = settings['port']
-                        self.PORT_CUBISM = port.get('port_http', self.PORT_CUBISM)
-                        self.PORT_WEBSOCKET = port.get('port_websocket', self.PORT_WEBSOCKET)
+                        self.PORT_CUBISM = port.get('http', self.PORT_CUBISM)
+                        self.PORT_WEBSOCKET = port.get('websocket', self.PORT_WEBSOCKET)
                     if 'authentication' in settings:
                         authentication = settings['authentication']
                         self.AUTH_TOKEN = str(authentication.get('token', self.AUTH_TOKEN)).lower()
                         self.REQUIRE_AUTH = False if self.AUTH_TOKEN == "" else True
-                    if 'output' in settings:
-                        self.OUTPUT_YAML = settings.get('output_yaml', self.OUTPUT_YAML)
 
         # File not found or YAML parsing error
         except FileNotFoundError:
