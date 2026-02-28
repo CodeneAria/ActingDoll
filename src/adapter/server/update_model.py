@@ -113,20 +113,15 @@ def run_update_model():
         parser.add_argument('-v', '--version', action='version',
                             version=f'%(prog)s {__version__}')
         parser.add_argument('-x', '--horizontal', type=float, default=0.4,
-                            help='Initial horizontal position of the model'
-                            )
+                            help='Initial horizontal position of the model')
         parser.add_argument('-y', '--vertical', type=float, default=-0.4,
-                            help='Initial vertical position of the model'
-                            )
+                            help='Initial vertical position of the model')
         parser.add_argument('-s', '--scale', type=float, default=1.4,
-                            help='Initial scale of the model'
-                            )
-        parser.add_argument('--custom', type=bool, default=False,
-                            help='Whether to set isCustom flag to true for all models'
-                            )
+                            help='Initial scale of the model')
+        parser.add_argument('--custom', action='store_true', default=False,
+                            help='Whether to set isCustom flag to true for all models')
         parser.add_argument('--workspace', type=str, default=str(Path(__file__).parent.parent.resolve()),
-                            help='Path to the workspace directory'
-                            )
+                            help='Path to the workspace directory')
 
         args = parser.parse_args()
 

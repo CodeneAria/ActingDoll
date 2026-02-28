@@ -7,8 +7,6 @@ create:
   # absolute or relative path to the workspace directory (where the REQUIRED files are located)
   workspace: ../
 
-  # moc3 file for Cubism SDK Web
-  moc3_file: archives/Resources/Haru/Haru.moc3
   # Archive file for Cubism SDK Web
   sdk_archive: archives/CubismSdkForWeb-5-r.5-beta.3.zip
 
@@ -20,6 +18,16 @@ create:
   # [OPTIONAL]
   # Docker image settings
   docker_image_name: acting_doll_image
+moc3:
+  file: archives/Resources/Haru/Haru.moc3
+  scale: 1.4
+  horizontal: 0.4
+  vertical: -0.4
+  custom_motion: false
+mcp:
+  # MCP server port
+  port: 3001
+  type: shttp
 
 # Docker Configuration for Cubism SDK Web
 settings:
@@ -27,7 +35,6 @@ settings:
   port:
     http: 8080
     websocket: 8765
-    mcp: 3001
   # Authentication settings for WebSocket connections
   authentication:
     token: your_authentication_token_here

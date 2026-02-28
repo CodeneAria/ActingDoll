@@ -10,18 +10,16 @@ if [ "${SCRIPT_RUNNING}" != "true" ]; then
 fi
 
 ###################################
-# Settings
+# Define paths
 ###################################
 CURRENT_DIR=$(dirname "$(readlink -f "$0")")
+#CURRENT_DIR=$(pwd)
 SERVER_DIR=$(readlink -f "${CURRENT_DIR}/server")
 NODE_DIR=$(readlink -f "${CURRENT_DIR}/acting_doll")
-# 外部アクセスを許可する場合は 0.0.0.0 を指定してください（認証必須）
-HOST_ADDRESS=${HOST_ADDRESS:-"0.0.0.0"}
 
-PORT_WEBSOCKET_NUMBER=${PORT_WEBSOCKET_NUMBER:-"8765"}
-PORT_HTTP_NUMBER=${PORT_HTTP_NUMBER:-"5000"}
-PORT_MCP_NUMBER=${PORT_MCP_NUMBER:-"3001"}
-
+###################################
+# Settings
+###################################
 # セキュリティ設定: デフォルトでlocalhostにバインド
 # 本番環境では環境変数で認証トークンとホワイトリストを設定してください:
 export WEBSOCKET_AUTH_TOKEN=${WEBSOCKET_AUTH_TOKEN:-"your_secret_token_here"}
@@ -33,6 +31,32 @@ if [ "${WEBSOCKET_REQUIRE_AUTH}" == "false" ] || [ -z "${WEBSOCKET_AUTH_TOKEN}" 
     export WEBSOCKET_AUTH_TOKEN=""
     export WEBSOCKET_REQUIRE_AUTH=false
 fi
+
+# 外部アクセスを許可する場合は 0.0.0.0 を指定してください（認証必須）
+HOST_ADDRESS=${HOST_ADDRESS:-"0.0.0.0"}
+
+PORT_WEBSOCKET_NUMBER=${PORT_WEBSOCKET_NUMBER:-"8765"}
+PORT_HTTP_NUMBER=${PORT_HTTP_NUMBER:-"5000"}
+PORT_MCP_NUMBER=${PORT_MCP_NUMBER:-"3001"}
+
+MODE_MCP=${MODE_MCP:-"shttp"}
+
+###################################
+# Log settings
+###################################
+OUTPUT_LOG=${OUTPUT_LOG:-"true"}
+if [ "${OUTPUT_LOG}" == "true" ]; then
+    LOGS_DIR="${CURRENT_DIR}/logs"
+    rm -rf "${LOGS_DIR}"
+    mkdir -p "${LOGS_DIR}"
+
+    LOG_ACTING_DOLL="${LOGS_DIR}/acting_doll.log"
+    LOG_NPM="${LOGS_DIR}/npm.log"
+else
+    LOG_ACTING_DOLL="/dev/null"
+    LOG_NPM="/dev/null"
+fi
+
 
 ###################################
 # Function
@@ -70,22 +94,24 @@ function check_process {
 cd ${SERVER_DIR}
 
 # 既存のCubism Controllerプロセスを停止
-pip show acting-doll-server >/dev/null 2>&1
+pip show acting-doll-server > /dev/null 2>&1
 ret_acting_doll=$?
+ACTING_DOLL_ARGS="--host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --mcp-port ${PORT_MCP_NUMBER} --mode_mcp ${MODE_MCP}"
 # Cubism Controllerを起動
 MESSAGE_PROCESS="acting_doll_server.py "
 CUBISM_PID=-1
-pkill -f "acting_doll_server" || true
 if [ ${ret_acting_doll} -ne 0 ]; then
     MESSAGE_PROCESS="python3 acting_doll_server.py"
+    pkill -f ${MESSAGE_PROCESS} || true
     # Run WebSocket server in the background
-    python3 acting_doll_server.py --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --mcp-port ${PORT_MCP_NUMBER} &
+    python3 acting_doll_server.py ${ACTING_DOLL_ARGS} > ${LOG_ACTING_DOLL} 2>&1 &
     CUBISM_PID=$!
 else
     acting-doll-server --version
     MESSAGE_PROCESS="acting-doll-server"
+    pkill -f ${MESSAGE_PROCESS} || true
     # Run WebSocket server in the background
-    acting-doll-server --host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --mcp-port ${PORT_MCP_NUMBER} &
+    acting-doll-server ${ACTING_DOLL_ARGS} > ${LOG_ACTING_DOLL} 2>&1 &
     CUBISM_PID=$!
 fi
 check_process ${CUBISM_PID} "${MESSAGE_PROCESS}"
@@ -95,7 +121,7 @@ check_process ${CUBISM_PID} "${MESSAGE_PROCESS}"
 # Start Node.js Application
 ###################################
 cd ${NODE_DIR}
-npm run start -- --port ${PORT_HTTP_NUMBER} --host ${HOST_ADDRESS}
+npm run start -- --port ${PORT_HTTP_NUMBER} --host ${HOST_ADDRESS} > ${LOG_NPM} 2>&1
 
 ###################################
 # Clean up: Stop application exits

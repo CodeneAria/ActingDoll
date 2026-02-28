@@ -4,19 +4,33 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Docker:template",
+            "label": "[cubism_container]:00_Create",
             "type": "shell",
             "command": "python",
             "args": [
                 "${workspaceFolder}/src/CubismContainer/cubism_container.py",
-                "template",
-                "--output",
+                "create",
+                "--workspace",
                 "${workspaceFolder}",
+                "--config",
+                "${workspaceFolder}/src/config.yaml",
             ],
-            "detail": "Dockerの中に入って操作できるコンソール"
+            "detail": "Dockerコンテナを作成してサーバーを起動する（初回のセットアップや、イメージの内容を更新したいときに）"
         },
         {
-            "label": "Docker:Exec",
+            "label": "[cubism_container]:01_Rebuild",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "${workspaceFolder}/src/CubismContainer/cubism_container.py",
+                "rebuild",
+                "--config",
+                "${workspaceFolder}/src/config.yaml"
+            ],
+            "detail": "Dockerイメージを再構築する（イメージの内容を更新したいときに）"
+        },
+        {
+            "label": "[cubism_container]:exec",
             "type": "shell",
             "command": "python",
             "args": [
@@ -28,42 +42,8 @@
             "detail": "Dockerの中に入って操作できるコンソール"
         },
         {
-            "label": "Docker:00_Create",
-            "type": "shell",
-            "command": "python",
-            "args": [
-                "${workspaceFolder}/src/CubismContainer/cubism_container.py",
-                "create",
-                "--workspace",
-                "${workspaceFolder}",
-                "--config",
-                "${workspaceFolder}/src/config.yaml",
-            ],
-            "detail": "Dockerイメージとコンテナを作成する"
-        },
-        {
-            "label": "Docker:01_Rebuild",
-            "type": "shell",
-            "command": "python",
-            "args": [
-                "${workspaceFolder}/src/CubismContainer/cubism_container.py",
-                "rebuild",
-                "--config",
-                "${workspaceFolder}/src/config.yaml"
-            ],
-            "detail": "モデルデータをビルドして dist フォルダに出力する"
-        },
-        {
-            "label": "Docker:Model:DirUpdate",
-            "type": "shell",
-            "command": "python",
-            "args": [
-                "${workspaceFolder}/src/adapter/server/update_model_dirs.py"
-            ],
-            "detail": "src/Cubism/Resources/ 以下のモデルディレクトリを参照するように lappdefine.ts を更新する"
-        },
-        {
-            "label": "Docker:stop_server",
+            "hide": true,
+            "label": "[cubism_container]:stop_server",
             "type": "shell",
             "command": "python",
             "args": [
@@ -74,5 +54,36 @@
             ],
             "detail": "Dockerコンテナ内のサーバーを停止する"
         },
+        {
+            "label": "[cubism_container]:template",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "${workspaceFolder}/src/CubismContainer/cubism_container.py",
+                "template",
+                "--output",
+                "${workspaceFolder}/config",
+            ],
+            "detail": "config.yaml のテンプレートを生成する"
+        },
+        {
+            "hide": true,
+            "label": "[update_model_dirs]",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "${workspaceFolder}/src/adapter/server/update_model.py",
+                "--workspace",
+                "${workspaceFolder}/src/adapter",
+                "--horizontal",
+                "-15.1",
+                "--vertical",
+                "-28.2",
+                "--scale",
+                "0.2",
+                "--custom"
+            ],
+            "detail": "src/Cubism/Resources/ 以下のモデルディレクトリを参照するように lappdefine.ts を更新する"
+        }
     ]
 }

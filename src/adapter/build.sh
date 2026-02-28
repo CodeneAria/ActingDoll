@@ -15,6 +15,14 @@ if [ "${BUILD_MCP_WITH_DIST}" == "true" ]; then
     BUILD_MCP="true"
 fi
 
+MOC3_SCALE=${MOC3_SCALE:-"1.0"}
+MOC3_HORIZONTAL=${MOC3_HORIZONTAL:-"0.4"}
+MOC3_VERTICAL=${MOC3_VERTICAL:-"-0.4"}
+MOC3_CUSTOM_MOTION=${MOC3_CUSTOM_MOTION:-"False"}
+if [ "${MOC3_CUSTOM_MOTION}" == "True" ]; then
+    UPDATE_MODEL_ARGS="${UPDATE_MODEL_ARGS} --custom"
+fi
+
 ###################################
 # Build
 ###################################
@@ -68,14 +76,14 @@ if [ "${BUILD_MCP}" == "true" ]; then
     fi
 
     echo "=== Complete acting-doll-server ==="
-    update-model --workspace ${CODE_DIR}
+    update-model --workspace ${CODE_DIR} ${UPDATE_MODEL_ARGS}
     ret=$?
     if [ $ret -ne 0 ]; then
         echo "=== Failed to update model. Please check the error messages above. ==="
         exit $ret
     fi
 else
-    python update_model.py
+    python update_model.py ${UPDATE_MODEL_ARGS}
 fi
 
 ###############################################################################

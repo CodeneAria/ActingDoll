@@ -34,68 +34,137 @@ except Exception:
 class ConfigActingDoll:
     """Configuration class for Acting Doll project."""
 
-    def yaml_str(self) -> str:
-        yaml_str = yaml.dump({
-            "docker_container_name": str(self.DOCKER_CONTAINER_NAME),
-            "create": {
-                "workspace": str(self.WORKSPACE),
-                "moc3_file": str(self.MOC3_FILE.relative_to(self.WORKSPACE).as_posix()),
-                "sdk_archive": str(self.SDK_ARCHIVE.relative_to(self.WORKSPACE).as_posix()),
-                "dockerfile": str(self.DOCKER_FILE_NAME.relative_to(self.WORKSPACE).as_posix()),
-                "code_dir": str(self.CODE_DIRECTORY.relative_to(self.WORKSPACE).as_posix()),
-                "docker_image_name": self.DOCKER_IMAGE_NAME
-            },
-            "settings": {
-                "port": {
-                    "http": self.PORT_CUBISM,
-                    "websocket": self.PORT_WEBSOCKET,
-                    "mcp": self.PORT_MCP
-                },
-                "authentication": {
-                    "token": str(self.AUTH_TOKEN)
-                },
-                "output_yaml": self.OUTPUT_YAML
-            }
-        }, sort_keys=False)
-        return yaml_str
-
     def __init__(self, work_dir: Path):
         self.WORKSPACE = Path(work_dir).resolve().absolute() if work_dir else Path(__file__).parent.parent.resolve()
         # Default configuration values: Create command
-        self.DOCKER_FILE_NAME = self._path('src/CubismContainer/volume/Dockerfile')
-        self.SDK_ARCHIVE = self._path('archives/CubismSdkForWeb-5-r.5-beta.3.zip')
-        self.MOC3_FILE = self._path('src/adapter/Cubism/Resources/Haru/Haru.moc3')
-        self.CODE_DIRECTORY = self._path('src/adapter')
-        self.DOCKER_IMAGE_NAME = 'acting_doll_image'
-        self.DOCKER_IMAGE_VER = 'latest'
-        self.DOCKER_CONTAINER_NAME = 'acting_doll_server_sample'
+        self.DOCKER_FILE_NAME: Path = self._path('src/CubismContainer/volume/Dockerfile')
+        self.SDK_ARCHIVE: Path = self._path('archives/CubismSdkForWeb-5-r.5-beta.3.zip')
+        self.CODE_DIRECTORY: Path = self._path('src/adapter')
+        self.DIR_CONTROL_SERVER: Path = self._path(
+            self.CODE_DIRECTORY / 'server') if self.CODE_DIRECTORY is not None else None
+        self.DIR_ACTING_DOLL: Path = self._path(
+            self.CODE_DIRECTORY / 'acting_doll') if self.CODE_DIRECTORY is not None else None
+        self.DOCKER_IMAGE_NAME: str = 'acting_doll_image'
+        self.DOCKER_IMAGE_VER: str = 'latest'
+        self.DOCKER_CONTAINER_NAME: str = 'acting_doll_server_sample'
+
+        # MOC3 file update settings
+        self.MOC3_FILE: Path = self._path('src/adapter/Cubism/Resources/Haru/Haru.moc3')
+        self.MOC3_SCALE: float = 1.4
+        self.MOC3_HORIZONTAL: float = 0.4
+        self.MOC3_VERTICAL: float = -0.4
+        self.MOC3_CUSTOM_MOTION: bool = False
 
         # Authentication settings
         self.PORT_CUBISM: int = 8080
         self.PORT_WEBSOCKET: int = 8765
-        self.PORT_MCP: int = 3001
         self.REQUIRE_AUTH: bool = False
         self.AUTH_TOKEN: str = ""
         self.ALLOWED_DIRS = [
             "/root/workspace/adapter/allowed"
         ]
 
+        # MCP settings
+        self.MCP_TYPE: str = "shttp"  # or "sse" / "stdio"
+        self.PORT_MCP: int = 3001
+
         # Build settings
         self.PRODUCTION: bool = True
         self.OUTPUT_YAML: bool = True
 
         # Default configuration values: Cubism SDK Web
-        self.VOLUME_SHARE = True
-        self.root_dir = "/root/workspace/adapter"
+        self.VOLUME_SHARE: bool = True
+        self.ROOT_DIR: str = "/root/workspace/adapter"
 
-        self.GIT_FRAMEWORK_REPO = "https://github.com/Live2D/CubismWebFramework.git"
-        self.GIT_FRAMEWORK_TAG = "5-r.5-beta.3"
-        self.GIT_FRAMEWORK_DIR_NAME = "Framework"
-        self.GIT_SAMPLE_REPO = "https://github.com/Live2D/CubismWebSamples.git"
-        self.GIT_SAMPLE_TAG = "5-r.5-beta.3"
-        self.GIT_SAMPLE_DIR_NAME = "Samples"
+        self.GIT_FRAMEWORK_REPO: str = "https://github.com/Live2D/CubismWebFramework.git"
+        self.GIT_FRAMEWORK_TAG: str = "5-r.5-beta.3"
+        self.GIT_FRAMEWORK_DIR_NAME: str = "Framework"
+        self.GIT_SAMPLE_REPO: str = "https://github.com/Live2D/CubismWebSamples.git"
+        self.GIT_SAMPLE_TAG: str = "5-r.5-beta.3"
+        self.GIT_SAMPLE_DIR_NAME: str = "Samples"
 
-    def _path(self, path_str) -> Path:
+    def yaml_str(self) -> str:
+        # yaml_str = yaml.dump({
+        #    "docker_container_name": str(self.DOCKER_CONTAINER_NAME),
+        #    "create": {
+        #        "workspace": str(self.WORKSPACE),
+        #        "moc3_file": str(self.MOC3_FILE.relative_to(self.WORKSPACE).as_posix()),
+        #        "sdk_archive": str(self.SDK_ARCHIVE.relative_to(self.WORKSPACE).as_posix()),
+        #        "dockerfile": str(self.DOCKER_FILE_NAME.relative_to(self.WORKSPACE).as_posix()),
+        #        "code_dir": str(self.CODE_DIRECTORY.relative_to(self.WORKSPACE).as_posix()),
+        #        "docker_image_name": self.DOCKER_IMAGE_NAME
+        #    },
+        #    "settings": {
+        #        "port": {
+        #            "http": self.PORT_CUBISM,
+        #            "websocket": self.PORT_WEBSOCKET,
+        #            "mcp": self.PORT_MCP
+        #        },
+        #        "authentication": {
+        #            "token": str(self.AUTH_TOKEN)
+        #        },
+        #        "output_yaml": self.OUTPUT_YAML
+        #    }
+        # }, sort_keys=False)
+        yaml_str: str = (
+            f"# Docker container settings\n"
+            f"docker_container_name: {self.DOCKER_CONTAINER_NAME}\n"
+            f"\n"
+            f"# Configuration for creating the Docker container\n"
+            f"create:\n"
+            f"  # [REQUIRED]\n"
+            f"  # absolute or relative path to the workspace directory (where the REQUIRED files are located)\n"
+            f"  workspace: {self.WORKSPACE}\n"
+            f"\n"
+            f"  # Archive file for Cubism SDK Web\n"
+            f"  sdk_archive: {str(self.SDK_ARCHIVE.relative_to(self.WORKSPACE).as_posix())}\n"
+            f"\n"
+            f"  # Dockerfile name\n"
+            f"  dockerfile: {str(self.DOCKER_FILE_NAME.relative_to(self.WORKSPACE).as_posix())}\n"
+            f"  # target directory for custom code\n"
+            f"  code_dir: {str(self.CODE_DIRECTORY.relative_to(self.WORKSPACE).as_posix())}\n"
+            f"\n"
+            f"  # [OPTIONAL]\n"
+            f"  # Docker image settings\n"
+            f"  docker_image_name: {self.DOCKER_IMAGE_NAME}\n"
+            f"moc3:\n"
+            f"  file: {str(self.MOC3_FILE.relative_to(self.WORKSPACE).as_posix())}\n"
+            f"  scale: {self.MOC3_SCALE}\n"
+            f"  horizontal: {self.MOC3_HORIZONTAL}\n"
+            f"  vertical: {self.MOC3_VERTICAL}\n"
+            f"  custom_motion: {self.MOC3_CUSTOM_MOTION}\n"
+            f"mcp:\n"
+            f"  # MCP server port\n"
+            f"  port: {self.PORT_MCP}\n"
+            f"  type: {self.MCP_TYPE}\n"
+            f"\n"
+            f"# Docker Configuration for Cubism SDK Web\n"
+            f"settings:\n"
+            f"  # Docker container ports\n"
+            f"  port:\n"
+            f"    http: {self.PORT_CUBISM}\n"
+            f"    websocket: {self.PORT_WEBSOCKET}\n"
+            f"  # Authentication settings for WebSocket connections\n"
+            f"  authentication:\n"
+            f"    token: {self.AUTH_TOKEN}\n"
+            f"  # Enable or disable outputting the configuration as YAML\n"
+            f"  output_yaml: {self.OUTPUT_YAML}\n"
+            f"\n"
+            f"# Cubism SDK information\n"
+            f"cubism:\n"
+            f"  # Git repository and tag for Cubism Framework\n"
+            f"  git_framework_dir_name: {self.GIT_FRAMEWORK_DIR_NAME}\n"
+            f"  git_framework_repo: {self.GIT_FRAMEWORK_REPO}\n"
+            f"  git_framework_tag: {self.GIT_FRAMEWORK_TAG}\n"
+            f"\n"
+            f"  # Git repository and tag for Cubism Web Samples\n"
+            f"  git_sample_dir_name: {self.GIT_SAMPLE_DIR_NAME}\n"
+            f"  git_sample_repo: {self.GIT_SAMPLE_REPO}\n"
+            f"  git_sample_tag: {self.GIT_SAMPLE_TAG}\n"
+        )
+        return yaml_str
+
+    def _path(self, path_str: str) -> Path:
         try:
             path = Path(path_str)
             if path.exists():
@@ -128,16 +197,30 @@ class ConfigActingDoll:
                     self.WORKSPACE = Path(create.get('workspace', self.WORKSPACE)).resolve().absolute()
                     self.DOCKER_FILE_NAME = self._path(create.get('dockerfile', self.DOCKER_FILE_NAME))
                     self.SDK_ARCHIVE = self._path(create.get('sdk_archive', self.SDK_ARCHIVE))
-                    self.MOC3_FILE = self._path(create.get('moc3_file', self.MOC3_FILE))
                     self.CODE_DIRECTORY = self._path(create.get('code_dir', self.CODE_DIRECTORY))
+                    self.DIR_CONTROL_SERVER = self._path(
+                        self.CODE_DIRECTORY / 'server')if self.CODE_DIRECTORY is not None else None
+                    self.DIR_ACTING_DOLL = self._path(
+                        self.CODE_DIRECTORY / 'acting_doll') if self.CODE_DIRECTORY is not None else None
                     self.DOCKER_IMAGE_NAME = create.get('docker_image_name', self.DOCKER_IMAGE_NAME)
+                if 'moc3' in config:
+                    moc3 = config['moc3']
+                    self.MOC3_FILE = self._path(moc3.get('file', self.MOC3_FILE))
+                    self.MOC3_SCALE = moc3.get('scale', self.MOC3_SCALE)
+                    self.MOC3_HORIZONTAL = moc3.get('horizontal', self.MOC3_HORIZONTAL)
+                    self.MOC3_VERTICAL = moc3.get('vertical', self.MOC3_VERTICAL)
+                    self.MOC3_CUSTOM_MOTION = moc3.get('custom_motion', self.MOC3_CUSTOM_MOTION)
+
+                if 'mcp' in config:
+                    mcp = config['mcp']
+                    self.PORT_MCP = mcp.get('port', self.PORT_MCP)
+                    self.MCP_TYPE = mcp.get('type', self.MCP_TYPE)
                 if 'settings' in config:
                     settings = config['settings']
                     if 'port' in settings:
                         port = settings['port']
                         self.PORT_CUBISM = port.get('port_http', self.PORT_CUBISM)
                         self.PORT_WEBSOCKET = port.get('port_websocket', self.PORT_WEBSOCKET)
-                        self.PORT_MCP = port.get('port_mcp', self.PORT_MCP)
                     if 'authentication' in settings:
                         authentication = settings['authentication']
                         self.AUTH_TOKEN = str(authentication.get('token', self.AUTH_TOKEN)).lower()
@@ -180,6 +263,10 @@ class ConfigActingDoll:
             if args.code_directory is not None:
                 path = self._path(args.code_directory)
                 self.CODE_DIRECTORY = path if path is not None else self.CODE_DIRECTORY
+                self.DIR_CONTROL_SERVER = self._path(
+                    self.CODE_DIRECTORY / 'server') if self.CODE_DIRECTORY is not None else None
+                self.DIR_ACTING_DOLL = self._path(
+                    self.CODE_DIRECTORY / 'acting_doll') if self.CODE_DIRECTORY is not None else None
         if hasattr(args, 'docker_image_name'):
             if args.docker_image_name is not None:
                 self.DOCKER_IMAGE_NAME = args.docker_image_name
@@ -403,12 +490,17 @@ def cmd_docker_build(config: ConfigActingDoll):
     logger.info("# Building Docker image...")
     try:
         ref_dir = temp_root_dir.relative_to(config.WORKSPACE).as_posix()
-        build_cmd = "docker build" \
-            + f" --build-arg ADAPTER_DIR=./{ref_dir}" \
-            + f" --build-arg SDK_ARCHIVE={config.SDK_ARCHIVE.stem}" \
-            + f" -t {config.DOCKER_IMAGE_NAME}:{config.DOCKER_IMAGE_VER}" \
-            + f" -f {str(config.DOCKER_FILE_NAME)}" \
-            + f" {config.WORKSPACE}"
+        build_cmd = ("docker build"
+                     f" --build-arg ADAPTER_DIR=./{ref_dir}"
+                     f" --build-arg SDK_ARCHIVE={config.SDK_ARCHIVE.stem}"
+                     f' --build-arg MOC3_SCALE={config.MOC3_SCALE}'
+                     f' --build-arg MOC3_HORIZONTAL={config.MOC3_HORIZONTAL}'
+                     f' --build-arg MOC3_VERTICAL={config.MOC3_VERTICAL}'
+                     f' --build-arg MOC3_CUSTOM_MOTION={"true" if config.MOC3_CUSTOM_MOTION else "false"}'
+                     f" -t {config.DOCKER_IMAGE_NAME}:{config.DOCKER_IMAGE_VER}"
+                     f" -f {str(config.DOCKER_FILE_NAME)}"
+                     f" {config.WORKSPACE}"
+                     )
         result = _run_command(build_cmd, shell=False, check=True)
         if result.returncode != 0:
             logger.error(f"Failed to build Docker image")
@@ -505,7 +597,14 @@ def cmd_rebuild(config: ConfigActingDoll,
             f' -e PRODUCTION={"true" if is_production else "false"}'
             f' -e BUILD_NODE={"true" if build_node else "false"}'
             f' -e BUILD_MCP={"true" if build_mcp else "false"}'
-            f' {config.DOCKER_CONTAINER_NAME} /bin/sh -c "cd {config.root_dir};/bin/sh build.sh"'
+            f' -e PRODUCTION={"true" if is_production else "false"}'
+            f' -e BUILD_NODE={"true" if build_node else "false"}'
+            f' -e BUILD_MCP={"true" if build_mcp else "false"}'
+            f' -e MOC3_SCALE={config.MOC3_SCALE}'
+            f' -e MOC3_HORIZONTAL={config.MOC3_HORIZONTAL}'
+            f' -e MOC3_VERTICAL={config.MOC3_VERTICAL}'
+            f' -e MOC3_CUSTOM_MOTION={"true" if config.MOC3_CUSTOM_MOTION else "false"}'
+            f' {config.DOCKER_CONTAINER_NAME} /bin/sh -c "cd {config.ROOT_DIR};/bin/sh build.sh"'
         )
         result = _run_command(cmd_rebuild, check=True)
         if result.returncode != 0:
@@ -563,7 +662,6 @@ def cmd_exec(config: ConfigActingDoll):
     logger.info("# Executing shell inside the container...")
     try:
         npm_cmd = (f'docker exec -it '
-                   f' -e SCRIPT_RUNNING=false'
                    f' {config.DOCKER_CONTAINER_NAME} /bin/sh'
                    )
         # Run the command and show output in real-time
@@ -586,16 +684,51 @@ def cmd_stop_server(config: ConfigActingDoll):
         cmd_stop = (
             f'docker exec -t'
             f' -e SCRIPT_RUNNING=false'
-            f' {config.DOCKER_CONTAINER_NAME} /bin/sh -c "cd {config.root_dir};/bin/sh start.sh"'
+            f' {config.DOCKER_CONTAINER_NAME} /bin/sh -c "cd {config.ROOT_DIR};/bin/sh start.sh"'
         )
         result = _run_command(cmd_stop, check=True)
         if result.returncode != 0:
             logger.error(f"Build failed.")
             sys.exit(1)
     except Exception as e:
-        logger.error(f"Failed to rebuild project inside Docker container: {e}")
+        logger.error(f"Failed to stop server inside Docker container: {e}")
         sys.exit(1)
     logger.info("# Server stop command executed. Please check container logs for details.")
+
+
+def cmd_update_model(config: ConfigActingDoll, is_docker_exec: bool = True):
+    """Update the model inside Docker container."""
+    # Ensure container is running
+
+    try:
+        logger.info("# Updating model inside Docker container...")
+        if is_docker_exec:
+            if not _ensure_container_running(config):
+                sys.exit(1)
+            cmd_update = (
+                f'docker exec -t'
+                f' {config.DOCKER_CONTAINER_NAME} /bin/sh -c "update-model"'
+            )
+            result = _run_command(cmd_update, check=True)
+            if result.returncode != 0:
+                logger.error(f"Build failed.")
+                sys.exit(1)
+        else:
+            # Run update-model script directly on host (for development)
+            update_cmd = (f'cd {config.DIR_CONTROL_SERVER} && python update_model.py'
+                          f' --workspace {config.CODE_DIRECTORY}'
+                          f' --horizontal {config.MOC3_HORIZONTAL} --vertical {config.MOC3_VERTICAL}'
+                          f' --scale {config.MOC3_SCALE}'
+                          f' {"--custom" if config.MOC3_CUSTOM_MOTION else ""}'
+                          )
+            result = _run_command(update_cmd, shell=True, check=True)
+            if result.returncode != 0:
+                logger.error(f"Model update failed.")
+                sys.exit(1)
+    except Exception as e:
+        logger.error(f"Failed to update model inside Docker container: {e}")
+        sys.exit(1)
+    logger.info("# Model update command executed. Please check container logs for details.")
 
 
 # ============================================================================
@@ -679,13 +812,13 @@ def main():
         create_parser.add_argument(
             '--token',
             type=str,
-            default='',
+            default=None,
             help='Authentication token for WebSocket connections (default: empty, no authentication)'
         )
         create_parser.add_argument(
             '--not_output_yaml',
             action='store_true',
-            default=True,
+            default=False,
             help='Do not output configuration to YAML file'
         )
 
@@ -806,19 +939,23 @@ def main():
 
         # Execute command
         if args.command == 'create':
+            cmd_update_model(config, is_docker_exec=False)
+            if config.OUTPUT_YAML:
+                cmd_template(config,
+                             file_name=f"{config.DOCKER_CONTAINER_NAME}.yaml",
+                             output_dir=config.WORKSPACE / "config")
             cmd_docker_build(config)
             cmd_docker_run(config, hosting=False)
             if config.VOLUME_SHARE:
                 _docker_clean(config, with_image=False)
                 cmd_docker_run(config, hosting=True)
-            if config.OUTPUT_YAML:
-                cmd_template(config,
-                             file_name=f"{config.DOCKER_CONTAINER_NAME}.yaml",
-                             output_dir=config.WORKSPACE / "config")
             # _docker_logs(config)
             logger.info("=" * 50)
             logger.info("\t(HTTP)\thttp://localhost:{port}".format(port=config.PORT_CUBISM))
-            logger.info("\t(MCP)\thttp://localhost:{port}/sse".format(port=config.PORT_MCP))
+            if config.MCP_TYPE == "sse":
+                logger.info("\t(MCP)\thttp://localhost:{port}/sse".format(port=config.PORT_MCP))
+            elif config.MCP_TYPE == "shttp":
+                logger.info("\t(MCP)\thttp://localhost:{port}/mcp".format(port=config.PORT_MCP))
         elif args.command == 'rebuild':
             development: bool = args.development if hasattr(args, 'development') else False
             build_node: bool = not args.no_build_node_modules if hasattr(

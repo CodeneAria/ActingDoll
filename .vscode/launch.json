@@ -5,57 +5,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "[MCP_SSE] acting_doll_server",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/src/adapter/server/acting_doll_server.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--mode",
-                "mcp_sse",
-                "--host",
-                "0.0.0.0",
-                "--port",
-                "8765",
-                "--mcp-port",
-                "3002"
-            ]
-        },
-        {
-            "name": "[Cubism] acting_doll_server",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/src/adapter/server/acting_doll_server.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--mode",
-                "cubism",
-                "--host",
-                "0.0.0.0",
-                "--port",
-                "8765",
-                "--mcp-port",
-                "3002",
-                "--disable-auth"
-            ]
-        },
-        {
-            "name": "[BOTH] acting_doll_server",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/src/adapter/server/acting_doll_server.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--host",
-                "0.0.0.0",
-                "--port",
-                "8766",
-                "--mcp-port",
-                "3002",
-                "--disable-auth"
-            ]
-        },
-        {
             "name": "[create] CubismContainer",
             "type": "debugpy",
             "request": "launch",
@@ -79,6 +28,36 @@
                 "rebuild",
                 "--config",
                 "${workspaceFolder}/src/config.yaml"
+            ]
+        },
+        {
+            "name": "[template] CubismContainer",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/CubismContainer/cubism_container.py",
+            "console": "integratedTerminal",
+            "args": [
+                "template",
+                "--output",
+                "${workspaceFolder}/config",
+            ]
+        },
+        {
+            "name": "update_model",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/adapter/server/update_model.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--workspace",
+                "${workspaceFolder}/src/adapter",
+                "--horizontal",
+                "-15.1",
+                "--vertical",
+                "-28.2",
+                "--scale",
+                "0.2",
+                "--custom"
             ]
         }
     ]
