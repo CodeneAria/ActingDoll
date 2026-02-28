@@ -53,7 +53,7 @@ def _parse_args():
         '--mode_stop_cubism',
         action='store_true',
         default=False,
-        help='CubismControllerを有効化するかどうか'
+        help='CubismControllerを起動しないフラグ（指定しない場合は起動します）'
     )
     parser.add_argument(
         '--model-dir',
