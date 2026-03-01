@@ -40,8 +40,6 @@ class CubismControllerHandler:
     # グローバルなセキュリティ設定（後で初期化）
     security_config: Optional[SecurityConfig] = None
 
-    # MCPサーバー停止関数のグローバル変数
-    fnc_stop_mcp = None
     # サーバーの実行状態を管理
     is_running = False
 
@@ -1450,7 +1448,6 @@ class CubismControllerHandler:
     async def run(self,
                   host: str, port: int,
                   security_config: SecurityConfig,
-                  stop_mcp_server: any,
                   model_dir: str,
                   console: bool = True,
                   disable_auth: bool = False):
@@ -1461,7 +1458,6 @@ class CubismControllerHandler:
             host: バインドするホストアドレス
             port: バインドするポート
             security: セキュリティ設定
-            stop_mcp_server: MCPサーバー停止関数
             model_dir: モデルディレクトリパス
             console: コンソール有効化フラグ
             disable_auth: 認証無効化フラグ
@@ -1469,7 +1465,6 @@ class CubismControllerHandler:
 
         # セキュリティ設定を初期化
         self.security_config = security_config
-        self.fnc_stop_mcp = stop_mcp_server
 
         # モデルマネージャーを初期化
         self.model_manager = moc3manager.ModelManager(model_dir)
@@ -1524,12 +1519,6 @@ class CubismControllerHandler:
             "timestamp": datetime.now().isoformat()
         })
         self.is_running = False
-        # MCPサーバーを停止
-        try:
-            if self.fnc_stop_mcp:
-                await self.fnc_stop_mcp()
-        except Exception as e:
-            logger.error(f"MCPサーバー停止中にエラーが発生しました: {e}")
         # クライアント接続を全て閉じる
         for websocket in self.connected_clients:
             try:
@@ -1544,7 +1533,6 @@ class CubismControllerHandler:
 
 async def run_websocket(host: str, port: int,
                         security_config: SecurityConfig,
-                        stop_mcp_server: any,
                         model_dir: str,
                         console: bool = True,
                         disable_auth: bool = False):
@@ -1555,7 +1543,6 @@ async def run_websocket(host: str, port: int,
         host: バインドするホストアドレス
         port: バインドするポート
         security: セキュリティ設定
-        stop_mcp_server: MCPサーバー停止関数
         model_dir: モデルディレクトリパス
         console: コンソール有効化フラグ
         disable_auth: 認証無効化フラグ
@@ -1567,7 +1554,6 @@ async def run_websocket(host: str, port: int,
     try:
         await task_cubism.run(host=host, port=port,
                               security_config=security_config,
-                              stop_mcp_server=stop_mcp_server,
                               model_dir=model_dir,
                               console=console,
                               disable_auth=disable_auth)

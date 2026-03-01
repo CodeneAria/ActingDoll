@@ -5,6 +5,8 @@ if [ "${SCRIPT_RUNNING}" != "true" ]; then
     pkill -f "npm" || true
     pkill -f "acting_doll_server" || true
     pkill -f "acting-doll-server" || true
+    pkill -f "acting_doll_mcp" || true
+    pkill -f "acting-doll-mcp" || true
     echo "# Stop command received. Exiting start script."
     exit 0
 fi
@@ -26,20 +28,21 @@ export WEBSOCKET_AUTH_TOKEN=${WEBSOCKET_AUTH_TOKEN:-"your_secret_token_here"}
 export WEBSOCKET_ALLOWED_DIRS=${WEBSOCKET_ALLOWED_DIRS:-"${CURRENT_DIR}/allowed"}
 export WEBSOCKET_REQUIRE_AUTH=${WEBSOCKET_REQUIRE_AUTH:-"false"}
 
+# 外部アクセスを許可する場合は 0.0.0.0 を指定してください（認証必須）
+export HOST_ADDRESS=${HOST_ADDRESS:-"0.0.0.0"}
+export PORT_WEBSOCKET_NUMBER=${PORT_WEBSOCKET_NUMBER:-"8765"}
+export PORT_HTTP_NUMBER=${PORT_HTTP_NUMBER:-"5000"}
+export PORT_MCP_NUMBER=${PORT_MCP_NUMBER:-"3001"}
+export MODE_MCP=${MODE_MCP:-"shttp"}
+
+export CUBISM_MODEL_DIR=${CUBISM_MODEL_DIR:-"/root/workspace/adapter/Cubism/Resource"}
+
+###################################
 if [ "${WEBSOCKET_REQUIRE_AUTH}" == "false" ] || [ -z "${WEBSOCKET_AUTH_TOKEN}" ]; then
     export WEBSOCKET_ALLOWED_DIRS=""
     export WEBSOCKET_AUTH_TOKEN=""
     export WEBSOCKET_REQUIRE_AUTH=false
 fi
-
-# 外部アクセスを許可する場合は 0.0.0.0 を指定してください（認証必須）
-HOST_ADDRESS=${HOST_ADDRESS:-"0.0.0.0"}
-
-PORT_WEBSOCKET_NUMBER=${PORT_WEBSOCKET_NUMBER:-"8765"}
-PORT_HTTP_NUMBER=${PORT_HTTP_NUMBER:-"5000"}
-PORT_MCP_NUMBER=${PORT_MCP_NUMBER:-"3001"}
-
-MODE_MCP=${MODE_MCP:-"shttp"}
 
 ###################################
 # Log settings
@@ -47,13 +50,16 @@ MODE_MCP=${MODE_MCP:-"shttp"}
 OUTPUT_LOG=${OUTPUT_LOG:-"true"}
 if [ "${OUTPUT_LOG}" == "true" ]; then
     LOGS_DIR="${CURRENT_DIR}/logs"
-    rm -rf "${LOGS_DIR}"
     mkdir -p "${LOGS_DIR}"
 
-    LOG_ACTING_DOLL="${LOGS_DIR}/acting_doll.log"
-    LOG_NPM="${LOGS_DIR}/npm.log"
+    LOG_ACTING_DOLL_SERVER="${LOGS_DIR}/run_acting_doll_server.log"
+    LOG_ACTING_DOLL_MCP="${LOGS_DIR}/run_acting_doll_mcp.log"
+    LOG_NPM="${LOGS_DIR}/run_npm.log"
+
+    rm -f "${LOG_ACTING_DOLL_SERVER}" "${LOG_ACTING_DOLL_MCP}" "${LOG_NPM}"
 else
-    LOG_ACTING_DOLL="/dev/null"
+    LOG_ACTING_DOLL_SERVER="/dev/null"
+    LOG_ACTING_DOLL_MCP="/dev/null"
     LOG_NPM="/dev/null"
 fi
 
@@ -96,26 +102,52 @@ cd ${SERVER_DIR}
 # 既存のCubism Controllerプロセスを停止
 pip show acting-doll-server > /dev/null 2>&1
 ret_acting_doll=$?
-ACTING_DOLL_ARGS="--host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER} --mcp-port ${PORT_MCP_NUMBER} --mode_mcp ${MODE_MCP}"
-# Cubism Controllerを起動
-MESSAGE_PROCESS="acting_doll_server.py "
-CUBISM_PID=-1
-if [ ${ret_acting_doll} -ne 0 ]; then
-    MESSAGE_PROCESS="python3 acting_doll_server.py"
-    pkill -f ${MESSAGE_PROCESS} || true
-    # Run WebSocket server in the background
-    python3 acting_doll_server.py ${ACTING_DOLL_ARGS} > ${LOG_ACTING_DOLL} 2>&1 &
-    CUBISM_PID=$!
-else
-    acting-doll-server --version
-    MESSAGE_PROCESS="acting-doll-server"
-    pkill -f ${MESSAGE_PROCESS} || true
-    # Run WebSocket server in the background
-    acting-doll-server ${ACTING_DOLL_ARGS} > ${LOG_ACTING_DOLL} 2>&1 &
-    CUBISM_PID=$!
-fi
-check_process ${CUBISM_PID} "${MESSAGE_PROCESS}"
 
+###############################################################################
+# Start WebSocket Server
+###############################################################################
+ARGS_ACTING_DOLL_SERVER="--host ${HOST_ADDRESS} --port ${PORT_WEBSOCKET_NUMBER}"
+MESSAGE_ACTING_DOLL_SERVER="acting_doll_server.py"
+PID_ACTING_DOLL_SERVER=-1
+
+if [ ${ret_acting_doll} -ne 0 ]; then
+    MESSAGE_ACTING_DOLL_SERVER="python3 acting_doll_server.py"
+    pkill -f "acting_doll_server" || true
+    # Run WebSocket server in the background
+    python3 acting_doll_server.py ${ARGS_ACTING_DOLL_SERVER} >> ${LOG_ACTING_DOLL_SERVER} 2>&1 &
+    PID_ACTING_DOLL_SERVER=$!
+else
+    acting-doll-server --version >> ${LOG_ACTING_DOLL_SERVER} 2>&1
+    MESSAGE_ACTING_DOLL_SERVER="acting-doll-server"
+    pkill -f ${MESSAGE_ACTING_DOLL_SERVER} || true
+    # Run WebSocket server in the background
+    acting-doll-server ${ARGS_ACTING_DOLL_SERVER} >> ${LOG_ACTING_DOLL_SERVER} 2>&1 &
+    PID_ACTING_DOLL_SERVER=$!
+fi
+check_process ${PID_ACTING_DOLL_SERVER} "${MESSAGE_ACTING_DOLL_SERVER}"
+
+###############################################################################
+# Start MCP Server
+###############################################################################
+ARGS_ACTING_DOLL_MCP="--host ${HOST_ADDRESS} --port ${PORT_MCP_NUMBER} --mode ${MODE_MCP} --websocket_url ws://${HOST_ADDRESS}:${PORT_WEBSOCKET_NUMBER}"
+MESSAGE_ACTING_DOLL_MCP="acting_doll_mcp.py"
+PID_ACTING_DOLL_MCP=-1
+
+if [ ${ret_acting_doll} -ne 0 ]; then
+    MESSAGE_ACTING_DOLL_MCP="python3 acting_doll_mcp.py"
+    pkill -f "acting_doll_mcp" || true
+    # Run WebSocket server in the background
+    python3 acting_doll_mcp.py ${ARGS_ACTING_DOLL_MCP} >> ${LOG_ACTING_DOLL_MCP} 2>&1 &
+    PID_ACTING_DOLL_MCP=$!
+else
+    acting-doll-mcp --version >> ${LOG_ACTING_DOLL_MCP} 2>&1
+    MESSAGE_ACTING_DOLL_MCP="acting-doll-mcp"
+    pkill -f ${MESSAGE_ACTING_DOLL_MCP} || true
+    # Run WebSocket server in the background
+    acting-doll-mcp ${ARGS_ACTING_DOLL_MCP} >> ${LOG_ACTING_DOLL_MCP} 2>&1 &
+    PID_ACTING_DOLL_MCP=$!
+fi
+check_process ${PID_ACTING_DOLL_MCP} "${MESSAGE_ACTING_DOLL_MCP}"
 
 ###################################
 # Start Node.js Application
@@ -126,5 +158,10 @@ npm run start -- --port ${PORT_HTTP_NUMBER} --host ${HOST_ADDRESS} > ${LOG_NPM} 
 ###################################
 # Clean up: Stop application exits
 ###################################
+kill ${PID_ACTING_DOLL_SERVER} 2>/dev/null || true
+kill ${PID_ACTING_DOLL_MCP} 2>/dev/null || true
+
 pkill -f "acting_doll_server" || true
 pkill -f "acting-doll-server" || true
+pkill -f "acting_doll_mcp" || true
+pkill -f "acting-doll-mcp" || true

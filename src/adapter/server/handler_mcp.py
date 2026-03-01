@@ -416,7 +416,7 @@ class MCPHandler:
                     msg_type = data.get("type")
                     if msg_type == "welcome":
                         await self._send_thank_you_message(data.get("client_id", "unknown"))
-                        logger.info("MCP <--> Cubism Controllerの接続しました")
+                        logger.info(f"MCP <--> Cubism Controllerの接続しました: {websocket_url}")
                         return
             except Exception as e:
                 if timeout_counter <= 0:
@@ -492,13 +492,6 @@ class MCPHandler:
             pass
         else:
             logger.warning("MCPサーバーは起動していません")
-
-
-async def stop_mcp_server():
-    """グローバルなMCPサーバーインスタンスを停止"""
-    global mcp_server
-    if mcp_server is not None:
-        await mcp_server.stop()
 
 
 async def run_mcp(websocket_url: str = "ws://localhost:8765",

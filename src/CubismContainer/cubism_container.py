@@ -494,17 +494,22 @@ def cmd_docker_build(config: ConfigActingDoll):
     # Display settings
     logger.info("=" * 50)
     logger.info("[Create Cubism SDK for Web Docker Container]")
-    logger.info(f"  Code         : {config.CODE_DIRECTORY}")
+    logger.info(f"  Workspace    : {'N/A' if config.WORKSPACE is None else config.WORKSPACE}")
+    logger.info(
+        f"  Code         : {'N/A' if config.CODE_DIRECTORY is None else config.CODE_DIRECTORY.relative_to(config.WORKSPACE).as_posix()}")
     logger.info(f"  Docker")
-    logger.info(f"    dockerfile : {config.DOCKER_FILE_NAME}")
-    logger.info(f"    image      : {config.DOCKER_IMAGE_NAME}:{config.DOCKER_IMAGE_VER}")
+    logger.info(
+        f"    dockerfile : {'N/A' if config.DOCKER_FILE_NAME is None else config.DOCKER_FILE_NAME.relative_to(config.WORKSPACE).as_posix()}")
+    logger.info(f"    image-name : {config.DOCKER_IMAGE_NAME}:{config.DOCKER_IMAGE_VER}")
     logger.info(f"    container  : {config.DOCKER_CONTAINER_NAME}")
     logger.info(f"      port(HTTP)      : {config.PORT_CUBISM}")
     logger.info(f"      port(Websocket) : {config.PORT_WEBSOCKET}")
     logger.info(f"      port(MCP)       : {config.PORT_MCP}")
     logger.info(f"  Cubism SDK for Web")
-    logger.info(f"    archive   : {config.SDK_ARCHIVE}")
-    logger.info(f"    moc3 file : {config.MOC3_FILE}")
+    logger.info(
+        f"    archive   : {'N/A' if config.SDK_ARCHIVE is None else config.SDK_ARCHIVE.relative_to(config.WORKSPACE).as_posix()}")
+    logger.info(
+        f"    moc3 file : {'N/A' if config.MOC3_FILE is None else config.MOC3_FILE.relative_to(config.WORKSPACE).as_posix()}")
     logger.info("=" * 50)
 
     # Check Files and Directories
@@ -516,7 +521,7 @@ def cmd_docker_build(config: ConfigActingDoll):
             logger.error(f"{description} not found: {path}")
             sys.exit(1)
 
-    logger.info(f"# Checking Dockerfile: {config.DOCKER_FILE_NAME}")
+    logger.info(f"# Checking Files and Directories...")
     _check_path(config.DOCKER_FILE_NAME, "Dockerfile")
     _check_path(config.CODE_DIRECTORY, "Code directory")
     _check_path(config.SDK_ARCHIVE, "SDK archive")
@@ -529,7 +534,7 @@ def cmd_docker_build(config: ConfigActingDoll):
     temp_root_dir = config.DOCKER_FILE_NAME.parent / 'temp_adapter'
     temp_resources_dir = temp_root_dir / "Resources"
     temp_code_dir = temp_root_dir / config.CODE_DIRECTORY.name
-    logger.info(f"# Copying files to {temp_root_dir} ...")
+    logger.info(f"# Copying files to '{temp_root_dir.relative_to(config.WORKSPACE)}'")
     try:
         _remove_directory_and_empty_parents(config.WORKSPACE, temp_root_dir)
         temp_root_dir.mkdir(parents=True, exist_ok=True)
