@@ -118,3 +118,6 @@ export const DefaultToggle = {
   physics: true,
   eye_blink: true
 }
+
+// BackgroundColorControllerのデフォルト設定
+export const DefaultBackgroundColor = '#00FF00';

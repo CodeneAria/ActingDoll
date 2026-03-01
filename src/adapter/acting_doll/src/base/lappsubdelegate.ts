@@ -12,6 +12,7 @@ import { LAppPal } from './lapppal';
 import { LAppTextureManager } from './lapptexturemanager';
 import { LAppUI } from './lappui';
 import { LAppView } from './lappview';
+import { BackgroundColorController } from './../addons/backgroundcolorcontroller';
 
 /**
  * Canvasに関連する操作を取りまとめるクラス
@@ -29,6 +30,9 @@ export class LAppSubdelegate {
     this._view = new LAppView();
     this._frameBuffer = null;
     this._captured = false;
+    this._backgroundColorController = new BackgroundColorController(
+      LAppDefine.DefaultBackgroundColor,
+      LAppDefine.DefaultBackgroundColorAlpha);
   }
 
   /**
@@ -53,6 +57,9 @@ export class LAppSubdelegate {
 
     this._glManager.release();
     this._glManager = null;
+
+    this._backgroundColorController.release();
+    this._backgroundColorController = null;
   }
 
   /**
@@ -152,7 +159,14 @@ export class LAppSubdelegate {
     const gl = this._glManager.getGl();
 
     // 画面の初期化
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    if (this._backgroundColorController) {
+      gl.clearColor(this._backgroundColorController.ColorR,
+        this._backgroundColorController.ColorG,
+        this._backgroundColorController.ColorB,
+        this._backgroundColorController.ColorA);
+    } else {
+      gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    }
 
     // 深度テストを有効化
     gl.enable(gl.DEPTH_TEST);
@@ -374,4 +388,9 @@ export class LAppSubdelegate {
   private _captured: boolean;
 
   private _needResize: boolean;
+
+  /**
+   * 背景色コントローラー
+   */
+  private _backgroundColorController: BackgroundColorController | null = null;
 }

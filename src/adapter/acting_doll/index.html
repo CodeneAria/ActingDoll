@@ -80,6 +80,14 @@
           <option value="">Select Expression...</option>
         </select>
       </div>
+      <!-- Background Color Section -->
+      <div class="control-section">
+        <label for="backgroundColorInput"><span class="value-label">Background Color: </span><span id="backgroundColorValue" class="value-color">#FFFFFF</span></label>
+        <div style="margin-top: 8px; display: flex; gap: 4px; align-items: center;">
+          <input type="text" id="backgroundColorInput" placeholder="#FFFFFF" value="#FFFFFF" maxlength="7" style="flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-family: monospace;">
+          <input type="color" id="backgroundColorPicker" value="#ffffff" style="width: 50px; height: 36px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;">
+        </div>
+      </div>
       <!-- Motions Section -->
       <div class="control-section">
         <label for="motionSelect">Motions:</label>

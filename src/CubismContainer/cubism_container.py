@@ -8,7 +8,6 @@ import argparse
 import os
 import subprocess
 import sys
-import time
 import yaml
 import logging
 import shutil
@@ -1022,6 +1021,7 @@ def main():
                              output_dir=config.WORKSPACE / "config")
             cmd_docker_build(config)
             cmd_docker_run(config, hosting=False)
+            cmd_update_model(config, is_docker_exec=False)
             if config.VOLUME_SHARE:
                 _docker_clean(config, with_image=False)
                 cmd_update_model(config, is_docker_exec=False)
