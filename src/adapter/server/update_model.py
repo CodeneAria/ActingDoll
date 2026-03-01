@@ -142,10 +142,9 @@ def run_update_model():
         lappdefine_path = _path(args.workspace, 'acting_doll/src/base/lappdefine.ts')
 
         logger.info('=' * 60)
-        logger.info('ModelConfigs Auto Update Script')
-        logger.info('=' * 60)
-        logger.info(f'Model directory    : {models_dir}')
-        logger.info(f'Update target file : {lappdefine_path}')
+        logger.info(f'[ModelConfigs Auto Update Script]')
+        logger.info(f'Model dir   : {models_dir}')
+        logger.info(f'Update file : {lappdefine_path}')
         logger.info('=' * 60)
 
         # Search for model directories

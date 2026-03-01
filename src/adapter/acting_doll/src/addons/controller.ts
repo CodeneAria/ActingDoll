@@ -58,8 +58,9 @@ class Live2DController {
       // 初期データを取得
       this.loadInitialData();
     } catch (error) {
-      CubismLogError(LAppMultilingual.getMessage(MessageKey.WS_CONNECTED_FAILED, error.toString()));
-      this.showError(LAppMultilingual.getMessage(MessageKey.WS_CONNECTED_FAILED, error.toString()));
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      CubismLogError(LAppMultilingual.getMessage(MessageKey.WS_CONNECTED_FAILED, errorMessage));
+      this.showError(LAppMultilingual.getMessage(MessageKey.WS_CONNECTED_FAILED, errorMessage));
     }
   }
 

@@ -67,7 +67,7 @@ python cubism_container.py create \
 **主要オプション:**
 - `--workspace`: ワークスペースのパス
 - `--config`: config.yaml のパス
-- `--docker_image_name`: Docker イメージ名（デフォルト: image_acting_doll）
+- `--docker_image_name`: Docker イメージ名（デフォルト: acting_doll_image）
 - `--docker_container_name`: Docker コンテナ名
 - `--port_http`: HTTP サーバーポート
 - `--port_websocket`: WebSocket ポート

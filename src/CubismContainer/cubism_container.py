@@ -12,6 +12,7 @@ import time
 import yaml
 import logging
 import shutil
+import fnmatch
 from pathlib import Path
 
 str_format = '[%(levelname)s]\t%(message)s'
@@ -132,7 +133,7 @@ class ConfigActingDoll:
             f"  scale: {self.MOC3_SCALE}\n"
             f"  horizontal: {self.MOC3_HORIZONTAL}\n"
             f"  vertical: {self.MOC3_VERTICAL}\n"
-            f"  custom_motion: {self.MOC3_CUSTOM_MOTION}\n"
+            f"  custom_motion: {"Yes" if self.MOC3_CUSTOM_MOTION else "No"}\n"
             f"mcp:\n"
             f"  # MCP server port\n"
             f"  port: {self.PORT_MCP}\n"
@@ -146,9 +147,9 @@ class ConfigActingDoll:
             f"    websocket: {self.PORT_WEBSOCKET}\n"
             f"  # Authentication settings for WebSocket connections\n"
             f"  authentication:\n"
-            f"    token: {'<your_authentication_token_here>' if self.AUTH_TOKEN == "" else self.AUTH_TOKEN}\n"
+            f"    token: {'<your_authentication_token_here>' if self.AUTH_TOKEN == '' else self.AUTH_TOKEN}\n"
             f"  # Enable or disable outputting the configuration as YAML\n"
-            f"  output_yaml: {self.OUTPUT_YAML}\n"
+            f"  output_yaml: {"Yes" if self.OUTPUT_YAML else "No"}\n"
             f"\n"
             f"# Cubism SDK information\n"
             f"cubism:\n"
@@ -209,15 +210,24 @@ class ConfigActingDoll:
                     self.MOC3_SCALE = moc3.get('scale', self.MOC3_SCALE)
                     self.MOC3_HORIZONTAL = moc3.get('horizontal', self.MOC3_HORIZONTAL)
                     self.MOC3_VERTICAL = moc3.get('vertical', self.MOC3_VERTICAL)
-                    self.MOC3_CUSTOM_MOTION = moc3.get('custom_motion', self.MOC3_CUSTOM_MOTION)
-
+                    # Convert "Yes"/"No" string to True/False
+                    custom_motion_value = moc3.get('custom_motion', self.MOC3_CUSTOM_MOTION)
+                    if isinstance(custom_motion_value, str):
+                        self.MOC3_CUSTOM_MOTION = custom_motion_value.lower() == 'yes'
+                    else:
+                        self.MOC3_CUSTOM_MOTION = bool(custom_motion_value)
                 if 'mcp' in config:
                     mcp = config['mcp']
                     self.PORT_MCP = mcp.get('port', self.PORT_MCP)
                     self.MCP_TYPE = mcp.get('type', self.MCP_TYPE)
                 if 'settings' in config:
                     settings = config['settings']
-                    self.OUTPUT_YAML = settings.get('output_yaml', self.OUTPUT_YAML)
+                    # Convert "Yes"/"No" string to True/False
+                    output_yaml_value = settings.get('output_yaml', self.OUTPUT_YAML)
+                    if isinstance(output_yaml_value, str):
+                        self.OUTPUT_YAML = output_yaml_value.lower() == 'yes'
+                    else:
+                        self.OUTPUT_YAML = bool(output_yaml_value)
                     if 'port' in settings:
                         port = settings['port']
                         self.PORT_CUBISM = port.get('http', self.PORT_CUBISM)
@@ -422,6 +432,60 @@ def _docker_restart(config: ConfigActingDoll):
         logger.error(f" - Failed to restart container {config.DOCKER_CONTAINER_NAME}: {e}")
 
 
+def _find_model_directories(models_dir: Path) -> list[str]:
+    """
+    Search for directories with .model3.json files in src/models folder
+    Args:
+        models_dir: Path to models directory
+    Returns:
+        List of model directory names (sorted)
+    """
+    model_dirs = []
+
+    if not models_dir.exists():
+        logger.error(f'{models_dir} not found')
+        return model_dirs
+
+    for item in models_dir.iterdir():
+        if item.is_dir():
+            # Check if .model3.json file exists
+            model3_files = list(item.glob('*.model3.json'))
+            if model3_files:
+                model_dirs.append(item.name)
+    return sorted(model_dirs)
+
+
+def _find_file(target_dir: Path, pattern: str) -> list[str]:
+    """
+    Search for directories with files matching the given pattern in src/models folder
+    Args:
+        target_dir: Path to target directory
+        pattern: File pattern to search for (e.g. '*.model3.json')
+    Returns:
+        List of model directory names (sorted)
+    """
+    file_list = []
+
+    if not target_dir.exists():
+        logger.error(f'{target_dir} not found')
+        return file_list
+
+    for item in target_dir.iterdir():
+        if item.is_file():
+            # Check if file matches the pattern
+            if fnmatch.fnmatch(item.name, pattern):
+                file_list.append(item.name)
+    return sorted(file_list)
+
+
+def _convert_file_to_lf(file_path):
+    with open(file_path, 'rb') as f:
+        content = f.read()
+    new_content = content.replace(b'\r\n', b'\n').replace(b'\r', b'\n')
+    with open(file_path, 'wb') as f:
+        f.write(new_content)
+
+
 # ============================================================================
 # COMMAND
 # ============================================================================
@@ -465,17 +529,25 @@ def cmd_docker_build(config: ConfigActingDoll):
     # Temporarily copy Core files to Dockerfile directory
     temp_root_dir = config.DOCKER_FILE_NAME.parent / 'temp_adapter'
     temp_resources_dir = temp_root_dir / "Resources"
+    temp_code_dir = temp_root_dir / config.CODE_DIRECTORY.name
     logger.info(f"# Copying files to {temp_root_dir} ...")
     try:
         _remove_directory_and_empty_parents(config.WORKSPACE, temp_root_dir)
         temp_root_dir.mkdir(parents=True, exist_ok=True)
         temp_resources_dir.mkdir(parents=True, exist_ok=True)
         # Source code directory
-        shutil.copytree(config.CODE_DIRECTORY, temp_root_dir / config.CODE_DIRECTORY.name)
-        _remove_directory_and_empty_parents(temp_root_dir, temp_root_dir / "adapter" / "acting_doll" / "public")
-        _remove_directory_and_empty_parents(temp_root_dir, temp_root_dir / "adapter" / "acting_doll" / "dist")
-        _remove_directory_and_empty_parents(temp_root_dir, temp_root_dir / "adapter" / "acting_doll" / "node_modules")
-        _remove_directory_and_empty_parents(temp_root_dir, temp_root_dir / "adapter" / "acting_doll" / "public")
+        shutil.copytree(config.CODE_DIRECTORY, temp_code_dir, dirs_exist_ok=True)
+        _remove_directory_and_empty_parents(temp_root_dir, temp_code_dir / "acting_doll" / "public")
+        _remove_directory_and_empty_parents(temp_root_dir, temp_code_dir / "acting_doll" / "dist")
+        _remove_directory_and_empty_parents(temp_root_dir, temp_code_dir / "acting_doll" / "node_modules")
+        _remove_directory_and_empty_parents(temp_root_dir, temp_code_dir / "acting_doll" / "public")
+        resources_dirs = temp_root_dir / "adapter" / "Cubism" / "Resources"
+        model_dirs = _find_model_directories(resources_dirs)
+        if len(model_dirs) > 0:
+            logger.info(f"# Removed old model directories")
+            for dir_name in model_dirs:
+                _remove_directory_and_empty_parents(resources_dirs, resources_dirs / dir_name)
+                logger.info(f"  - {dir_name}")
         # Cubism SDK for Web.zip
         shutil.copyfile(config.SDK_ARCHIVE, temp_root_dir / config.SDK_ARCHIVE.name)
         # Moc3 file and its parent directories
@@ -545,7 +617,7 @@ def cmd_docker_run(config: ConfigActingDoll, hosting: bool = False):
             logger.error(f"Failed to start Docker container: {result.stderr}")
             sys.exit(1)
         else:
-            logger.info("# -- Container setup completed successfully! --")
+            logger.info(" - Container setup completed successfully!")
     except Exception as e:
         logger.error(f"Failed to start Docker container: {e}")
         sys.exit(1)
@@ -562,7 +634,7 @@ def cmd_docker_run(config: ConfigActingDoll, hosting: bool = False):
                 logger.error(f"Failed to copy Cubism SDK files from container: {result.stderr}")
                 sys.exit(1)
             else:
-                logger.info("# -- Container setup completed successfully! --")
+                logger.info(" - Cubism SDK files copied successfully!")
         except Exception as e:
             logger.error(f"Failed to copy Cubism SDK files from container: {e}")
             sys.exit(1)
@@ -781,8 +853,8 @@ def main():
         create_parser.add_argument(
             '--docker_image_name',
             type=str,
-            default='image_acting_doll',
-            help='Name of the Docker image (default: image_acting_doll)'
+            default='acting_doll_image',
+            help='Name of the Docker image (default: acting_doll_image)'
         )
         create_parser.add_argument(
             '--docker_container_name',
@@ -938,7 +1010,12 @@ def main():
 
         # Execute command
         if args.command == 'create':
-            cmd_update_model(config, is_docker_exec=False)
+            files = _find_file(config.CODE_DIRECTORY, "*.sh")
+            if len(files) > 0:
+                logger.info(f"# Converting line endings of shell scripts to LF...")
+                for item in files:
+                    _convert_file_to_lf(config.CODE_DIRECTORY / item)
+                    logger.info(f"  - {item}")
             if config.OUTPUT_YAML:
                 cmd_template(config,
                              file_name=f"{config.DOCKER_CONTAINER_NAME}.yaml",
@@ -947,6 +1024,7 @@ def main():
             cmd_docker_run(config, hosting=False)
             if config.VOLUME_SHARE:
                 _docker_clean(config, with_image=False)
+                cmd_update_model(config, is_docker_exec=False)
                 cmd_docker_run(config, hosting=True)
             # _docker_logs(config)
             logger.info("=" * 50)

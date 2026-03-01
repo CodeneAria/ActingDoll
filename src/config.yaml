@@ -23,7 +23,7 @@ moc3:
   scale: 1.4
   horizontal: 0.4
   vertical: -0.4
-  custom_motion: false
+  custom_motion: Yes
 mcp:
   # MCP server port
   port: 3001
@@ -39,7 +39,7 @@ settings:
   authentication:
     token: your_authentication_token_here
   # Enable or disable outputting the configuration as YAML
-  output_yaml: true
+  output_yaml: Yes
 
 # Cubism SDK information
 cubism:
