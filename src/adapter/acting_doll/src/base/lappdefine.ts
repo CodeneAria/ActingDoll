@@ -121,3 +121,4 @@ export const DefaultToggle = {
 
 // BackgroundColorControllerのデフォルト設定
 export const DefaultBackgroundColor = '#00FF00';
+export const DefaultBackgroundColorAlpha = 1.0;
