@@ -23,7 +23,11 @@ moc3:
   scale: 1.4
   horizontal: 0.4
   vertical: -0.4
-  custom_motion: Yes
+
+  # MOC3のバージョンが古い場合、ParameterIDが一致してない場合があります。ParameterIDを再定義できます。
+  # custom_motionをYesにして、以下のファイルを編集してください。
+  #   src/adapter/acting_doll/src/addons/cubismdefaultparameterid_custom.ts
+  custom_motion: No
 mcp:
   # MCP server port
   port: 3001

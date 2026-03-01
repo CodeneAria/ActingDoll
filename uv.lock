@@ -11,7 +11,7 @@ members = [
 
 [[package]]
 name = "acting-doll"
-version = "0.2.0"
+version = "0.2.1"
 source = { editable = "." }
 dependencies = [
     { name = "acting-doll-server" },
@@ -42,7 +42,7 @@ dev = [
 
 [[package]]
 name = "acting-doll-server"
-version = "0.2.0"
+version = "0.2.1"
 source = { editable = "src/adapter/server" }
 dependencies = [
     { name = "fastmcp" },
@@ -286,7 +286,7 @@ wheels = [
 
 [[package]]
 name = "cubism-container"
-version = "0.2.0"
+version = "0.2.1"
 source = { editable = "src/CubismContainer" }
 dependencies = [
     { name = "pyyaml" },
