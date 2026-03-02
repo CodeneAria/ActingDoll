@@ -41,31 +41,31 @@ class MCPHandler:
     ###########################################################
     def _setup_tools(self):
         """ツール定義をセットアップ"""
-        @self.mcp.tool()
-        async def list_clients() -> dict:
-            """接続中のクライアント一覧を取得します"""
-            # list
-            return await self._list_clients()
+        # @self.mcp.tool()
+        # async def list_clients() -> dict:
+        #    """接続中のクライアント一覧を取得します"""
+        #    # list
+        #    return await self._list_clients()
 
-        @self.mcp.tool()
-        async def get_model_list() -> dict:
-            """利用可能なLive2Dモデルの一覧を取得します"""
-            # model list
-            return await self._get_model_list()
+        # @self.mcp.tool()
+        # async def get_model_list() -> dict:
+        #    """利用可能なLive2Dモデルの一覧を取得します"""
+        #    # model list
+        #    return await self._get_model_list()
 
-        @self.mcp.tool()
-        async def get_model_info(model_name: str) -> dict:
-            """指定したモデルの詳細情報（expressions、motions、parameters）を取得します"""
-            # model get_expressions <name>
-            # model get_motions <name>
-            # model get_parameters <name>
-            return await self._get_model_info(model_name)
+        # @self.mcp.tool()
+        # async def get_model_info(model_name: str) -> dict:
+        #    """指定したモデルの詳細情報（expressions、motions、parameters）を取得します"""
+        #    # model get_expressions <name>
+        #    # model get_motions <name>
+        #    # model get_parameters <name>
+        #     return await self._get_model_info(model_name)
 
-        @self.mcp.tool()
-        async def set_expression(client_id: str, expression: str) -> dict:
-            """クライアントのモデルの表情を設定します"""
-            # client <client_id> set_expression [expression_name]
-            return await self._set_expression(client_id, expression)
+        # @self.mcp.tool()
+        # async def set_expression(client_id: str, expression: str) -> dict:
+        #    """クライアントのモデルの表情を設定します"""
+        #    # client <client_id> set_expression [expression_name]
+        #    return await self._set_expression(client_id, expression)
 
         @self.mcp.tool()
         async def set_motion(client_id: str, group: str, no: int, priority: int = 2) -> dict:
@@ -131,7 +131,7 @@ class MCPHandler:
         def get_config() -> Dict[str, str]:
             """アプリケーションの設定情報を返すリソース"""
             return {
-                "version": "1.0.0",
+                "version": "0.2.1",
                 "name": "acting-doll",
                 "description": "Live2Dモデル制御のためのMCPサーバー",
                 "features": "model_control, client_management, motion_control"
@@ -160,6 +160,7 @@ class MCPHandler:
     ###########################################################
     # — Prompt を追加 —
     ###########################################################
+
     def _setup_prompts(self):
         @self.mcp.prompt()
         def plan_animation_sequence(model_name: str, emotions: list[str], duration_seconds: int) -> str:
