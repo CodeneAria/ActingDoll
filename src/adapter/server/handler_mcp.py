@@ -132,34 +132,61 @@ class MCPHandler:
             """アプリケーションの設定情報を返すリソース"""
             return {
                 "version": "1.0.0",
-                "maintainer": "YourName",
-                "features": "greet, sum, fetch"
+                "name": "acting-doll",
+                "description": "Live2Dモデル制御のためのMCPサーバー",
+                "features": "model_control, client_management, motion_control"
             }
-        # 動的テンプレート URI リソース（URI の中にパラメータ {name} を含む例）
 
-        @self.mcp.resource("user://{name}")
-        def get_user_profile(name: str) -> Dict[str, str]:
-            """ユーザープロファイル情報を返すリソース"""
-            # 実際には DB などから取る想定
-            return {
-                "name": name,
-                "role": "user",
-                "welcome_msg": f"Welcome, {name}!"
-            }
+        @self.mcp.resource("app://models")
+        async def list_models() -> Dict[str, any]:
+            """利用可能なLive2Dモデルの一覧を返すリソース"""
+            return await self._get_model_list()
+
+        @self.mcp.resource("app://models/{model_name}")
+        async def get_model_info(model_name: str) -> Dict[str, any]:
+            """指定したモデルの詳細情報を返すリソース"""
+            return await self._get_model_info(model_name)
+
+        @self.mcp.resource("app://clients")
+        async def list_clients_resource() -> Dict[str, any]:
+            """接続中のクライアント一覧を返すリソース"""
+            return await self._list_clients()
+
+        @self.mcp.resource("app://clients/{client_id}")
+        async def get_client_state_resource(client_id: str) -> Dict[str, any]:
+            """クライアントの状態を返すリソース"""
+            return await self._get_client_state(client_id)
 
     ###########################################################
     # — Prompt を追加 —
     ###########################################################
     def _setup_prompts(self):
         @self.mcp.prompt()
-        def ask_for_sum(nums: list[int]) -> str:
-            """合計を求めるプロンプトテンプレート"""
-            return "次の数字の合計を求めてください：" + ", ".join(str(n) for n in nums)
+        def plan_animation_sequence(model_name: str, emotions: list[str], duration_seconds: int) -> str:
+            """アニメーション シーケンスを計画するプロンプトテンプレート"""
+            emotions_str = "、".join(emotions)
+            return (f"モデル '{model_name}' に対して、{duration_seconds} 秒間のアニメーションシーケンスを計画してください。\n"
+                    f"以下の感情を順番に表現してください：{emotions_str}\n"
+                    f"各感情への遷移は自然で、モデルの表情とモーションを組み合わせて使用してください。")
 
         @self.mcp.prompt()
-        def greet_user(name: str) -> str:
-            """挨拶を促すプロンプトテンプレート"""
-            return f"Hi, my name is {name}. Nice to meet you!"
+        def describe_model_capabilities(model_name: str) -> str:
+            """モデルの能力を説明するプロンプトテンプレート"""
+            return (f"モデル '{model_name}' の以下の能力について説明してください：\n"
+                    f"1. 利用可能な表情（expressions）\n"
+                    f"2. 利用可能なモーション（motions）\n"
+                    f"3. 制御可能なパラメータ（parameters）\n"
+                    f"このモデルでシーン制作時に活用できるクリエイティブな方法を提案してください。")
+
+        @self.mcp.prompt()
+        def create_interaction_guide(client_id: str, interaction_type: str) -> str:
+            """クライアント対話ガイドを作成するプロンプトテンプレート"""
+            return (f"クライアント '{client_id}' に対して、{interaction_type} タイプの対話プロトコルを作成してください。\n"
+                    f"以下を含めてください：\n"
+                    f"- 初期化手順\n"
+                    f"- 状態遷移フロー\n"
+                    f"- エラーハンドリング\n"
+                    f"- 終了手順")
 
     ###########################################################
     # Functions
