@@ -152,3 +152,9 @@ ActingDollはブラウザベースのAPIコントローラーパネル（API.htm
 ## ライセンス
 
 MIT License - 詳細は [LICENSE](LICENSE) を参照してください。
+
+### 利用ソフトウェア
+
+- [VoiceVox Engine](https://github.com/VOICEVOX/voicevox_engine)のDockerイメージを利用しています。
+VoiceVox Engineは、テキストから自然な音声を生成するためのオープンソースの音声合成エンジンです。
+  - https://hub.docker.com/r/voicevox/voicevox_engine
