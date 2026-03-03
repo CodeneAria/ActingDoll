@@ -19,9 +19,8 @@ pip install -U pytest pytest-asyncio websockets
 
 ```bash
 # Cubism Controllerの起動
-python tools/CubismContainer/create_container.py
-python tools/CubismContainer/build.py
-python tools/CubismContainer/start.py
+uv sync
+uv run cubism-container create --workspace . --config config/config.yaml
 ```
 
 ### 基本的なテストの実行例

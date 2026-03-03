@@ -108,6 +108,7 @@
         "testpypi",
         "touchmanager",
         "uvicorn",
+        "voicevox",
         "Wanko",
         "webassets",
         "websocketclient",

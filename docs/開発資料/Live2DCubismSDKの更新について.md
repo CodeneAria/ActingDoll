@@ -5,7 +5,7 @@ Live2D Cubism SDKのVersionを上げたい場合の対処になります。
 ## 修正が必要になる個所
 
 - タグの更新
-  - [ ] ```src/config.yaml```のタグの更新
+  - [ ] ```config/config.yaml```のタグの更新
   - [ ] ```tools/CubismContainer/volume/Dockerfile```にもタグの更新
 - Live2D Cubism Coreの更新
   - [ ] ```src/Cubism/Core```を対象のVersionに更新してください

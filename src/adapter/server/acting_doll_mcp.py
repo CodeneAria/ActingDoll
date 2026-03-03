@@ -5,7 +5,7 @@ import argparse
 import asyncio
 import logging
 import os
-from handler_mcp import run_mcp
+from modules.handler_mcp import run_mcp
 try:
     from importlib.metadata import version as get_version
     __version__ = get_version('acting-doll-server')

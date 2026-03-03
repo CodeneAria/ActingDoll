@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Docker container management script for Cubism SDK Web.
-Provides a unified CLI to manage create, rebuild, template, exec, and stop_server operations.
+Provides a unified CLI to manage setup, create, rebuild, template, exec, and stop_server operations.
 """
 
 import argparse
@@ -83,6 +83,19 @@ class ConfigActingDoll:
         self.GIT_SAMPLE_TAG: str = "5-r.5-beta.3"
         self.GIT_SAMPLE_DIR_NAME: str = "Samples"
 
+        # text_to_speech
+        self.TTS_USE_GPU: bool = False
+        self.TTS_DOCKER_CONTAINER_NAME: str = "text_to_speech"
+        self.TTS_PORT: int = 50021
+
+        self.TTS_DOCKER_IMAGE_PULL: str = "voicevox/voicevox_engine"
+        self.TTS_DOCKER_IMAGE_VERSION_CPU: str = "cpu-latest"
+        self.TTS_DOCKER_IMAGE_VERSION_GPU: str = "nvidia-latest"
+        if self.TTS_USE_GPU:
+            self.TTS_DOCKER_IMAGE_VERSION = self.TTS_DOCKER_IMAGE_VERSION_GPU
+        else:
+            self.TTS_DOCKER_IMAGE_VERSION = self.TTS_DOCKER_IMAGE_VERSION_CPU
+
     def yaml_str(self) -> str:
         # yaml_str = yaml.dump({
         #    "docker_container_name": str(self.DOCKER_CONTAINER_NAME),
@@ -115,28 +128,36 @@ class ConfigActingDoll:
             f"  # [REQUIRED]\n"
             f"  # absolute or relative path to the workspace directory (where the REQUIRED files are located)\n"
             f"  workspace: {self.WORKSPACE}\n"
-            f"\n"
-            f"  # Archive file for Cubism SDK Web\n"
+            f"\n  # Archive file for Cubism SDK Web\n"
             f"  sdk_archive: {'<your_sdk_archive_here>' if self.SDK_ARCHIVE is None else self.SDK_ARCHIVE.relative_to(self.WORKSPACE).as_posix()}\n"
-            f"\n"
-            f"  # Dockerfile name\n"
+            f"\n  # Dockerfile name\n"
             f"  dockerfile: {'<your_dockerfile_here>' if self.DOCKER_FILE_NAME is None else self.DOCKER_FILE_NAME.relative_to(self.WORKSPACE).as_posix()}\n"
             f"  # target directory for custom code\n"
             f"  code_dir: {'<your_code_directory_here>' if self.CODE_DIRECTORY is None else self.CODE_DIRECTORY.relative_to(self.WORKSPACE).as_posix()}\n"
             f"\n"
-            f"  # [OPTIONAL]\n"
             f"  # Docker image settings\n"
             f"  docker_image_name: {self.DOCKER_IMAGE_NAME}\n"
+            f"\n"
             f"moc3:\n"
             f"  file: {'<your_moc3_file_here>' if self.MOC3_FILE is None else self.MOC3_FILE.relative_to(self.WORKSPACE).as_posix()}\n"
             f"  scale: {self.MOC3_SCALE}\n"
             f"  horizontal: {self.MOC3_HORIZONTAL}\n"
             f"  vertical: {self.MOC3_VERTICAL}\n"
             f"  custom_motion: {"Yes" if self.MOC3_CUSTOM_MOTION else "No"}\n"
+            f"\n"
             f"mcp:\n"
             f"  # MCP server port\n"
             f"  port: {self.PORT_MCP}\n"
             f"  type: {self.MCP_TYPE}\n"
+            f"\n"
+            f"text_to_speech:\n"
+            f"  use_gpu: {"Yes" if self.TTS_USE_GPU else "No"}\n"
+            f"  docker_container_name: {self.TTS_DOCKER_CONTAINER_NAME}\n"
+            f"  port: {self.TTS_PORT}\n"
+            f"\n  # Docker image settings\n"
+            f"  docker_image_pull: {self.TTS_DOCKER_IMAGE_PULL}\n"
+            f"  docker_image_version_cpu: {self.TTS_DOCKER_IMAGE_VERSION_CPU}\n"
+            f"  docker_image_version_gpu: {self.TTS_DOCKER_IMAGE_VERSION_GPU}\n"
             f"\n"
             f"# Docker Configuration for Cubism SDK Web\n"
             f"settings:\n"
@@ -235,6 +256,25 @@ class ConfigActingDoll:
                         authentication = settings['authentication']
                         self.AUTH_TOKEN = str(authentication.get('token', self.AUTH_TOKEN)).lower()
                         self.REQUIRE_AUTH = False if self.AUTH_TOKEN == "" else True
+                if 'text_to_speech' in config:
+                    tts = config['text_to_speech']
+                    # Convert "Yes"/"No" string to True/False
+                    use_gpu_value = tts.get('use_gpu', self.TTS_USE_GPU)
+                    if isinstance(use_gpu_value, str):
+                        self.TTS_USE_GPU = use_gpu_value.lower() == 'yes'
+                    else:
+                        self.TTS_USE_GPU = bool(use_gpu_value)
+                    self.TTS_DOCKER_CONTAINER_NAME = tts.get('docker_container_name', self.TTS_DOCKER_CONTAINER_NAME)
+                    self.TTS_PORT = tts.get('port', self.TTS_PORT)
+                    self.TTS_DOCKER_IMAGE_PULL = tts.get('docker_image_pull', self.TTS_DOCKER_IMAGE_PULL)
+                    self.TTS_DOCKER_IMAGE_VERSION_CPU = tts.get(
+                        'docker_image_version_cpu', self.TTS_DOCKER_IMAGE_VERSION_CPU)
+                    self.TTS_DOCKER_IMAGE_VERSION_GPU = tts.get(
+                        'docker_image_version_gpu', self.TTS_DOCKER_IMAGE_VERSION_GPU)
+                    if self.TTS_USE_GPU:
+                        self.TTS_DOCKER_IMAGE_VERSION = self.TTS_DOCKER_IMAGE_VERSION_GPU
+                    else:
+                        self.TTS_DOCKER_IMAGE_VERSION = self.TTS_DOCKER_IMAGE_VERSION_CPU
 
         # File not found or YAML parsing error
         except FileNotFoundError:
@@ -290,6 +330,9 @@ class ConfigActingDoll:
         if hasattr(args, 'port_mcp'):
             if args.port_mcp is not None:
                 self.PORT_MCP = args.port_mcp
+        if hasattr(args, 'port_tts'):
+            if args.port_tts is not None:
+                self.TTS_PORT = args.port_tts
         if hasattr(args, 'production'):
             if args.production is not None:
                 self.PRODUCTION = args.production
@@ -387,11 +430,11 @@ def _ensure_container_running(config: ConfigActingDoll):
         return False
 
 
-def _docker_clean(config: ConfigActingDoll, with_image=False):
+def _docker_clean(image_name_label: str, with_image=False):
     """Delete Docker container and image."""
     # Remove existing containers
     logger.info("# Checking for existing containers...")
-    ps_cmd = f'docker ps -a --format "{{{{.ID}}}}" --filter "ancestor={config.DOCKER_IMAGE_NAME}:{config.DOCKER_IMAGE_VER}"'
+    ps_cmd = f'docker ps -a --format "{{{{.ID}}}}" --filter "ancestor={image_name_label}"'
     result = _run_command(ps_cmd, capture_output=True)
     if result.stdout.strip():
         container_ids = result.stdout.strip().split('\n')
@@ -401,13 +444,13 @@ def _docker_clean(config: ConfigActingDoll, with_image=False):
 
     if with_image:
         logger.info("# Checking for existing images...")
-        img_cmd = f"docker image ls -q {config.DOCKER_IMAGE_NAME}:{config.DOCKER_IMAGE_VER}"
+        img_cmd = f"docker image ls -q {image_name_label}"
         result = _run_command(img_cmd, capture_output=True)
         if result.stdout.strip():
             logger.info(
-                f"  - Remove existing image: {config.DOCKER_IMAGE_NAME}:{config.DOCKER_IMAGE_VER}")
+                f"  - Remove existing image: {image_name_label}")
             _run_command(
-                f"docker rmi {config.DOCKER_IMAGE_NAME}:{config.DOCKER_IMAGE_VER}", capture_output=True)
+                f"docker rmi {image_name_label}", capture_output=True)
 
 
 def _docker_logs(config: ConfigActingDoll):
@@ -488,6 +531,47 @@ def _convert_file_to_lf(file_path):
 # ============================================================================
 # COMMAND
 # ============================================================================
+def cmd_create_tts(config: ConfigActingDoll) -> bool:
+    logger.info("# Creating Text-to-Speech Docker container...")
+    ret_flag = True
+    if config.TTS_DOCKER_IMAGE_PULL == "":
+        logger.error("  - TTS Docker image pull name or version is not set.")
+        ret_flag = False
+    else:
+        try:
+            docker_options: str = ""
+            if config.TTS_USE_GPU:
+                docker_options = f"-gpus all"
+            if config.TTS_DOCKER_IMAGE_VERSION != "":
+                image_name = f"{config.TTS_DOCKER_IMAGE_PULL}:{config.TTS_DOCKER_IMAGE_VERSION}"
+            else:
+                image_name = config.TTS_DOCKER_IMAGE_PULL
+
+            # Pull Docker image
+            img_cmd = (f"docker pull {image_name}")
+            result = _run_command(img_cmd, check=True)
+            if result.returncode != 0:
+                raise RuntimeError(f"Failed to pull Docker image: {image_name}")
+
+            # Remove existing container if exists
+            _docker_clean(image_name, with_image=False)
+
+            # Create and start container
+            run_cmd = (f"docker run {docker_options}"
+                       f" -d"
+                       f" -p {config.TTS_PORT}:50021"
+                       f" --name {config.TTS_DOCKER_CONTAINER_NAME}"
+                       f" {image_name}")
+            result = _run_command(run_cmd, check=True)
+            if result.returncode != 0:
+                raise RuntimeError(f"Failed to create Docker container: {config.TTS_DOCKER_CONTAINER_NAME}")
+
+        except Exception as e:
+            raise RuntimeError(f"{e}")
+
+    return ret_flag
+
+
 def cmd_docker_build(config: ConfigActingDoll):
     """Create Docker image and container."""
 
@@ -528,7 +612,7 @@ def cmd_docker_build(config: ConfigActingDoll):
     _check_path(config.MOC3_FILE, "Moc3 file")
 
     # Remove existing containers
-    _docker_clean(config, with_image=True)
+    _docker_clean(f"{config.DOCKER_IMAGE_NAME}:{config.DOCKER_IMAGE_VER}", with_image=True)
 
     # Temporarily copy Core files to Dockerfile directory
     temp_root_dir = config.DOCKER_FILE_NAME.parent / 'temp_adapter'
@@ -603,19 +687,20 @@ def cmd_docker_run(config: ConfigActingDoll, hosting: bool = False):
     # Run container
     try:
         logger.info("# Creating Docker container...")
-        run_cmd = "docker container run -dit" \
-            + f" --name {config.DOCKER_CONTAINER_NAME}" \
-            + (f" -v {config.CODE_DIRECTORY}:/root/workspace/adapter:rw" if hosting else "") \
-            + f" -p {config.PORT_CUBISM}:{config.PORT_CUBISM}" \
-            + f" -p {config.PORT_WEBSOCKET}:{config.PORT_WEBSOCKET}" \
-            + f" -p {config.PORT_MCP}:{config.PORT_MCP}" \
-            + f" -e PORT_HTTP_NUMBER={config.PORT_CUBISM}" \
-            + f" -e PORT_WEBSOCKET_NUMBER={config.PORT_WEBSOCKET}" \
-            + f" -e PORT_MCP_NUMBER={config.PORT_MCP}" \
-            + f" -e WEBSOCKET_AUTH_TOKEN={config.AUTH_TOKEN}" \
-            + f" -e WEBSOCKET_REQUIRE_AUTH={config.REQUIRE_AUTH}" \
-            + f" -e WEBSOCKET_ALLOWED_DIRS={':'.join(config.ALLOWED_DIRS)}" \
-            + f" {config.DOCKER_IMAGE_NAME}:{config.DOCKER_IMAGE_VER}"
+        value_options = f"-v {config.CODE_DIRECTORY}:/root/workspace/adapter:rw" if hosting else ""
+        run_cmd = ("docker container run -dit"
+                   f" --name {config.DOCKER_CONTAINER_NAME} {value_options}"
+                   f" -p {config.PORT_CUBISM}:{config.PORT_CUBISM}"
+                   f" -p {config.PORT_WEBSOCKET}:{config.PORT_WEBSOCKET}"
+                   f" -p {config.PORT_MCP}:{config.PORT_MCP}"
+                   f" -e PORT_HTTP_NUMBER={config.PORT_CUBISM}"
+                   f" -e PORT_WEBSOCKET_NUMBER={config.PORT_WEBSOCKET}"
+                   f" -e PORT_MCP_NUMBER={config.PORT_MCP}"
+                   f" -e WEBSOCKET_AUTH_TOKEN={config.AUTH_TOKEN}"
+                   f" -e WEBSOCKET_REQUIRE_AUTH={config.REQUIRE_AUTH}"
+                   f" -e WEBSOCKET_ALLOWED_DIRS={':'.join(config.ALLOWED_DIRS)}"
+                   f" {config.DOCKER_IMAGE_NAME}:{config.DOCKER_IMAGE_VER}"
+                   )
         result = _run_command(run_cmd, shell=False, capture_output=True)
         if result.returncode != 0:
             logger.error(f"Failed to start Docker container: {result.stderr}")
@@ -630,9 +715,10 @@ def cmd_docker_run(config: ConfigActingDoll, hosting: bool = False):
             logger.info("# Copying Cubism SDK files from container...")
             cubism_dir = config.CODE_DIRECTORY / 'Cubism'
             _remove_directory_and_empty_parents(config.WORKSPACE, cubism_dir)
-            cp_cubism_cmd = "docker cp" \
-                + f" {config.DOCKER_CONTAINER_NAME}:/root/workspace/adapter/Cubism" \
-                + f" {cubism_dir}"
+            cp_cubism_cmd = ("docker cp"
+                             f" {config.DOCKER_CONTAINER_NAME}:/root/workspace/adapter/Cubism"
+                             f" {cubism_dir}"
+                             )
             result = _run_command(cp_cubism_cmd, shell=False, capture_output=True)
             if result.returncode != 0:
                 logger.error(f"Failed to copy Cubism SDK files from container: {result.stderr}")
@@ -712,7 +798,7 @@ def cmd_template(config: ConfigActingDoll, file_name: str = "template.config.yam
 
         logger.info("=" * 50)
         logger.info("[Generate Template Files]")
-        logger.info(f"Generated: {config_path}")
+        logger.info(f"\t{config_path}")
     except Exception as e:
         logger.error(f"An error occurred while generating template files: {e}")
         sys.exit(1)
@@ -836,61 +922,6 @@ def main():
             help='Path to workspace folder (default: current folder)'
         )
         create_parser.add_argument(
-            '--sdk_archive',
-            type=str,
-            default=None,
-            help='Path to SDK zip file(required)'
-        )
-        create_parser.add_argument(
-            '--moc3_file',
-            type=str,
-            default=None,
-            help='Path to moc3 file(required)'
-        )
-        create_parser.add_argument(
-            '--code_directory',
-            type=str,
-            default=None,
-            help='Path to source code directory(required)'
-        )
-
-        create_parser.add_argument(
-            '--docker_image_name',
-            type=str,
-            default='acting_doll_image',
-            help='Name of the Docker image (default: acting_doll_image)'
-        )
-        create_parser.add_argument(
-            '--docker_container_name',
-            type=str,
-            default=None,
-            help='Name of the Docker container'
-        )
-        create_parser.add_argument(
-            '--port_http',
-            type=int,
-            default=None,
-            help='Port for HTTP server'
-        )
-        create_parser.add_argument(
-            '--port_websocket',
-            type=int,
-            default=None,
-            help='Port for WebSocket server'
-        )
-        create_parser.add_argument(
-            '--port_mcp',
-            type=int,
-            default=None,
-            help='Port for MCP server'
-        )
-        create_parser.add_argument(
-            '--token',
-            type=str,
-            default=None,
-            help='Authentication token for WebSocket connections (default: empty, no authentication)'
-        )
-        create_parser.add_argument(
             '--not_output_yaml',
             action='store_true',
             default=False,
@@ -939,11 +970,72 @@ def main():
             help='Generate template files for Dockerfile and config.yaml'
         )
         template_parser.add_argument(
-            '-o', '--output',
+            'output',
             type=str,
             default=None,
-            help='Output directory for template files (default: workspace root)'
+            help='Output directory for template files'
         )
+        template_parser.add_argument(
+            '--sdk_archive',
+            type=str,
+            default=None,
+            help='Path to SDK zip file'
+        )
+        template_parser.add_argument(
+            '--moc3_file',
+            type=str,
+            default=None,
+            help='Path to moc3 file'
+        )
+        template_parser.add_argument(
+            '--code_directory',
+            type=str,
+            default=None,
+            help='Path to source code directory'
+        )
+        template_parser.add_argument(
+            '--docker_image_name',
+            type=str,
+            default='acting_doll_image',
+            help='Name of the Docker image (default: acting_doll_image)'
+        )
+        template_parser.add_argument(
+            '--docker_container_name',
+            type=str,
+            default=None,
+            help='Name of the Docker container'
+        )
+        template_parser.add_argument(
+            '--port_http',
+            type=int,
+            default=None,
+            help='Port for HTTP server'
+        )
+        template_parser.add_argument(
+            '--port_websocket',
+            type=int,
+            default=None,
+            help='Port for WebSocket server'
+        )
+        template_parser.add_argument(
+            '--port_mcp',
+            type=int,
+            default=None,
+            help='Port for MCP server'
+        )
+        template_parser.add_argument(
+            '--port_tts',
+            type=int,
+            default=None,
+            help='Port for text-to-speech server'
+        )
+        template_parser.add_argument(
+            '--token',
+            type=str,
+            default=None,
+            help='Authentication token for WebSocket connections (default: empty, no authentication)'
+        )
+
         # exec command
         exec_parser = subparsers.add_parser(
             'exec',
@@ -1027,17 +1119,22 @@ def main():
             cmd_docker_build(config)
             cmd_docker_run(config, hosting=False)
             cmd_update_model(config, is_docker_exec=False)
+
+            # Create TTS container
+            cmd_create_tts(config)
+
             if config.VOLUME_SHARE:
-                _docker_clean(config, with_image=False)
+                _docker_clean(f"{config.DOCKER_IMAGE_NAME}:{config.DOCKER_IMAGE_VER}", with_image=False)
                 cmd_update_model(config, is_docker_exec=False)
                 cmd_docker_run(config, hosting=True)
             # _docker_logs(config)
             logger.info("=" * 50)
-            logger.info("\t(HTTP)\thttp://localhost:{port}".format(port=config.PORT_CUBISM))
+            logger.info("\t(tts)\thttp://localhost:{port}".format(port=config.TTS_PORT))
             if config.MCP_TYPE == "sse":
                 logger.info("\t(MCP)\thttp://localhost:{port}/sse".format(port=config.PORT_MCP))
             elif config.MCP_TYPE == "shttp":
                 logger.info("\t(MCP)\thttp://localhost:{port}/mcp".format(port=config.PORT_MCP))
+            logger.info("\t(HTTP)\thttp://localhost:{port}".format(port=config.PORT_CUBISM))
         elif args.command == 'rebuild':
             development: bool = args.development if hasattr(args, 'development') else False
             build_node: bool = not args.no_build_node_modules if hasattr(

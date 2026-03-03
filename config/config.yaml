@@ -15,9 +15,9 @@ create:
   # target directory for custom code
   code_dir: src/adapter
 
-  # [OPTIONAL]
   # Docker image settings
   docker_image_name: acting_doll_image
+
 moc3:
   file: archives/Resources/Haru/Haru.moc3
   scale: 1.4
@@ -28,10 +28,22 @@ moc3:
   # custom_motionをYesにして、以下のファイルを編集してください。
   #   src/adapter/acting_doll/src/addons/cubismdefaultparameterid_custom.ts
   custom_motion: No
+
 mcp:
   # MCP server port
   port: 3001
   type: shttp
+
+text_to_speech:
+  use_gpu: Yes
+  docker_container_name: text_to_speech
+  port: 50021
+
+  # Docker image settings
+  #  ref. https://hub.docker.com/r/voicevox/voicevox_engine
+  docker_image_pull: voicevox/voicevox_engine
+  docker_image_version_cpu: cpu-latest
+  docker_image_version_gpu: nvidia-latest
 
 # Docker Configuration for Cubism SDK Web
 settings:

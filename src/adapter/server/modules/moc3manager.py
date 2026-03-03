@@ -1,7 +1,6 @@
 """
 Live2Dモデルの情報を管理するモジュール
 """
-
 from pathlib import Path
 from typing import Dict, List, Optional
 import json

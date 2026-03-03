@@ -1,6 +1,7 @@
 """
 Tests for security_config module
 """
+from modules.security_config import SecurityConfig
 import os
 import tempfile
 from pathlib import Path
@@ -10,8 +11,6 @@ import sys
 # Add src/adapter/server to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent /
                 "src" / "adapter" / "server"))
-
-from security_config import SecurityConfig
 
 
 class TestSecurityConfig:

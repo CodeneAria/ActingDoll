@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent /
 
 def test_import_modules():
     """モジュールのインポートテスト"""
-    from security_config import SecurityConfig
+    from modules.security_config import SecurityConfig
 
     # SecurityConfigモジュールが正常にインポートできることを確認
     assert SecurityConfig is not None
@@ -23,7 +23,7 @@ def test_import_modules():
 
 def test_security_config_initialization():
     """SecurityConfigの初期化テスト"""
-    from security_config import SecurityConfig
+    from modules.security_config import SecurityConfig
 
     # 環境変数をクリアして初期化
     env_backup = {}
@@ -50,7 +50,7 @@ def test_parse_args_with_defaults():
     """parse_argsのデフォルト値テスト"""
     # websocket_serverをインポートできるかテスト
     # 実際のコマンドライン引数パースは行わない（argparseがsys.argvを使うため）
-    from security_config import SecurityConfig
+    from modules.security_config import SecurityConfig
 
     config = SecurityConfig()
     assert config.default_host == '127.0.0.1'

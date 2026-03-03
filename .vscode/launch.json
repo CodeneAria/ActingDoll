@@ -13,7 +13,7 @@
             "args": [
                 "create",
                 "--config",
-                "${workspaceFolder}/src/config.yaml",
+                "${workspaceFolder}/config/config.yaml",
                 "--workspace",
                 "${workspaceFolder}"
             ]
@@ -27,7 +27,7 @@
             "args": [
                 "rebuild",
                 "--config",
-                "${workspaceFolder}/src/config.yaml"
+                "${workspaceFolder}/config/config.yaml"
             ]
         },
         {
@@ -38,7 +38,6 @@
             "console": "integratedTerminal",
             "args": [
                 "template",
-                "--output",
                 "${workspaceFolder}/config",
             ]
         },

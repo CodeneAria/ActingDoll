@@ -13,7 +13,7 @@
                 "--workspace",
                 "${workspaceFolder}",
                 "--config",
-                "${workspaceFolder}/src/config.yaml",
+                "${workspaceFolder}/config/config.yaml",
             ],
             "detail": "Dockerコンテナを作成してサーバーを起動する（初回のセットアップや、イメージの内容を更新したいときに）"
         },
@@ -25,7 +25,7 @@
                 "${workspaceFolder}/src/CubismContainer/cubism_container.py",
                 "rebuild",
                 "--config",
-                "${workspaceFolder}/src/config.yaml"
+                "${workspaceFolder}/config/config.yaml"
             ],
             "detail": "Dockerイメージを再構築する（イメージの内容を更新したいときに）"
         },
@@ -37,7 +37,7 @@
                 "${workspaceFolder}/src/CubismContainer/cubism_container.py",
                 "exec",
                 "--config",
-                "${workspaceFolder}/src/config.yaml"
+                "${workspaceFolder}/config/config.yaml"
             ],
             "detail": "Dockerの中に入って操作できるコンソール"
         },
@@ -50,7 +50,7 @@
                 "${workspaceFolder}/src/CubismContainer/cubism_container.py",
                 "stop_server",
                 "--config",
-                "${workspaceFolder}/src/config.yaml"
+                "${workspaceFolder}/config/config.yaml"
             ],
             "detail": "Dockerコンテナ内のサーバーを停止する"
         },
@@ -61,8 +61,27 @@
             "args": [
                 "${workspaceFolder}/src/CubismContainer/cubism_container.py",
                 "template",
-                "--output",
                 "${workspaceFolder}/config",
+                "--sdk_archive",
+                "archives/CubismSdkForWeb-5-r.5-beta.3.zip",
+                "--moc3_file",
+                "archives/Resources/Haru/Haru.moc3",
+                "--code_directory",
+                "src/adapter",
+                "--docker_image_name",
+                "acting_doll_image",
+                "--docker_container_name",
+                "Haru",
+                "--port_http",
+                "8080",
+                "--port_websocket",
+                "8765",
+                "--port_mcp",
+                "3001",
+                "--port_tts",
+                "50021",
+                "--token",
+                "your_authentication_token_here"
             ],
             "detail": "config.yaml のテンプレートを生成する"
         },

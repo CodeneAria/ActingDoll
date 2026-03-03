@@ -90,7 +90,7 @@ python cubism_container.py rebuild --config config/config.yaml
 テンプレートファイル（config.yaml, Dockerfile）を生成します。
 
 ```bash
-python cubism_container.py template --output config/
+python cubism_container.py template ./config
 ```
 
 ### exec

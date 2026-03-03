@@ -26,11 +26,11 @@ cd ActingDoll
 # uv を利用してpython環境を構築
 uv sync
 
-# [OPTIONS] config.yamlのテンプレートを生成する場合
-cubism-container template --output ./config
+# config.yamlのテンプレートを生成してください。必要に応じて
+cubism-container template ./config
 
 # config.yamlをすべて指定した場合のコマンド
-cubism-container create --config config/config.yaml
+cubism-container create --config ./config/config.yaml
 # [OPTIONS] config.yamlを指定せずにデフォルトのconfig.yamlを利用する場合
 # workspace/config.yamlを生成しますので、編集してご利用ください
 cubism-container create --workspace . --code_directory src/adapter --sdk_archive archives/CubismSdkForWeb-5-r.5-beta.3.zip --moc3_file archives/Resources/Haru/Haru.moc3 --docker_container_name Haru

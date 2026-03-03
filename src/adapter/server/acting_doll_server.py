@@ -5,8 +5,8 @@ import argparse
 import asyncio
 import logging
 import os
-from handler_cubism_controller import run_websocket
-from security_config import SecurityConfig
+from modules.handler_cubism_controller import run_websocket
+from modules.security_config import SecurityConfig
 try:
     from importlib.metadata import version as get_version
     __version__ = get_version('acting-doll-server')
