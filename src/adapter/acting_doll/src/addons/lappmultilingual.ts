@@ -413,6 +413,10 @@ const messages: MessageMap = {
     ja: 'クライアントとメッセージを入力してください',
     en: 'Please select a client and enter a message'
   },
+  CTRL_SELECT_CLIENT_AND_VOICE: {
+    ja: 'クライアントとボイスを入力してください',
+    en: 'Please select a client and enter a voice'
+  },
   CTRL_SELECT_MODEL: {
     ja: 'モデルを選択してください',
     en: 'Please select a model'
@@ -688,6 +692,7 @@ export const MessageKey = {
   CTRL_COMMAND_RESPONSE: 'CTRL_COMMAND_RESPONSE',
   CTRL_WELCOME_MESSAGE: 'CTRL_WELCOME_MESSAGE',
   CTRL_SELECT_CLIENT_AND_MESSAGE: 'CTRL_SELECT_CLIENT_AND_MESSAGE',
+  CTRL_SELECT_CLIENT_AND_VOICE: 'CTRL_SELECT_CLIENT_AND_VOICE',
   CTRL_SELECT_MODEL: 'CTRL_SELECT_MODEL',
   CTRL_SELECT_CLIENT: 'CTRL_SELECT_CLIENT',
   CTRL_SELECT_CLIENT_AND_EXPRESSION: 'CTRL_SELECT_CLIENT_AND_EXPRESSION',

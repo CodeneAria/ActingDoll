@@ -541,7 +541,7 @@ def cmd_create_tts(config: ConfigActingDoll) -> bool:
         try:
             docker_options: str = ""
             if config.TTS_USE_GPU:
-                docker_options = f"-gpus all"
+                docker_options = f"--gpus all"
             if config.TTS_DOCKER_IMAGE_VERSION != "":
                 image_name = f"{config.TTS_DOCKER_IMAGE_PULL}:{config.TTS_DOCKER_IMAGE_VERSION}"
             else:

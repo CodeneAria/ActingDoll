@@ -167,7 +167,11 @@ class Live2DController {
     <button id="btn-list">クライアント一覧取得 (list)</button>
     <div style="margin-top: 10px;">
       <input type="text" id="input-send-message" placeholder="メッセージ" style="width: 200px;" />
-      <button id="btn-send">メッセージ送信 (send)</button>
+      <button id="btn-send-message">メッセージ送信 (send)</button>
+    </div>
+    <div style="margin-top: 10px;">
+      <input type="text" id="input-voice" placeholder="ボイステキスト" style="width: 200px;" />
+      <button id="btn-voice">ボイス送信 (voice)</button>
     </div>
     <div class="model-section">
       <h3>モデル操作</h3>
@@ -316,12 +320,20 @@ class Live2DController {
       }
     });
 
-    document.getElementById('btn-send')?.addEventListener('click', () => {
+    document.getElementById('btn-send-message')?.addEventListener('click', () => {
       const input = document.getElementById('input-send-message') as HTMLInputElement;
       if (input && input.value && this.selectedClientId) {
         this.sendCommand(`send ${this.selectedClientId} ${input.value}`);
       } else {
         this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_SELECT_CLIENT_AND_MESSAGE));
+      }
+    });
+    document.getElementById('btn-voice')?.addEventListener('click', () => {
+      const input = document.getElementById('input-voice') as HTMLInputElement;
+      if (input && input.value && this.selectedClientId) {
+        this.sendCommand(`voice ${this.selectedClientId} ${input.value}`);
+      } else {
+        this.showError(LAppMultilingual.getMessage(MessageKey.CTRL_SELECT_CLIENT_AND_VOICE));
       }
     });
 

@@ -6,6 +6,7 @@ import asyncio
 import json
 import logging
 import base64
+import requests
 import websockets
 from websockets.server import ServerConnection
 from datetime import datetime
@@ -26,32 +27,38 @@ class CubismControllerHandler:
     Live2Dモデルの制御コマンドを処理するクラスです。
     """
 
-    # 接続されたクライアントを管理
-    connected_clients: Set[ServerConnection] = set()
-    # クライアントIDとWebSocket接続のマッピング
-    client_id_map: dict[str, ServerConnection] = {}
-    # 認証済みクライアントを追跡
-    authenticated_clients: Set[ServerConnection] = set()
-    # クライアントIDとクライアントタイプのマッピング
-    client_type_map: dict[str, str] = {}
+    def __init__(self):
+        # 接続されたクライアントを管理
+        self.connected_clients: Set[ServerConnection] = set()
+        # クライアントIDとWebSocket接続のマッピング
+        self.client_id_map: dict[str, ServerConnection] = {}
+        # 認証済みクライアントを追跡
+        self.authenticated_clients: Set[ServerConnection] = set()
+        # クライアントIDとクライアントタイプのマッピング
+        self.client_type_map: dict[str, str] = {}
 
-    # グローバルなモデルマネージャー（後で初期化）
-    model_manager = None
-    # グローバルなセキュリティ設定（後で初期化）
-    security_config: Optional[SecurityConfig] = None
+        # グローバルなモデルマネージャー（後で初期化）
+        self.model_manager = None
+        # グローバルなセキュリティ設定（後で初期化）
+        self.security_config: Optional[SecurityConfig] = None
 
-    # サーバーの実行状態を管理
-    is_running = False
+        # サーバーの実行状態を管理
+        self.is_running: bool = False
+
+        self.tts_url: str = ""  # TTSサーバーのURL
+        self.tts_speaker_id: int = 1
+        self.tts_speaker_uuid: str = ""
 
     def print_usage(self):
         print("=== サーバーコンソール ===")
 
         print("サーバーコマンド:")
-        print("  quit                       - サーバーを停止")
-        # print("  count                      - 接続数を表示")
-        print("  list                       - 接続中のクライアント一覧")
-        print("  notify <message>           - 全クライアントに通知を送信")
-        print("  send <client_id> <message> - 特定のクライアントにメッセージを送信")
+        print("  quit                        - サーバーを停止")
+        # print("  count                       - 接続数を表示")
+        print("  list                        - 接続中のクライアント一覧")
+        print("  notify <message>            - 全クライアントに通知を送信")
+        print("  send <client_id> <message>  - 特定のクライアントにメッセージを送信")
+        print("  voice <client_id> <message> - 特定のクライアントにボイスメッセージを送信")
 
         print("モデルコマンド:")
         print("  model list                      - 利用可能なモデル一覧を取得")
@@ -96,6 +103,121 @@ class CubismControllerHandler:
         print("  client <client_id> get_scale")
         print("  client <client_id> set_scale [size]")
         print("========================\n")
+
+    async def init_tts_server(self, tts_url: str, model_name: str, model_type: str) -> bool:
+        """
+        TTSサーバーの初期化
+        Args:
+            tts_url: TTSサーバーのURL
+            model_name: TTSモデル名
+            model_type: TTSモデルタイプ
+        """
+        if not tts_url:
+            logger.warning("TTSサーバーのURLが指定されていません。TTS機能は無効になります。")
+            return False
+
+        self.tts_url = tts_url
+        logger.info(f"TTSサーバーのURLを設定: {self.tts_url}")
+        try:
+            timeout = 15  # timeoutは環境によって適切なものを設定する
+            ######################################################################
+            # Step 1: TTSサーバーが起動しているかと、APIのバージョンを確認
+            ######################################################################
+            url = f"{self.tts_url}/version"
+            version_response = requests.get(url, timeout=timeout)
+            version_response.raise_for_status()
+            logger.info(f"TTSサーバーバージョン: {version_response.json()}")
+
+            url = f"{self.tts_url}/core_versions"
+            core_versions_response = requests.get(url, timeout=timeout)
+            core_versions_response.raise_for_status()
+            logger.info(f"TTSサーバーコアバージョン: {core_versions_response.json()}")
+
+            ######################################################################
+            # Step 2: スピーカー情報を取得し、対象のモデル・タイプを探す
+            ######################################################################
+            logger.info(f"スピーカー情報を取得中... (モデル: {model_name}, タイプ: {model_type})")
+            url = f"{self.tts_url}/speakers"
+            speakers_response = requests.get(url, timeout=timeout)
+            speakers_response.raise_for_status()
+            speakers_data = speakers_response.json()
+            logger.debug(f"スピーカー情報: {speakers_data}")
+
+            # 対象のモデル・タイプを検索
+            target_speaker_id = None
+            for speaker in speakers_data:
+                if speaker.get("name") == model_name:
+                    # 指定されたタイプのスタイルを探す
+                    styles = speaker.get("styles", [])
+                    for style in styles:
+                        if style.get("name") == model_type:
+                            target_speaker_id = style.get("id")
+                            self.tts_speaker_uuid = style.get("uuid", "")
+                            logger.info(
+                                f"対象スピーカーを発見: {model_name} - {model_type} (ID: {target_speaker_id})")
+                            break
+                    if target_speaker_id is not None:
+                        break
+
+            if target_speaker_id is None:
+                logger.warning(
+                    f"指定されたモデル (name={model_name}, type={model_type}) が見つかりません。"
+                )
+                logger.debug(f"利用可能なスピーカー: {[s.get('name') for s in speakers_data]}")
+                # スピーカーがない場合はTTS機能を無効化
+                self.tts_url = ""
+                return False
+
+            ######################################################################
+            # Step 3: スピーカーを初期化
+            ######################################################################
+            logger.info(f"スピーカーを初期化中... (ID: {target_speaker_id})")
+            url = f"{self.tts_url}/initialize_speaker"
+            params = {"speaker": target_speaker_id, "skip_reinit": True}
+            init_response = requests.post(url, params=params, timeout=timeout)
+            init_response.raise_for_status()
+            logger.info(f"スピーカーの初期化が完了しました (ID: {target_speaker_id})")
+            self.tts_speaker_id = target_speaker_id
+            ######################################################################
+            return True
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"TTSサーバーへのリクエスト中にエラーが発生しました: {e}")
+            self.tts_url = ""  # TTS機能を無効化
+        except Exception as e:
+            logger.error(f"TTSサーバーへの接続または通信中にエラーが発生しました: {e}")
+            self.tts_url = ""  # TTS機能を無効化
+
+    async def text_to_wav(self, text: str) -> Optional[str]:
+        """
+        テキストをWAV形式のBase64エンコードされた文字列に変換する（TTSサーバーを利用）
+        Args:
+            text: 変換するテキスト
+        Returns:
+            Base64エンコードされたWAVデータの文字列、または変換に失敗した場合はNone
+        """
+        if not self.tts_url:
+            logger.warning("TTSサーバーのURLが設定されていません")
+            return None
+
+        try:
+            url = f"{self.tts_url}/audio_query"
+            params = {"text": text, "speaker": self.tts_speaker_id}
+            timeout = 15
+            query_synthesis = requests.post(url, params=params, timeout=timeout)
+
+            params = {"speaker": self.tts_speaker_id}
+            response = requests.post(
+                f"{self.tts_url}/synthesis",
+                params=params,
+                json=query_synthesis.json(),
+            )
+            wav = response.content
+            wav_base64 = base64.b64encode(wav).decode('utf-8')
+            return wav_base64
+        except Exception as e:
+            logger.error(f"TTSサーバーへの接続または通信中にエラーが発生しました: {e}")
+            return None
 
     async def broadcast_message(self, message: dict, exclude: ServerConnection = None):
         """
@@ -1280,6 +1402,36 @@ class CubismControllerHandler:
                 "from": client_id,
                 "success": True if success else False
             }
+        elif command == "voice":
+            args = parts[1].strip().split(maxsplit=2)
+            # 形式: voice <client_id> <message>
+            if len(args) < 2:
+                return {
+                    "type": "command_response",
+                    "command": command,
+                    "from": client_id,
+                    "error": "使い方: voice <client_id> <message>"
+                }
+
+            target_client_id = args[0]
+            message = args[1]
+
+            wav_data = await self.text_to_wav(message)
+            success = False
+            if wav_data is not None:
+                success = await self.send_to_client(target_client_id, {
+                    "type": "set_lipsync",
+                    "client_id": target_client_id,
+                    "from": client_id,
+                    "wav_data": wav_data,
+                    "timestamp": datetime.now().isoformat()
+                })
+            return {
+                "type": "command_response",
+                "command": command,
+                "client_id": client_id,
+                "success": True if success else False
+            }
         elif command == "model":
             # モデルコマンドを処理
             # 形式: model <sub_command> [args]
@@ -1378,6 +1530,30 @@ class CubismControllerHandler:
                     else:
                         logger.error(f"メッセージ送信失敗 -> {target_client_id}")
 
+                elif command == "voice" and len(parts) > 1:
+                    # 形式: voice <client_id> <message>
+                    if len(parts) < 3:
+                        logger.warning("使い方: voice <client_id> <message>")
+                        continue
+
+                    target_client_id = parts[1]
+                    message = parts[2]
+
+                    wav_data = await self.text_to_wav(message)
+                    success = False
+                    if wav_data is not None:
+                        success = await self.send_to_client(target_client_id, {
+                            "type": "set_lipsync",
+                            "client_id": target_client_id,
+                            "wav_data": wav_data,
+                            "timestamp": datetime.now().isoformat()
+                        })
+                    if success:
+                        logger.info(
+                            f"メッセージ送信完了 -> {target_client_id}: {message}")
+                    else:
+                        logger.error(f"メッセージ送信失敗 -> {target_client_id}")
+
                 elif command == "notify" and len(parts) > 1:
                     message = parts[1]
                     await self.broadcast_message({
@@ -1449,6 +1625,9 @@ class CubismControllerHandler:
                   host: str, port: int,
                   security_config: SecurityConfig,
                   model_dir: str,
+                  tts_url: str,
+                  model_name: str,
+                  model_type: str,
                   console: bool = True,
                   disable_auth: bool = False):
         """
@@ -1459,9 +1638,15 @@ class CubismControllerHandler:
             port: バインドするポート
             security: セキュリティ設定
             model_dir: モデルディレクトリパス
+            tts_url: TTS（Text-to-Speech）サーバーのURL
+            model_name: モデル名
+            model_type: モデルタイプ
             console: コンソール有効化フラグ
             disable_auth: 認証無効化フラグ
         """
+
+        # TTSサーバーURLを保存して初期化
+        await self.init_tts_server(tts_url=tts_url, model_name=model_name, model_type=model_type)
 
         # セキュリティ設定を初期化
         self.security_config = security_config
@@ -1528,12 +1713,15 @@ class CubismControllerHandler:
         self.connected_clients.clear()
         self.client_id_map.clear()
         self.authenticated_clients.clear()
-        logger.info("Cubism Controllerは正常に停止しました")
+        logger.info("Cubism Controllerは停止しました")
 
 
 async def run_websocket(host: str, port: int,
                         security_config: SecurityConfig,
                         model_dir: str,
+                        tts_url: str = "",
+                        model_name: str = "",
+                        model_type: str = "",
                         console: bool = True,
                         disable_auth: bool = False):
     """
@@ -1544,6 +1732,9 @@ async def run_websocket(host: str, port: int,
         port: バインドするポート
         security: セキュリティ設定
         model_dir: モデルディレクトリパス
+        tts_url: TTS（Text-to-Speech）サーバーのURL
+        model_name: モデル名
+        model_type: モデルタイプ
         console: コンソール有効化フラグ
         disable_auth: 認証無効化フラグ
     """
@@ -1556,6 +1747,9 @@ async def run_websocket(host: str, port: int,
                               security_config=security_config,
                               model_dir=model_dir,
                               console=console,
+                              model_name=model_name,
+                              model_type=model_type,
+                              tts_url=tts_url,
                               disable_auth=disable_auth)
     except Exception as e:
         logger.error(f"Cubism Controllerエラー: {e}")

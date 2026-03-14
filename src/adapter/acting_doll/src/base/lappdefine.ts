@@ -96,6 +96,19 @@ export const RenderTargetHeight = 1000;
 // モデル位置移動量設定
 export const ModelPositionMoveStep = 0.01;
 
+// トグルのデフォルト設定
+export const DefaultToggle = {
+  breath: true,
+  idle_motion: true,
+  drag_follow: false,
+  physics: true,
+  eye_blink: true
+}
+
+// BackgroundColorControllerのデフォルト設定
+export const DefaultBackgroundColor = '#00FF00';
+export const DefaultBackgroundColorAlpha = 1.0;
+
 // モデルスケールスライダー設定
 export const ModelScaleMin = 0.5;
 export const ModelScaleMax = 8.0;
@@ -109,16 +122,3 @@ export const WebSocketPort = '8765';
 export const WebSocketAutoConnect = true;
 export const WebSocketReconnectAttempts = 5;
 export const WebSocketReconnectDelay = 3000;
-
-// トグルのデフォルト設定
-export const DefaultToggle = {
-  breath: true,
-  idle_motion: true,
-  drag_follow: false,
-  physics: true,
-  eye_blink: true
-}
-
-// BackgroundColorControllerのデフォルト設定
-export const DefaultBackgroundColor = '#00FF00';
-export const DefaultBackgroundColorAlpha = 1.0;

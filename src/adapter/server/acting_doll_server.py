@@ -51,6 +51,18 @@ def _parse_args():
         help='Server port (default: environment variable "WEBSOCKET_PORT" or 8765)'
     )
     parser.add_argument(
+        '--tts_url',
+        type=str,
+        default=os.environ.get('TTS_URL', 'http://localhost:50021'),
+        help='TTS server URL (default: environment variable "TTS_URL" or http://localhost:50021)'
+    )
+    parser.add_argument(
+        '--tts_model_info',
+        type=str,
+        default=os.environ.get('TTS_MODEL_INFO', ''),
+        help='TTS model information (default: environment variable "TTS_MODEL_INFO" or empty)'
+    )
+    parser.add_argument(
         '--console',
         action='store_true',
         help='Enable interactive console'
@@ -80,12 +92,20 @@ async def _start_acting_doll_server():
         host = args.host if args.host is not None else security_config.default_host
         port = args.port if args.port is not None else security_config.default_port
 
+        # tts_url = f"http://{host}:{args.tts_port}"  # TTSサーバーのURLを指定
+        tts_url = args.tts_url  # TTSサーバーのURLを指定
+        model_name = ""
+        model_type = ""
+
         ##################################################
         # Processing based on mode
         ##################################################
         # Cubism mode
         cubism_task = asyncio.create_task(run_websocket(
             host=host, port=port,
+            tts_url=tts_url,
+            model_name=model_name,
+            model_type=model_type,
             security_config=security_config,
             model_dir=args.model_dir,
             console=args.console,
