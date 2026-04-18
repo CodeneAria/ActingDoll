@@ -87,6 +87,8 @@ class ConfigActingDoll:
         self.TTS_USE_GPU: bool = False
         self.TTS_DOCKER_CONTAINER_NAME: str = "text_to_speech"
         self.TTS_PORT: int = 50021
+        self.TTS_MODEL_NAME: str = "--"
+        self.TTS_MODEL_STYLE: str = "ノーマル"
 
         self.TTS_DOCKER_IMAGE_PULL: str = "voicevox/voicevox_engine"
         self.TTS_DOCKER_IMAGE_VERSION_CPU: str = "cpu-latest"
@@ -158,6 +160,10 @@ class ConfigActingDoll:
             f"  docker_image_pull: {self.TTS_DOCKER_IMAGE_PULL}\n"
             f"  docker_image_version_cpu: {self.TTS_DOCKER_IMAGE_VERSION_CPU}\n"
             f"  docker_image_version_gpu: {self.TTS_DOCKER_IMAGE_VERSION_GPU}\n"
+            f"  # Model information\n"
+            f"  model_info:\n"
+            f"    name: {self.TTS_MODEL_NAME}\n"
+            f"    style: {self.TTS_MODEL_STYLE}\n"
             f"\n"
             f"# Docker Configuration for Cubism SDK Web\n"
             f"settings:\n"
@@ -275,6 +281,10 @@ class ConfigActingDoll:
                         self.TTS_DOCKER_IMAGE_VERSION = self.TTS_DOCKER_IMAGE_VERSION_GPU
                     else:
                         self.TTS_DOCKER_IMAGE_VERSION = self.TTS_DOCKER_IMAGE_VERSION_CPU
+                    if 'model_info' in tts:
+                        model_info = tts['model_info']
+                        self.TTS_MODEL_NAME = str(model_info.get('model_name', self.TTS_MODEL_NAME))
+                        self.TTS_MODEL_STYLE = str(model_info.get('model_style', self.TTS_MODEL_STYLE))
 
         # File not found or YAML parsing error
         except FileNotFoundError:
@@ -333,6 +343,11 @@ class ConfigActingDoll:
         if hasattr(args, 'port_tts'):
             if args.port_tts is not None:
                 self.TTS_PORT = args.port_tts
+        if hasattr(args, 'tts_model_info'):
+            if args.tts_model_info:
+                parts = args.tts_model_info.split(':')
+                if len(parts) == 2:
+                    self.TTS_MODEL_NAME, self.TTS_MODEL_STYLE = parts
         if hasattr(args, 'production'):
             if args.production is not None:
                 self.PRODUCTION = args.production
@@ -699,6 +714,7 @@ def cmd_docker_run(config: ConfigActingDoll, hosting: bool = False):
                    f" -e WEBSOCKET_AUTH_TOKEN={config.AUTH_TOKEN}"
                    f" -e WEBSOCKET_REQUIRE_AUTH={config.REQUIRE_AUTH}"
                    f" -e WEBSOCKET_ALLOWED_DIRS={':'.join(config.ALLOWED_DIRS)}"
+                   f" -e TTS_MODEL_INFO={config.TTS_MODEL_NAME}:{config.TTS_MODEL_STYLE}"
                    f" {config.DOCKER_IMAGE_NAME}:{config.DOCKER_IMAGE_VER}"
                    )
         result = _run_command(run_cmd, shell=False, capture_output=True)
@@ -1028,6 +1044,12 @@ def main():
             type=int,
             default=None,
             help='Port for text-to-speech server'
+        )
+        template_parser.add_argument(
+            '--tts_model_info',
+            type=str,
+            default=None,
+            help='TTS model information in format: model_name:model_style (e.g. "name:natural")'
         )
         template_parser.add_argument(
             '--token',

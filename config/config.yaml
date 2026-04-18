@@ -44,6 +44,10 @@ text_to_speech:
   docker_image_pull: voicevox/voicevox_engine
   docker_image_version_cpu: cpu-latest
   docker_image_version_gpu: nvidia-latest
+  # Model information
+  model_info:
+    name: --
+    style: ノーマル
 
 # Docker Configuration for Cubism SDK Web
 settings:

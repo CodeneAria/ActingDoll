@@ -95,7 +95,16 @@ async def _start_acting_doll_server():
         # tts_url = f"http://{host}:{args.tts_port}"  # TTSサーバーのURLを指定
         tts_url = args.tts_url  # TTSサーバーのURLを指定
         model_name = ""
-        model_type = ""
+        model_style = ""
+
+        # Parse model info from "model_name:model_style" format
+        if args.tts_model_info:
+            parts = args.tts_model_info.split(':')
+            if len(parts) == 2:
+                model_name, model_style = parts
+            else:
+                logger.warning(
+                    f"Invalid tts_model_info format: {args.tts_model_info}. Expected 'model_name:model_style'")
 
         ##################################################
         # Processing based on mode
@@ -105,7 +114,7 @@ async def _start_acting_doll_server():
             host=host, port=port,
             tts_url=tts_url,
             model_name=model_name,
-            model_type=model_type,
+            model_style=model_style,
             security_config=security_config,
             model_dir=args.model_dir,
             console=args.console,

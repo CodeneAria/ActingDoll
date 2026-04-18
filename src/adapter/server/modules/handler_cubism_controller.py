@@ -104,13 +104,13 @@ class CubismControllerHandler:
         print("  client <client_id> set_scale [size]")
         print("========================\n")
 
-    async def init_tts_server(self, tts_url: str, model_name: str, model_type: str) -> bool:
+    async def init_tts_server(self, tts_url: str, model_name: str, model_style: str) -> bool:
         """
         TTSサーバーの初期化
         Args:
             tts_url: TTSサーバーのURL
             model_name: TTSモデル名
-            model_type: TTSモデルタイプ
+            model_style: TTSモデルタイプ
         """
         if not tts_url:
             logger.warning("TTSサーバーのURLが指定されていません。TTS機能は無効になります。")
@@ -136,7 +136,7 @@ class CubismControllerHandler:
             ######################################################################
             # Step 2: スピーカー情報を取得し、対象のモデル・タイプを探す
             ######################################################################
-            logger.info(f"スピーカー情報を取得中... (モデル: {model_name}, タイプ: {model_type})")
+            logger.info(f"スピーカー情報を取得中... (モデル: {model_name}, スタイル: {model_style})")
             url = f"{self.tts_url}/speakers"
             speakers_response = requests.get(url, timeout=timeout)
             speakers_response.raise_for_status()
@@ -150,18 +150,18 @@ class CubismControllerHandler:
                     # 指定されたタイプのスタイルを探す
                     styles = speaker.get("styles", [])
                     for style in styles:
-                        if style.get("name") == model_type:
+                        if style.get("name") == model_style:
                             target_speaker_id = style.get("id")
                             self.tts_speaker_uuid = style.get("uuid", "")
                             logger.info(
-                                f"対象スピーカーを発見: {model_name} - {model_type} (ID: {target_speaker_id})")
+                                f"対象スピーカーを発見: {model_name} - {model_style} (ID: {target_speaker_id})")
                             break
                     if target_speaker_id is not None:
                         break
 
             if target_speaker_id is None:
                 logger.warning(
-                    f"指定されたモデル (name={model_name}, type={model_type}) が見つかりません。"
+                    f"指定されたモデル (name={model_name}, type={model_style}) が見つかりません。"
                 )
                 logger.debug(f"利用可能なスピーカー: {[s.get('name') for s in speakers_data]}")
                 # スピーカーがない場合はTTS機能を無効化
@@ -1627,7 +1627,7 @@ class CubismControllerHandler:
                   model_dir: str,
                   tts_url: str,
                   model_name: str,
-                  model_type: str,
+                  model_style: str,
                   console: bool = True,
                   disable_auth: bool = False):
         """
@@ -1640,13 +1640,13 @@ class CubismControllerHandler:
             model_dir: モデルディレクトリパス
             tts_url: TTS（Text-to-Speech）サーバーのURL
             model_name: モデル名
-            model_type: モデルタイプ
+            model_style: モデルタイプ
             console: コンソール有効化フラグ
             disable_auth: 認証無効化フラグ
         """
 
         # TTSサーバーURLを保存して初期化
-        await self.init_tts_server(tts_url=tts_url, model_name=model_name, model_type=model_type)
+        await self.init_tts_server(tts_url=tts_url, model_name=model_name, model_style=model_style)
 
         # セキュリティ設定を初期化
         self.security_config = security_config
@@ -1721,7 +1721,7 @@ async def run_websocket(host: str, port: int,
                         model_dir: str,
                         tts_url: str = "",
                         model_name: str = "",
-                        model_type: str = "",
+                        model_style: str = "",
                         console: bool = True,
                         disable_auth: bool = False):
     """
@@ -1734,7 +1734,7 @@ async def run_websocket(host: str, port: int,
         model_dir: モデルディレクトリパス
         tts_url: TTS（Text-to-Speech）サーバーのURL
         model_name: モデル名
-        model_type: モデルタイプ
+        model_style: モデルタイプ
         console: コンソール有効化フラグ
         disable_auth: 認証無効化フラグ
     """
@@ -1748,7 +1748,7 @@ async def run_websocket(host: str, port: int,
                               model_dir=model_dir,
                               console=console,
                               model_name=model_name,
-                              model_type=model_type,
+                              model_style=model_style,
                               tts_url=tts_url,
                               disable_auth=disable_auth)
     except Exception as e:
